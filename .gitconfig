@@ -1,0 +1,7 @@
+[user]
+	email = conformist.mw@gmail.com
+	name = conformist-mw
+[color]
+	ui = auto
+[core]
+	excludesfile = /home/conformist/.gitignore

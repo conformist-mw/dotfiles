@@ -1,0 +1,121 @@
+# ~/.bashrc: executed by bash(1) for non-login shells.
+# see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
+# for examples
+
+# If not running interactively, don't do anything
+case $- in
+    *i*) ;;
+      *) return;;
+esac
+
+# don't put duplicate lines or lines starting with space in the history.
+# See bash(1) for more options
+HISTCONTROL=ignoredups:erasedups
+
+# append to the history file, don't overwrite it
+shopt -s histappend
+
+# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
+HISTSIZE=10000
+HISTFILESIZE=20000
+
+# check the window size after each command and, if necessary,
+# update the values of LINES and COLUMNS.
+shopt -s checkwinsize
+
+# If set, the pattern "**" used in a pathname expansion context will
+# match all files and zero or more directories and subdirectories.
+#shopt -s globstar
+
+# make less more friendly for non-text input files, see lesspipe(1)
+#[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+
+# set a fancy prompt (non-color, unless we know we "want" color)
+case "$TERM" in
+    xterm-color|*-256color) color_prompt=yes;;
+esac
+
+# enable color support of ls and also add handy aliases
+if [ -x /usr/bin/dircolors ]; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    alias ls='ls --color=auto'
+    #alias dir='dir --color=auto'
+    #alias vdir='vdir --color=auto'
+
+    alias grep='grep --color=auto'
+    #alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+fi
+
+# colored GCC warnings and errors
+#export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
+
+# some more ls aliases
+alias ll='ls -l'
+alias la='ls -A'
+alias l='ls -CF'
+alias tmux='/usr/bin/tmux attach || /usr/bin/tmux new'
+alias make='grc make'
+alias diff='grc diff'
+alias logc='grc cat'
+alias logt='grc tail'
+alias logh='grc head'
+alias tvstart='sudo systemctl start teamviewerd'
+alias tvstop='sudo systemctl stop teamviewerd'
+alias dd='dd status=progress'
+alias sudo='sudo '
+alias urldecode='python -c "import sys, urllib as ul; print ul.unquote_plus(sys.argv[1])"'
+# Alias definitions.
+# You may want to put all your additions into a separate file like
+# ~/.bash_aliases, instead of adding them here directly.
+# See /usr/share/doc/bash-doc/examples in the bash-doc package.
+
+if [ -f ~/.bash_aliases ]; then
+    . ~/.bash_aliases
+fi
+
+# enable programmable completion features (you don't need to enable
+# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
+# sources /etc/bash.bashrc).
+if ! shopt -oq posix; then
+  if [ -f /usr/share/bash-completion/bash_completion ]; then
+    . /usr/share/bash-completion/bash_completion
+  elif [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+  fi
+fi
+# PS1="\[\e[36m\]\h\[\e[m\]\[\e[m\] \\$ "
+PS1="\[\033[38;5;14m\]\w\[$(tput sgr0)\]\[\033[38;5;15m\] \\$ \[$(tput sgr0)\]"
+# function directory_to_titlebar {
+# 	local pwd_length=42
+# 	local dir="$PWD"
+# 	if [[ "$HOME" == ${dir:0:${#HOME}} ]] ; then
+# 		dir="~${dir:${#HOME}}"
+# 	fi
+# 	if [[ ${dir:${#dir}-1} != "/" ]] ; then
+# 		dir="$dir/"
+# 	fi
+# 	if [[ "$dir" =~ (~){0,1}/.*(.{${pwd_length}}) ]] ; then
+# 		local tilde=${BASH_REMATCH[1]}
+# 		local directory=${BASH_REMATCH[2]}
+# 		if [[ "$directory" =~ [^/]*(.*) ]] ; then
+# 			directory=${BASH_REMATCH[1]}
+# 		fi
+# 		dir="$tilde/...$directory"
+# 	fi
+# 	printf "\033]0;%s\007" "$dir"
+# }
+# PROMPT_COMMAND="directory_to_titlebar"
+# PROMPT_COMMAND='echo -ne "\033]0;${directory_to_titlebar}\007"'
+export TERM=xterm-256color
+if [[ ! -z "$TMUX" ]]; then
+	export TERM=tmux-256color
+fi
+# function snowflake {
+# 	clear;while :;do echo $LINES $COLUMNS $(($RANDOM%$COLUMNS)) $(printf "\u2744\n");sleep 0.1;done|gawk '{a[$3]=0;for(x in a) {o=a[x];a[x]=a[x]+1;printf "\033[%s;%sH ",o,x;printf "\033[%s;%sH%s \033[0;0H",a[x],x,$4;}}'
+# }
+# export LFS=/mnt/lfs
+GIT_PROMPT_ONLY_IN_REPO=1
+source ~/.bash-git-prompt/gitprompt.sh
+export LESSOPEN="| /usr/share/source-highlight/src-hilite-lesspipe.sh %s"
+export LESS=' -R '
