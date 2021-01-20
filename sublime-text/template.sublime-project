@@ -1,0 +1,42 @@
+{
+	"build_systems":
+	[
+		{
+			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+			"name": "Project Python Builder",
+			"selector": "source.python",
+			"shell_cmd": "\"/home/user/.venvs/project/bin/python\" -u \"$file\""
+		}
+	],
+	"folders":
+	[
+		{
+			"path": "/home/user/dev/project"
+		},
+	],
+	"settings":
+	{
+		"anaconda_linter_phantoms": true,
+		"bold_folder_labels": true,
+		"draw_minimap_border": true,
+		"draw_white_space": "all",
+		"ensure_newline_at_eof_on_save": true,
+		"highlight_line": true,
+		"highlight_modified_tabs": true,
+		"python_interpreter": "/home/user/.venvs/project/bin/python",
+		"rulers":
+		[
+			80,
+			100,
+			120
+		],
+		"show_encoding": true,
+		"show_line_endings": true,
+		"spell_check": true,
+		"tab_size": 4,
+		"translate_tabs_to_spaces": true,
+		"trim_trailing_white_space_on_save": true,
+		"validate_imports": true,
+		"word_wrap": true
+	}
+}
