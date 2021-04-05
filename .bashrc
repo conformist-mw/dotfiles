@@ -86,36 +86,22 @@ if ! shopt -oq posix; then
 fi
 # PS1="\[\e[36m\]\h\[\e[m\]\[\e[m\] \\$ "
 PS1="\[\033[38;5;14m\]\w\[$(tput sgr0)\]\[\033[38;5;15m\] \\$ \[$(tput sgr0)\]"
-# function directory_to_titlebar {
-# 	local pwd_length=42
-# 	local dir="$PWD"
-# 	if [[ "$HOME" == ${dir:0:${#HOME}} ]] ; then
-# 		dir="~${dir:${#HOME}}"
-# 	fi
-# 	if [[ ${dir:${#dir}-1} != "/" ]] ; then
-# 		dir="$dir/"
-# 	fi
-# 	if [[ "$dir" =~ (~){0,1}/.*(.{${pwd_length}}) ]] ; then
-# 		local tilde=${BASH_REMATCH[1]}
-# 		local directory=${BASH_REMATCH[2]}
-# 		if [[ "$directory" =~ [^/]*(.*) ]] ; then
-# 			directory=${BASH_REMATCH[1]}
-# 		fi
-# 		dir="$tilde/...$directory"
-# 	fi
-# 	printf "\033]0;%s\007" "$dir"
-# }
-# PROMPT_COMMAND="directory_to_titlebar"
-# PROMPT_COMMAND='echo -ne "\033]0;${directory_to_titlebar}\007"'
+
 export TERM=xterm-256color
 if [[ ! -z "$TMUX" ]]; then
 	export TERM=tmux-256color
 fi
-# function snowflake {
-# 	clear;while :;do echo $LINES $COLUMNS $(($RANDOM%$COLUMNS)) $(printf "\u2744\n");sleep 0.1;done|gawk '{a[$3]=0;for(x in a) {o=a[x];a[x]=a[x]+1;printf "\033[%s;%sH ",o,x;printf "\033[%s;%sH%s \033[0;0H",a[x],x,$4;}}'
-# }
-# export LFS=/mnt/lfs
-GIT_PROMPT_ONLY_IN_REPO=1
-source ~/.bash-git-prompt/gitprompt.sh
 export LESSOPEN="| /usr/share/source-highlight/src-hilite-lesspipe.sh %s"
 export LESS=' -R '
+
+export WORKON_HOME=$HOME/.virtualenvs
+export PROJECT_HOME=$HOME/dev
+export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
+source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
+
+if [ -f "$HOME/.bash-git-prompt/gitprompt.sh" ]; then
+    GIT_PROMPT_THEME=Single_line_Minimalist
+    GIT_PROMPT_ONLY_IN_REPO=1
+    source $HOME/.bash-git-prompt/gitprompt.sh
+fi
+
