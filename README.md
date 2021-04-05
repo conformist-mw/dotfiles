@@ -1,12 +1,30 @@
 # dotfiles
 
-##### [GIT prompt bash](https://github.com/magicmonty/bash-git-prompt)
+### Used packages
 
-In `~/.bashrc`
+- [GIT prompt bash](https://github.com/magicmonty/bash-git-prompt)
 
-```sh
-GIT_PROMPT_ONLY_IN_REPO=1
-source ~/.bash-git-prompt/gitprompt.sh  
+###### Installation:
+
+```shell
+git clone https://github.com/magicmonty/bash-git-prompt.git ~/.bash-git-prompt --depth=1
 ```
----
+
+- [GNU's source-highlight](http://www.gnu.org/software/src-highlite/source-highlight.html#Using-source_002dhighlight-with-less)
+
+###### Installation:
+
+```shell
+sudo apt install libsource-highlight-common source-highlight
+dpkg -L libsource-highlight-common | grep lesspipe
+# /usr/share/source-highlight/src-hilite-lesspipe.sh
+```
+
+- [ripgrep](https://github.com/BurntSushi/ripgrep)
+
+###### Installation:
+
+```shell
+sudo apt install ripgrep
+```
 
