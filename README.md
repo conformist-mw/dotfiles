@@ -20,11 +20,3 @@ dpkg -L libsource-highlight-common | grep lesspipe
 # /usr/share/source-highlight/src-hilite-lesspipe.sh
 ```
 
-- [ripgrep](https://github.com/BurntSushi/ripgrep)
-
-###### Installation:
-
-```shell
-sudo apt install ripgrep
-```
-
