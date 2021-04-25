@@ -20,3 +20,16 @@ dpkg -L libsource-highlight-common | grep lesspipe
 # /usr/share/source-highlight/src-hilite-lesspipe.sh
 ```
 
+#### Sublime-text
+
+To easily create a project settings file, you need to create an venv first:
+
+```shell
+mkvirtualenv venv-name -a /abspath/to/project
+cp /path/to/template.sublime-project /abspath/to/project
+sed -i "s%PYTHON_INTERPRETER%`which python`%g" template.sublime-project
+sed -i "s%PROJECT_PATH%`pwd`%g" template.sublime-project
+mv template.sublime-project project-name.sublime-project
+```
+
+Also do not forget to add this directory to gitignore
