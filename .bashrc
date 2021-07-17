@@ -105,3 +105,7 @@ if [ -f "$HOME/.bash-git-prompt/gitprompt.sh" ]; then
     source $HOME/.bash-git-prompt/gitprompt.sh
 fi
 
+eval "$(starship init bash)"
+
+source <(kubectl completion bash)
+
