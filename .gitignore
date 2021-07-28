@@ -1,2 +1,9 @@
 *.py[co]
 __pycache__
+.envs-local
+.pytest_cache
+.idea
+*.egg-info/
+*.sublime-project
+*.sublime-workspace
+
