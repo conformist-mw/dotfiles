@@ -109,3 +109,9 @@ eval "$(starship init bash)"
 
 source <(kubectl completion bash)
 
+eval "$(pyenv init -)"
+
+eval "$(pyenv virtualenv-init -)"
+
+eval `keychain --eval id_ed25519`
+
