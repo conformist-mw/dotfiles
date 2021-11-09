@@ -105,13 +105,23 @@ if [ -f "$HOME/.bash-git-prompt/gitprompt.sh" ]; then
     source $HOME/.bash-git-prompt/gitprompt.sh
 fi
 
+# remove *.pyc files in current dir
+pyclean () {
+  find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
+}
+
+# https://starship.rs/config/
 eval "$(starship init bash)"
 
+# https://kubernetes.io/docs/tasks/tools/included/optional-kubectl-configs-bash-linux/#enable-kubectl-autocompletion
 source <(kubectl completion bash)
 
+# https://github.com/pyenv/pyenv#installation
 eval "$(pyenv init -)"
 
+# https://github.com/pyenv/pyenv-virtualenv#installation
 eval "$(pyenv virtualenv-init -)"
 
+# https://www.funtoo.org/Keychain
 eval `keychain --eval id_ed25519`
 
