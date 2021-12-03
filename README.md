@@ -33,3 +33,8 @@ mv template.sublime-project project-name.sublime-project
 ```
 
 Also do not forget to add this directory to gitignore
+
+##### tmux configuration
+
+Check [.tmux](https://github.com/gpakosz/.tmux) project.
+
