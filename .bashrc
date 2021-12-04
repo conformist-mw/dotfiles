@@ -88,9 +88,6 @@ fi
 PS1="\[\033[38;5;14m\]\w\[$(tput sgr0)\]\[\033[38;5;15m\] \\$ \[$(tput sgr0)\]"
 
 export TERM=xterm-256color
-if [[ ! -z "$TMUX" ]]; then
-	export TERM=tmux-256color
-fi
 export LESSOPEN="| /usr/share/source-highlight/src-hilite-lesspipe.sh %s"
 export LESS=' -R '
 
