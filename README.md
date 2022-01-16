@@ -2,7 +2,20 @@
 
 ### Used packages
 
-- [GIT prompt bash](https://github.com/magicmonty/bash-git-prompt)
+[Starship](https://starship.rs)
+
+[diff-so-fancy](https://github.com/so-fancy/diff-so-fancy)
+
+- save `lib/`, `diff-so-fancy` to the `~/.local/bin`
+
+##### Font
+
+[FiraMono Nerd Font](https://www.nerdfonts.com/font-downloads)
+
+1. download font
+2. unzip
+3. mv font_dir /usr/local/share/fonts
+4. fc-cache -f -v
 
 ###### Installation:
 
