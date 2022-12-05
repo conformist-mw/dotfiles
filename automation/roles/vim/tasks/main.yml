@@ -1,0 +1,31 @@
+---
+- name: Install vim, git, fonts-powerline
+  ansible.builtin.apt:
+    name:
+      - vim
+      - git
+      - fonts-powerline
+    state: present
+  become: yes
+
+- name: Create config dir
+  ansible.builtin.file:
+    path: "{{ vim_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Copy main configuration file
+  ansible.builtin.copy:
+    src: vimrc
+    dest: "{{ vim_dir }}/vimrc"
+
+- name: Clone Vundle plugin
+  ansible.builtin.git:
+    repo: "https://github.com/VundleVim/Vundle.vim.git"
+    dest: "{{ vim_dir }}/bundle/Vundle.vim"
+
+- name: Install Vundle plugins
+  ansible.builtin.shell: >
+    echo -ne '\n' | vim -E -s -c "source {{ vim_dir }}/vimrc" -c PluginInstall -c qa
+  register: result
+  failed_when: ( result.rc not in [0,1] )
