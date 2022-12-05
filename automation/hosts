@@ -1,0 +1,2 @@
+[raspberry]
+rpi.local ansible_user=pi

@@ -1,0 +1,8 @@
+machines:
+  hosts:
+    pi:
+      ansible_host: rpi.local
+      ansible_user: pi
+    website:
+      ansible_host: conformist.name
+      ansible_user: website
