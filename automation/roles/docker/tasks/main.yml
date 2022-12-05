@@ -1,0 +1,64 @@
+---
+- name: install required pachages
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+    update_cache: yes
+  become: yes
+
+- name: Add Docker GPG key
+  ansible.builtin.apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    keyring: /etc/apt/trusted.gpg.d/docker.gpg
+    state: present
+  become: yes
+
+- name: Get deb arch
+  ansible.builtin.shell: dpkg --print-architecture
+  register: target_arch
+
+- name: Add apt repo
+  ansible.builtin.apt_repository:
+    repo: deb [arch={{ target_arch.stdout }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable
+    state: present
+    filename: docker
+  become: yes
+
+- name: install docker, containerd.oi
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+  become: yes
+
+- name: start and enable docker daemon
+  become: yes
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: start and enable containerd daemon
+  become: yes
+  ansible.builtin.service:
+    name: containerd
+    state: started
+    enabled: yes
+
+- name: add docker group
+  become: yes
+  ansible.builtin.group:
+    name: docker
+    state: present
+
+- name: add user to the docker group
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes
+  become: yes
