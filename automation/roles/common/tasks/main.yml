@@ -1,0 +1,11 @@
+---
+- name: update apt index
+  ansible.builtin.apt:
+    name:
+      - curl
+      - mc
+      - ncdu
+      - htop
+      - bash-completion
+    update_cache: yes
+  become: yes
