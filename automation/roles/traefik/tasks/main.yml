@@ -1,0 +1,15 @@
+---
+- name: Create main dir
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/server"
+    state: directory
+
+- name: Create shared dir
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/server/shared"
+    state: directory
+
+- name: Create htpasswd
+  ansible.builtin.copy:
+    dest: "{{ ansible_env.HOME }}/server/shared/.htpasswd"
+    content: "{{ htpasswd }}"
