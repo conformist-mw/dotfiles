@@ -26,6 +26,5 @@
 
 - name: Install Vundle plugins
   ansible.builtin.shell: >
-    echo -ne '\n' | vim -E -s -c "source {{ vim_dir }}/vimrc" -c PluginInstall -c qa
-  register: result
-  failed_when: ( result.rc not in [0,1] )
+    echo -ne '\n' | vim -E -s -c "source {{ vim_dir }}/vimrc" -c PluginInstall -c qa || [ $? = 1 ] && exit 0 || exit 2
+  changed_when: false  # suppress changing

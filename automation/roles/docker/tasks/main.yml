@@ -16,15 +16,16 @@
     state: present
   become: yes
 
-- name: Get deb arch
-  ansible.builtin.shell: dpkg --print-architecture
-  register: target_arch
-
 - name: Add apt repo
   ansible.builtin.apt_repository:
-    repo: deb [arch={{ target_arch.stdout }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable
+    repo: deb [arch={{ [ansible_architecture] | map('extract', deb_architecture) | first }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable
     state: present
     filename: docker
+  vars:
+    deb_architecture: {
+      "aarch64": "arm64",
+      "x86_64": "amd64"
+    }
   become: yes
 
 - name: install docker, containerd.oi
