@@ -1,15 +1,238 @@
 ---
+- name: Install mkcert deps
+  ansible.builtin.apt:
+    name: libnss3-tools
+    state: present
+  become: true
+
+- name: Install mkcert
+  ansible.builtin.get_url:
+    url: "https://dl.filippo.io/mkcert/latest?for={{ arch }}"
+    dest: /usr/local/bin/mkcert
+    mode: "0755"
+  become: true
+
+- name: Get mkcert install status
+  ansible.builtin.stat:
+    path: "{{ ansible_env.HOME }}/.local/share/mkcert"
+  register: mkcert_dir
+
+- name: Run mkcert install
+  ansible.builtin.shell: mkcert -install
+  when: mkcert_dir.stat.isdir is not defined
+
 - name: Create main dir
   ansible.builtin.file:
     path: "{{ ansible_env.HOME }}/server"
     state: directory
 
-- name: Create shared dir
+- name: Create cert dir
   ansible.builtin.file:
-    path: "{{ ansible_env.HOME }}/server/shared"
+    path: "{{ certs_dir }}"
     state: directory
 
-- name: Create htpasswd
+- name: Get certs dir status
+  ansible.builtin.find:
+    path: "{{ certs_dir }}"
+  register: found_certs
+
+- name: Run certs generation
+  ansible.builtin.shell: "mkcert -key-file key.pem -cert-file cert.pem rpi.local '*.rpi.local'"
+  args:
+    chdir: "{{ certs_dir }}"
+  when: found_certs.matched == 0
+
+- name: Create data dir
+  ansible.builtin.file:
+    path: "{{ data_dir }}"
+    state: directory
+
+- name: Copy traefik config file
   ansible.builtin.copy:
-    dest: "{{ ansible_env.HOME }}/server/shared/.htpasswd"
-    content: "{{ htpasswd }}"
+    src: traefik.yml
+    dest: "{{ server_dir }}/traefik.yml"
+
+- name: Copy traefik config file
+  ansible.builtin.copy:
+    src: dynamic.yml
+    dest: "{{ server_dir }}/dynamic.yml"
+
+- name: Create a network for traefik
+  community.docker.docker_network:
+    name: "{{ network }}"
+    ipam_config:
+      - subnet: 192.168.100.0/24
+
+- name: Traefik container
+  community.docker.docker_container:
+    name: traefik
+    image: "traefik:v2.9"
+    restart_policy: "unless-stopped"
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - name: "{{ network }}"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "{{ server_dir }}/traefik.yml:/traefik.yml:ro"
+      - "{{ server_dir }}/dynamic.yml:/dynamic.yml:ro"
+      - "{{ certs_dir }}:/etc/certs:ro"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.traefik.entrypoints: "websecure"
+      traefik.http.routers.traefik.tls: "true"
+      traefik.http.routers.traefik.rule: "Host(`traefik.{{ ansible_host }}`)"
+      traefik.http.services.traefik.loadbalancer.server.port: "8080"
+
+- name: Glances container
+  community.docker.docker_container:
+    name: glances
+    platform: "{{ arch }}"
+    image: "nicolargo/glances:latest"
+    restart_policy: "unless-stopped"
+    pid_mode: "host"
+    networks:
+      - name: "{{ network }}"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    env:
+      GLANCES_OPT: "-w"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.glances.entrypoints: "websecure"
+      traefik.http.routers.glances.tls: "true"
+      traefik.http.routers.glances.rule: "Host(`glances.{{ ansible_host }}`)"
+      traefik.http.services.glances.loadbalancer.server.port: "61208"
+
+- name: Pihole container
+  community.docker.docker_container:
+    name: "pihole"
+    image: "pihole/pihole:latest"
+    restart_policy: "unless-stopped"
+    # networks:
+    #   - name: "{{ network }}"
+    dns_servers:
+      - 127.0.0.1
+      - 1.1.1.1
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "853:853"
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - "{{ data_dir }}/pihole/etc/pihole:/etc/pihole"
+      - "{{ data_dir }}/pihole/etc/dnsmasq.d:/etc/dnsmasq.d"
+    env:
+      WEBPASSWORD: "{{ password }}"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.pihole.entrypoints: "websecure"
+      traefik.http.routers.pihole.tls: "true"
+      traefik.http.routers.pihole.rule: "Host(`pihole.{{ ansible_host }}`)"
+      traefik.http.routers.pihole.service: "pihole"
+      traefik.http.routers.pihole.middlewares: "pihole-admin"
+      traefik.http.middlewares.pihole-admin.addprefix.prefix: "/admin"
+      traefik.http.services.pihole.loadbalancer.server.port: "80"
+
+- name: Whoami container
+  community.docker.docker_container:
+    name: "whoami"
+    image: "traefik/whoami"
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ network }}"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.whoami.entrypoints: "websecure"
+      traefik.http.routers.whoami.tls: "true"
+      traefik.http.routers.whoami.rule: "Host(`whoami.{{ ansible_host }}`)"
+
+- name: Portainer container
+  community.docker.docker_container:
+    name: "portainer"
+    image: "portainer/portainer-ce:latest"
+    command: "-H unix:///var/run/docker.sock --admin-password {{ hashed_password }}"
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ network }}"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "{{ data_dir }}/portainer:/data"
+    env:
+      WEBPASSWORD: "{{ password }}"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.portainer.entrypoints: "websecure"
+      traefik.http.routers.portainer.tls: "true"
+      traefik.http.routers.portainer.rule: "Host(`portainer.{{ ansible_host }}`)"
+      traefik.http.services.portainer.loadbalancer.server.port: "9000"
+
+- name: Heimdall container
+  community.docker.docker_container:
+    name: "heimdall"
+    image: "lscr.io/linuxserver/heimdall"
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ network }}"
+    env:
+      TZ: "{{ tz }}"
+      PUID: "{{ puid }}"
+      PGUID: "{{ pgid }}"
+    volumes:
+      - "{{ data_dir }}/heimdall:/config"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.heimdall.entrypoints: "websecure"
+      traefik.http.routers.Heimdall.tls: "true"
+      traefik.http.routers.heimdall.rule: "Host(`{{ ansible_host }}`)"
+      traefik.http.services.heimdall.loadbalancer.server.port: "80"
+
+- name: Gitea container
+  community.docker.docker_container:
+    name: "gitea"
+    image: "gitea/gitea:latest"
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ network }}"
+    env:
+      TZ: "{{ tz }}"
+      DB_TYPE: sqlite3
+      START_SSH_SERVER: "false"
+      SSH_PORT: ""
+      DOMAIN: "git.{{ ansible_host }}"
+      ROOT_URL: "https://git.{{ ansible_host }}"
+    volumes:
+      - "{{ data_dir }}/gitea:/data"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.gitea.entrypoints: "websecure"
+      traefik.http.routers.gitea.tls: "true"
+      traefik.http.routers.gitea.rule: "Host(`git.{{ ansible_host }}`)"
+      traefik.http.services.gitea.loadbalancer.server.port: "3000"
+
+- name: qbittorrent container
+  community.docker.docker_container:
+    name: "qbittorrent"
+    image: "lscr.io/linuxserver/qbittorrent:latest"
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ network }}"
+    ports:
+      - "6881:6881"
+      - "6881:6881/udp"
+    env:
+      TZ: "{{ tz }}"
+      PUID: "{{ puid }}"
+      PGUID: "{{ pgid }}"
+      WEBUI_PORT: "8080"
+    volumes:
+      - "{{ data_dir }}/qbittorrent:/config"
+      - "{{ downloads_dir }}:/downloads"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.qb.entrypoints: "websecure"
+      traefik.http.routers.qb.tls: "true"
+      traefik.http.routers.qb.rule: "Host(`torrent.{{ ansible_host }}`)"
+      traefik.http.services.qb.loadbalancer.server.port: "8080"
+  when: ansible_devices.sda.partitions.sda1 is defined

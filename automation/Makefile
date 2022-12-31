@@ -1,3 +1,6 @@
+install:
+	ansible-galaxy install -r requirements.yml
+
 encrypt:
 	ansible-vault encrypt secrets.enc --vault-password-file vault-password-file
 

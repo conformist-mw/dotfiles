@@ -1,5 +1,5 @@
 ---
-- name: update apt index
+- name: Install system requirements
   ansible.builtin.apt:
     name:
       - curl
@@ -7,5 +7,90 @@
       - ncdu
       - htop
       - bash-completion
+      - ntfs-3g
+      - bsd-mailx
+      # borg
+      - python3-pip
+      - python3-dev
+      - libssl-dev
+      - libacl1-dev
+      - libacl1
+      - liblz4-dev
+      - libzstd-dev
+      - libxxhash-dev
     update_cache: yes
-  become: yes
+  become: true
+
+- name: Install tg sendmail
+  ansible.builtin.apt:
+    deb: https://github.com/conformist-mw/sendmail/releases/download/v0.2.2/tg-sendmail_0.2.2_all.deb
+  become: true
+
+- name: Copy tg sendmail config
+  ansible.builtin.template:
+    dest: /etc/tg-sendmail.ini
+    src: tg-sendmail.ini.j2
+  become: true
+
+- name: add 2TB disk
+  ansible.posix.mount:
+    path: /mnt/media
+    src: UUID="{{ ansible_devices.sda.partitions.sda1.uuid }}"
+    fstype: ntfs
+    opts: "auto,exec,rw,user,dmask=002,fmask=113,uid=1000,gid=1000"
+    dump: "1"
+    state: mounted
+  when: ansible_devices.sda.partitions.sda1 is defined
+  become: true
+
+- name: setup minidlna
+  ansible.builtin.apt:
+    name:
+      - minidlna
+  become: true
+
+- name: Copy minidlna config
+  ansible.builtin.copy:
+    src: minidlna.conf
+    dest: "/etc/minidlna.conf"
+  register: minidlna_config
+  become: true
+
+- name: Restart minidlna
+  ansible.builtin.systemd:
+    state: restarted
+    name: minidlna
+  when: minidlna_config.changed
+  become: true
+
+- name: Install borg
+  ansible.builtin.pip:
+    name:
+      - borgbackup
+      - borgmatic
+  become: true
+
+- name: Copy borgmatic config
+  ansible.builtin.copy:
+    src: borgmatic.yaml
+    dest: /etc/borgmatic/config.yaml
+  become: true
+
+- name: Extend crontab path
+  ansible.builtin.cron:
+    name: PATH
+    env: yes
+    job: /usr/local/bin:$PATH
+    user: root
+    state: present
+  become: true
+
+- name: Run borgmatic by cron
+  ansible.builtin.cron:
+    name: "borgmatic"
+    minute: "0"
+    hour: "3"
+    job: "/usr/local/bin/borgmatic"
+    state: present
+    user: root
+  become: true

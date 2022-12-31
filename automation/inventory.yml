@@ -3,6 +3,12 @@ machines:
     pi:
       ansible_host: rpi.local
       ansible_user: pi
+      arch: linux/arm64
     website:
       ansible_host: conformist.name
       ansible_user: website
+      arch: linux/amd64
+  vars:
+    tz: "Europe/Kiev"
+    puid: "1000"
+    pgid: "1000"

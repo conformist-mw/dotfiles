@@ -1,0 +1,6 @@
+---
+network: "traefik_net"
+server_dir: "{{ ansible_env.HOME }}/server"
+certs_dir: "{{ ansible_env.HOME }}/server/certs"
+data_dir: "{{ ansible_env.HOME }}/server/data"
+downloads_dir: "/mnt/media/downloads"
