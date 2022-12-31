@@ -22,3 +22,6 @@ insert_final_newline = ignore
 [Makefile]
 indent_size = 4
 indent_style = tab
+
+[passwd]
+insert_final_newline = false
