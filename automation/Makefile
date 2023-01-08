@@ -9,3 +9,6 @@ decrypt:
 
 deploy-rpi:
 	ansible-playbook rpi.yml -e @secrets.enc --vault-password-file vault-password-file
+
+deploy-do-vps:
+	ansible-playbook do_vps.yml -e @secrets.enc --vault-password-file vault-password-file

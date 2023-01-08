@@ -1,0 +1,9 @@
+---
+django_vars:
+  DEBUG: "0"
+  SECRET_KEY: secret
+  DATABASE_URL: sqlite:////data/db.sqlite
+  ALLOWED_HOSTS: "segments.conformist.name"
+  CSRF_TRUSTED_ORIGINS: "https://segments.conformist.name,http://segments.conformist.name"
+  STATICFILES_DIR: /data/staticfiles
+network: "traefik_net"

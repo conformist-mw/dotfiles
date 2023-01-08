@@ -70,6 +70,13 @@
     create_home: false
   become: true
 
+- name: Add admin to the 2TB share group
+  ansible.builtin.user:
+    name: admin
+    append: true
+    groups: "{{ ansible_user }}"
+  become: true
+
 - name: Copy smbpasswd
   ansible.builtin.template:
     dest: /etc/samba/smbpasswd

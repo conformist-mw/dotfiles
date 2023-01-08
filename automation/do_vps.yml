@@ -1,0 +1,5 @@
+- hosts: website
+  roles:
+    - segments
+    - vim
+    - docker
