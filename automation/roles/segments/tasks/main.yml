@@ -1,0 +1,107 @@
+---
+- name: Create a network for traefik
+  community.docker.docker_network:
+    name: "{{ network }}"
+    ipam_config:
+      - subnet: 192.168.100.0/24
+
+- name: Copy traefik config file
+  ansible.builtin.copy:
+    src: traefik.yml
+    dest: "{{ server_dir }}/traefik.yml"
+
+- name: Copy traefik config file
+  ansible.builtin.copy:
+    src: dynamic.yml
+    dest: "{{ server_dir }}/dynamic.yml"
+
+- name: Create main dir
+  ansible.builtin.file:
+    path: "{{ server_dir }}"
+    state: directory
+
+- name: Create data dir
+  ansible.builtin.file:
+    path: "{{ data_dir }}"
+    state: directory
+
+- name: Traefik container
+  community.docker.docker_container:
+    name: traefik
+    image: "traefik:v2.9"
+    restart_policy: "unless-stopped"
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - name: "{{ network }}"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "{{ server_dir }}/traefik.yml:/traefik.yml:ro"
+      - "{{ server_dir }}/letsencrypt:/letsencrypt"
+    env:
+      DO_AUTH_TOKEN: "{{ dns_digitalocean_token }}"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.traefik.entrypoints: "websecure"
+      traefik.http.routers.traefik.tls: "true"
+      traefik.http.routers.traefik.tls.certresolver: "letsencrypt"
+      traefik.http.routers.traefik.rule: "Host(`traefik.{{ ansible_host }}`)"
+      traefik.http.services.traefik.loadbalancer.server.port: "8080"
+
+- name: Pull segments repo
+  ansible.builtin.git:
+    repo: git@github.com:conformist-mw/segments.git
+    dest: "{{ server_dir }}/segments"
+    update: yes
+  register: git_pull
+
+- name: Build base image
+  community.docker.docker_image:
+    name: segments
+    build:
+      path: "{{ server_dir }}/segments"
+    source: build
+    force_source: yes
+  when: git_pull.changed
+
+- name: Migrate
+  community.docker.docker_container:
+    image: segments
+    name: segments_migrate
+    auto_remove: true
+    command: python manage.py migrate
+    volumes:
+      - "{{ data_dir }}/segments:/data"
+    env: "{{ django_vars }}"
+  when: git_pull.changed
+
+- name: Collect static
+  community.docker.docker_container:
+    image: segments
+    name: segments_statics
+    auto_remove: true
+    command: python manage.py collectstatic
+    volumes:
+      - "{{ data_dir }}/segments:/data"
+    env: "{{ django_vars }}"
+  when: git_pull.changed
+
+- name: Run segments container
+  community.docker.docker_container:
+    image: segments
+    name: segments
+    command: "gunicorn --error-logfile - --access-logfile - --workers 3 --bind 0:8000 config.wsgi:application"
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ network }}"
+    volumes:
+      - "{{ data_dir }}/segments:/data"
+    env: "{{ django_vars }}"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.segments.entrypoints: "websecure"
+      traefik.http.routers.segments.tls: "true"
+      traefik.http.routers.segments.tls.certresolver: "letsencrypt"
+      traefik.http.routers.segments.rule: "Host(`segments.{{ ansible_host }}`)"
+      traefik.http.services.segments.loadbalancer.server.port: "8000"
