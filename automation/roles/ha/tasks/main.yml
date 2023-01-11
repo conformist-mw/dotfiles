@@ -1,0 +1,67 @@
+---
+- name: setup network manager, systemd journal remote
+  ansible.builtin.apt:
+    name:
+      - network-manager
+      - systemd-journal-remote
+  become: true
+
+- name: remove modemmanager
+  ansible.builtin.apt:
+    name: modemmanager
+    state: absent
+  become: true
+
+- name: Set systemd-journal-remote socket file
+  ansible.builtin.copy:
+    src: systemd-journal-gatewayd.socket
+    dest: "/etc/systemd/system/systemd-journal-gatewayd.socket"
+  become: true
+
+- name: Start systemd-journal-gatewayd
+  ansible.builtin.systemd:
+    state: started
+    name: systemd-journal-gatewayd
+    daemon_reload: yes
+  become: true
+
+# - name: NM connection
+#   community.general.nmcli:
+#     conn_name: "eth0"
+#     type: ethernet
+#     ifname: eth0
+#     ip4: 192.168.1.0/24
+#     gw4: 192.168.1.1
+#     dns4:
+#       - 192.168.1.2
+#     state: present
+#   become: true
+
+- name: Database container
+  community.docker.docker_container:
+    name: postgres
+    image: postgres:14-alpine
+    restart_policy: "always"
+    command: "postgres -c stats_temp_directory=/tmp"
+    network_mode: host
+    volumes:
+      - "{{ data_dir }}/pgdata:/var/lib/postgresql/data"
+      - "/var/run/postgresql:/var/run/postgresql"
+    env:
+      POSTGRES_PASSWORD: "postgres"
+
+- name: Install psycopg2
+  ansible.builtin.pip:
+    name:
+      - psycopg2-binary
+  become: true
+
+- name: Create HA user
+  community.postgresql.postgresql_user:
+    name: "homeassistant"
+    password: "homeassistant"
+
+- name: Create HA database
+  community.postgresql.postgresql_db:
+    name: "homeassistant"
+    owner: "homeassistant"

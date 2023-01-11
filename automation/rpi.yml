@@ -1,6 +1,7 @@
 - hosts: pi
   roles:
-    - common
+    # - common
     # - vim
     # - docker
     # - traefik
+    - ha
