@@ -1,0 +1,18 @@
+---
+- name: Run uptime kuma
+  community.docker.docker_container:
+    image: louislam/uptime-kuma:latest
+    name: uptime-kuma
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ network }}"
+    volumes:
+      - "{{ data_dir }}/uptime:/app/data"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.uptime.entrypoints: "websecure"
+      traefik.http.routers.uptime.tls: "true"
+      traefik.http.routers.uptime.tls.certresolver: "letsencrypt"
+      traefik.http.routers.uptime.rule: "Host(`uptime.{{ ansible_host }}`)"
+      traefik.http.services.uptime.loadbalancer.server.port: "3001"
+      traefik.http.routers.uptime.middlewares: "auth-chain@file"

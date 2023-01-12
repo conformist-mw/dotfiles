@@ -1,0 +1,20 @@
+---
+- name: Copy htpasswd file
+  ansible.builtin.copy:
+    content: "{{ dumbproxy_htpasswd }}"
+    dest: /etc/dumbproxy.htpasswd
+    owner: root
+    group: root
+    mode: 0600
+  become: true
+
+- name: Run dumbproxy container
+  community.docker.docker_container:
+    image: yarmak/dumbproxy
+    name: dumbproxy
+    restart_policy: "unless-stopped"
+    command: "-auth 'basicfile://?path=/etc/dumbproxy.htpasswd'"
+    ports:
+      - "10000:8080"
+    volumes:
+      - "/etc/dumbproxy.htpasswd:/etc/dumbproxy.htpasswd"

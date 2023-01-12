@@ -1,0 +1,39 @@
+http:
+  middlewares:
+    auth-chain:
+      chain:
+        middlewares:
+          - middlewares-basic-auth
+          - middlewares-rate-limit
+          - middlewares-secure-headers
+          - middlewares-compress
+    no-auth-chain:
+      chain:
+        middlewares:
+          - middlewares-rate-limit
+          - middlewares-secure-headers
+          - middlewares-compress
+    middlewares-basic-auth:
+      basicAuth:
+        usersFile: "/traefik.htpasswd"
+        realm: "conformist.name Basic Auth"
+    middlewares-rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+    middlewares-https-redirectscheme:
+      redirectScheme:
+        scheme: https
+        permanent: true
+    middlewares-secure-headers:
+      headers:
+        forceSTSHeader: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "same-origin"
+        permissionsPolicy: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), vr=()"
+        customResponseHeaders:
+          X-Robots-Tag: "none,noarchive,nosnippet,notranslate,noimageindex,"
+          server: ""
+    middlewares-compress:
+      compress: {}

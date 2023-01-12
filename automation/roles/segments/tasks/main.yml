@@ -15,6 +15,11 @@
     src: dynamic.yml
     dest: "{{ server_dir }}/dynamic.yml"
 
+- name: Copy htpasswd file
+  ansible.builtin.copy:
+    content: "{{ dumbproxy_htpasswd }}"
+    dest: "{{ server_dir }}/traefik.htpasswd"
+
 - name: Create main dir
   ansible.builtin.file:
     path: "{{ server_dir }}"
@@ -38,6 +43,8 @@
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "{{ server_dir }}/traefik.yml:/traefik.yml:ro"
+      - "{{ server_dir }}/dynamic.yml:/dynamic.yml:ro"
+      - "{{ server_dir }}/traefik.htpasswd:/traefik.htpasswd:ro"
       - "{{ server_dir }}/letsencrypt:/letsencrypt"
     env:
       DO_AUTH_TOKEN: "{{ dns_digitalocean_token }}"
@@ -48,6 +55,8 @@
       traefik.http.routers.traefik.tls.certresolver: "letsencrypt"
       traefik.http.routers.traefik.rule: "Host(`traefik.{{ ansible_host }}`)"
       traefik.http.services.traefik.loadbalancer.server.port: "8080"
+      traefik.http.routers.traefik.service: "api@internal"
+      traefik.http.routers.traefik.middlewares: "auth-chain@file"
 
 - name: Pull segments repo
   ansible.builtin.git:
@@ -105,3 +114,5 @@
       traefik.http.routers.segments.tls.certresolver: "letsencrypt"
       traefik.http.routers.segments.rule: "Host(`segments.{{ ansible_host }}`)"
       traefik.http.services.segments.loadbalancer.server.port: "8000"
+      traefik.http.routers.segments.middlewares: "no-auth-chain@file"
+
