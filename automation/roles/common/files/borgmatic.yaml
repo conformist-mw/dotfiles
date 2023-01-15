@@ -5,9 +5,16 @@ location:
         - /home/pi/server/data/qbittorrent
         - /home/pi/server/data/heimdall
         - /home/pi/server/data/portainer
+        - /home/pi/server/data/homer
+        - /home/pi/server/data/pgdata
+        - /home/pi/server/data/photoprism
+        - /usr/share/hassio
 
     repositories:
         - /mnt/media/server_backup
+
+    exclude_if_present:
+        - .nobackup
 
 storage:
   encryption_passphrase: "oleg7315"
