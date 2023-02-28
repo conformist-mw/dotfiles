@@ -37,3 +37,19 @@ http:
           server: ""
     middlewares-compress:
       compress: {}
+    root-redirect:
+      redirectRegex:
+        regex: "^https?://conformist.name/(.*)"
+        replacement: "https://about.conformist.name"
+        permanent: true
+  routers:
+    root-redirect-to-about:
+      rule: "Host(`conformist.name`)"
+      entryPoints:
+        - web
+        - websecure
+      middlewares:
+        - root-redirect
+      service: noop@internal
+      tls:
+        certResolver: letsencrypt
