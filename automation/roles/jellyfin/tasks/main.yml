@@ -1,0 +1,18 @@
+---
+- name: Jellyfin container
+  community.docker.docker_container:
+    image: jellyfin/jellyfin:latest
+    name: jellyfin
+    restart_policy: "unless-stopped"
+    network_mode: host
+    volumes:
+      - "{{ data_dir }}/jellyfin/config:/config"
+      - "{{ data_dir }}/jellyfin/cache:/cache"
+      - "/mnt/media/downloads:/media"
+    user: "1000:1000"
+    groups:
+      - "44"
+      - "106"
+    devices:
+      - "/dev/dri/renderD128:/dev/dri/renderD128"
+      - "/dev/dri/card0:/dev/dri/card0"

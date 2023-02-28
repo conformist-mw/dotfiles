@@ -12,3 +12,7 @@ deploy-rpi:
 
 deploy-do-vps:
 	ansible-playbook do_vps.yml -e @secrets.enc --vault-password-file vault-password-file
+
+syntax-check:
+	ansible-playbook do_vps.yml --syntax-check
+	ansible-playbook rpi.yml --syntax-check

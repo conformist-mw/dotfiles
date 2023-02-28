@@ -1,8 +1,9 @@
 - hosts: pi
   roles:
     - common
-    # - vim
-    # - docker
-    # - traefik
-    # - ha
+    - vim
+    - docker
+    - traefik
+    - ha
     - photo
+    - jellyfin

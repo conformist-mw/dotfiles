@@ -6,7 +6,7 @@
       - git
       - fonts-powerline
     state: present
-  become: yes
+  become: true
 
 - name: Create config dir
   ansible.builtin.file:
