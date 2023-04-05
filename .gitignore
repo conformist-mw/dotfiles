@@ -8,3 +8,4 @@ __pycache__
 *.sublime-workspace
 .env
 vault-password-file
+venv/

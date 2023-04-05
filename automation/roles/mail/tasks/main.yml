@@ -1,0 +1,16 @@
+---
+- name: Run mx container
+  community.docker.docker_container:
+    image: nginx
+    name: mx
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ network }}"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.mx.entrypoints: "websecure"
+      traefik.http.routers.mx.tls: "true"
+      traefik.http.routers.mx.tls.certresolver: "letsencrypt"
+      traefik.http.routers.mx.rule: "Host(`mx.{{ ansible_host }}`)"
+      traefik.http.services.mx.loadbalancer.server.port: "80"
+      traefik.http.routers.mx.middlewares: "no-auth-chain@file"
