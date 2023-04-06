@@ -1,16 +1,40 @@
 ---
+- name: Copy nginx config
+  ansible.builtin.copy:
+    src: nginx.conf
+    dest: "{{ server_dir }}/nginx.conf"
 - name: Run mx container
   community.docker.docker_container:
     image: nginx
     name: mx
     restart_policy: "unless-stopped"
+    restart: true
     networks:
       - name: "{{ network }}"
+    volumes:
+      - "{{ server_dir }}/nginx.conf:/etc/nginx/nginx.conf"
     labels:
       traefik.enable: "true"
       traefik.http.routers.mx.entrypoints: "websecure"
       traefik.http.routers.mx.tls: "true"
       traefik.http.routers.mx.tls.certresolver: "letsencrypt"
-      traefik.http.routers.mx.rule: "Host(`mx.{{ ansible_host }}`)"
+      traefik.http.routers.mx.rule: "Host(`mx.{{ ansible_host }}`,`mta-sts.{{ ansible_host }}`)"
       traefik.http.services.mx.loadbalancer.server.port: "80"
       traefik.http.routers.mx.middlewares: "no-auth-chain@file"
+
+- name: Run maddy container
+  community.docker.docker_container:
+    image: foxcpp/maddy:0.6
+    name: maddy
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ network }}"
+    ports:
+      - "25:25"
+      - "143:143"
+      - "465:465"
+      - "587:587"
+      - "993:993"
+    volumes:
+      - "{{ data_dir }}/maddy/:/data"
+      - "{{ server_dir }}/letsencrypt/certs/mx.conformist.name:/data/certs"
