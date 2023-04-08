@@ -1,5 +1,5 @@
 ---
-- name: Run mx container
+- name: Run mail container
   community.docker.docker_container:
     image: r.xmox.nl/mox:latest
     name: mox
@@ -16,9 +16,17 @@
     working_dir: "/mox"
     labels:
       traefik.enable: "true"
-      traefik.http.routers.mx.entrypoints: "websecure"
-      traefik.http.routers.mx.tls: "true"
-      traefik.http.routers.mx.tls.certresolver: "letsencrypt"
-      traefik.http.routers.mx.rule: "Host(`autoconfig.{{ ansible_host }}`,`mta-sts.{{ ansible_host }}`,`mail.{{ ansible_host }}`)"
-      traefik.http.services.mx.loadbalancer.server.port: "81"
-      traefik.http.routers.mx.middlewares: "no-auth-chain@file"
+      traefik.http.routers.moxauto.tls: "true"
+      traefik.http.routers.moxauto.entrypoints: "websecure"
+      traefik.http.routers.moxauto.tls.certresolver: "letsencrypt"
+      traefik.http.routers.moxauto.rule: "Host(`autoconfig.{{ ansible_host }}`,`mta-sts.{{ ansible_host }}`)"
+      traefik.http.routers.moxauto.middlewares: "no-auth-chain@file"
+      traefik.http.routers.moxauto.service: "moxauto"
+      traefik.http.services.moxauto.loadbalancer.server.port: "81"
+      traefik.http.routers.mox.tls: "true"
+      traefik.http.routers.mox.entrypoints: "websecure"
+      traefik.http.routers.mox.tls.certresolver: "letsencrypt"
+      traefik.http.routers.mox.rule: "Host(`mail.{{ ansible_host }}`)"
+      traefik.http.routers.mox.middlewares: "auth-chain@file"
+      traefik.http.routers.mox.service: "mox"
+      traefik.http.services.mox.loadbalancer.server.port: "1080"
