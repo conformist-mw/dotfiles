@@ -7,6 +7,12 @@
     restart_policy: "unless-stopped"
     networks:
       - name: "{{ network }}"
+    ports:
+      - "25:25"
+      - "143:143"
+      - "465:465"
+      - "587:587"
+      - "993:993"
     volumes:
       - "{{ data_dir }}/mox/config:/mox/config"
       - "{{ data_dir }}/mox/data:/mox/data"
@@ -28,6 +34,6 @@
       traefik.http.routers.mox.entrypoints: "websecure"
       traefik.http.routers.mox.tls.certresolver: "letsencrypt"
       traefik.http.routers.mox.rule: "Host(`mail.{{ ansible_host }}`)"
-      traefik.http.routers.mox.middlewares: "auth-chain@file"
+      traefik.http.routers.mox.middlewares: "no-auth-chain@file"
       traefik.http.routers.mox.service: "mox"
       traefik.http.services.mox.loadbalancer.server.port: "1080"
