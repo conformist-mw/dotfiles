@@ -5,7 +5,8 @@
     name: mox
     restart: true
     restart_policy: "unless-stopped"
-    network_mode: "host"
+    networks:
+      - name: "{{ network }}"
     volumes:
       - "{{ data_dir }}/mox/config:/mox/config"
       - "{{ data_dir }}/mox/data:/mox/data"
