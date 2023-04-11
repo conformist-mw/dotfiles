@@ -5,14 +5,7 @@
     name: mox
     restart: true
     restart_policy: "unless-stopped"
-    networks:
-      - name: "{{ network }}"
-    ports:
-      - "25:25"
-      - "143:143"
-      - "465:465"
-      - "587:587"
-      - "993:993"
+    network_mode: "host"
     volumes:
       - "{{ data_dir }}/mox/config:/mox/config"
       - "{{ data_dir }}/mox/data:/mox/data"
@@ -21,19 +14,3 @@
     env:
       MOX_DOCKER: "yes"
     working_dir: "/mox"
-    labels:
-      traefik.enable: "true"
-      traefik.http.routers.moxauto.tls: "true"
-      traefik.http.routers.moxauto.entrypoints: "websecure"
-      traefik.http.routers.moxauto.tls.certresolver: "letsencrypt"
-      traefik.http.routers.moxauto.rule: "Host(`autoconfig.{{ ansible_host }}`,`mta-sts.{{ ansible_host }}`)"
-      traefik.http.routers.moxauto.middlewares: "no-auth-chain@file"
-      traefik.http.routers.moxauto.service: "moxauto"
-      traefik.http.services.moxauto.loadbalancer.server.port: "81"
-      traefik.http.routers.mox.tls: "true"
-      traefik.http.routers.mox.entrypoints: "websecure"
-      traefik.http.routers.mox.tls.certresolver: "letsencrypt"
-      traefik.http.routers.mox.rule: "Host(`mail.{{ ansible_host }}`)"
-      traefik.http.routers.mox.middlewares: "no-auth-chain@file"
-      traefik.http.routers.mox.service: "mox"
-      traefik.http.services.mox.loadbalancer.server.port: "1080"
