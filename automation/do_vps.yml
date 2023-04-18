@@ -5,3 +5,6 @@
     - docker
     - rsstt
     - docs
+    - mail
+    - dumbproxy
+    - logs
