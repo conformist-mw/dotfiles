@@ -2,6 +2,7 @@
 - name: Jellyfin container
   community.docker.docker_container:
     image: jellyfin/jellyfin:latest
+    pull: true
     name: jellyfin
     restart_policy: "unless-stopped"
     network_mode: host

@@ -3,6 +3,7 @@
   community.docker.docker_container:
     name: dozzle
     image: amir20/dozzle:latest
+    pull: true
     restart_policy: "unless-stopped"
     restart: true
     networks:

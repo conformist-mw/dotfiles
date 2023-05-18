@@ -90,6 +90,7 @@
     name: glances
     platform: "{{ arch }}"
     image: "nicolargo/glances:latest"
+    pull: true
     restart_policy: "unless-stopped"
     pid_mode: "host"
     networks:
@@ -147,6 +148,7 @@
   community.docker.docker_container:
     name: "portainer"
     image: "portainer/portainer-ce:latest"
+    pull: true
     command: "-H unix:///var/run/docker.sock --admin-password {{ hashed_password }}"
     restart_policy: "unless-stopped"
     networks:
@@ -167,6 +169,7 @@
   community.docker.docker_container:
     name: dozzle
     image: amir20/dozzle:latest
+    pull: true
     restart_policy: "unless-stopped"
     networks:
       - name: "{{ network }}"
@@ -183,6 +186,7 @@
   community.docker.docker_container:
     name: "gitea"
     image: "gitea/gitea:latest"
+    pull: true
     restart_policy: "unless-stopped"
     networks:
       - name: "{{ network }}"
@@ -206,6 +210,7 @@
   community.docker.docker_container:
     name: "qbittorrent"
     image: "lscr.io/linuxserver/qbittorrent:latest"
+    pull: true
     restart_policy: "unless-stopped"
     networks:
       - name: "{{ network }}"
@@ -237,6 +242,7 @@
   community.docker.docker_container:
     name: homer
     image: b4bz/homer:latest
+    pull: true
     restart_policy: "unless-stopped"
     networks:
       - name: "{{ network }}"
