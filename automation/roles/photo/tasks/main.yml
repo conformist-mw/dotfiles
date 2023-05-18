@@ -2,6 +2,7 @@
 - name: Photoprism container
   community.docker.docker_container:
     image: photoprism/photoprism:latest
+    pull: true
     name: photoprism
     restart_policy: "unless-stopped"
     networks:
