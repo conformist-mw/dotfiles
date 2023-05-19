@@ -25,18 +25,6 @@
     daemon_reload: yes
   become: true
 
-# - name: NM connection
-#   community.general.nmcli:
-#     conn_name: "eth0"
-#     type: ethernet
-#     ifname: eth0
-#     ip4: 192.168.1.0/24
-#     gw4: 192.168.1.1
-#     dns4:
-#       - 192.168.1.2
-#     state: present
-#   become: true
-
 - name: Database container
   community.docker.docker_container:
     name: postgres
