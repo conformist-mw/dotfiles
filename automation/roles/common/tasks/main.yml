@@ -138,4 +138,4 @@
   ansible.builtin.cron:
     name: "push uptime"
     job: "curl -u conformist:{{ traefik_conformist_name_password}} '{{ uptime_push_url }}' > /dev/null 2>&1"
-    state: present
+    state: absent
