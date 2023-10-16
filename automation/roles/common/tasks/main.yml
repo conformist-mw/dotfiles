@@ -35,12 +35,11 @@
 - name: add 2TB disk
   ansible.posix.mount:
     path: /mnt/media
-    src: UUID="{{ ansible_devices.sda.partitions.sda1.uuid }}"
+    src: UUID="281B99140849F384"
     fstype: ntfs
     opts: "auto,exec,rw,user,dmask=002,fmask=113,uid=1000,gid=1000"
     dump: "1"
-    state: mounted
-  when: ansible_devices.sda.partitions.sda1 is defined
+    state: present
   become: true
 
 - name: setup minidlna
