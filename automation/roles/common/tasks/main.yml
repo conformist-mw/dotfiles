@@ -38,7 +38,7 @@
     src: UUID="281B99140849F384"
     fstype: ntfs
     opts: "auto,exec,rw,user,dmask=002,fmask=113,uid=1000,gid=1000"
-    dump: "1"
+    passno: 2
     state: present
   become: true
 
