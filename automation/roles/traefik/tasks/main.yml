@@ -36,7 +36,7 @@
       START_SSH_SERVER: "false"
       SSH_PORT: ""
       DOMAIN: "git.{{ ansible_host }}"
-      ROOT_URL: "https://git.{{ ansible_host }}"
+      ROOT_URL: "http://git.{{ ansible_host }}"
     volumes:
       - "{{ data_dir }}/gitea:/data"
 
