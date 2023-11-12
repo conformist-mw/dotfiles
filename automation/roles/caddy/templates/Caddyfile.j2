@@ -1,4 +1,24 @@
-:80 {
+{
+  auto_https off
+}
+
+rpi.local:80 {
 	root * {{ data_dir }}/caddy
 	file_server
+}
+
+torrent.rpi.local:80 {
+  reverse_proxy localhost:8081
+}
+
+photo.rpi.local:80 {
+  reverse_proxy localhost:2342
+}
+
+git.rpi.local:80 {
+  reverse_proxy localhost:8080
+}
+
+ha.rpi.local:80 {
+  reverse_proxy localhost:8123
 }

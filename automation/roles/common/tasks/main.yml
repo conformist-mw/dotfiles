@@ -2,22 +2,23 @@
 - name: Install system requirements
   ansible.builtin.apt:
     name:
+      - apt-transport-https
+      - bash-completion
+      - bsd-mailx
       - curl
+      - debian-archive-keyring
+      - htop
+      - libacl1
+      - libacl1-dev
+      - liblz4-dev
+      - libssl-dev
+      - libxxhash-dev
+      - libzstd-dev
       - mc
       - ncdu
-      - htop
-      - bash-completion
       - ntfs-3g
-      - bsd-mailx
-      # borg
-      - python3-pip
       - python3-dev
-      - libssl-dev
-      - libacl1-dev
-      - libacl1
-      - liblz4-dev
-      - libzstd-dev
-      - libxxhash-dev
+      - python3-pip
     update_cache: yes
   become: true
 
