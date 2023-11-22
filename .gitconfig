@@ -1,14 +1,11 @@
 [user]
-	email = conformist.mw@gmail.com
+	email = oleg.smedyuk@gmail.com
 	name = Oleg Smedyuk
 	signingkey = FF9C6EB4F3603E3E
 [color]
 	ui = true
 [core]
-	excludesfile = /home/conformist/.gitignore
-	pager = diff-so-fancy | less --tabs=4 -RFX
-[diff]
-	tool = meld
+	excludesfile = ~/.gitignore
 [alias]
 	s = status
 	b = branch
@@ -24,18 +21,6 @@
 	la = !git config --list | grep -oP '(?<=alias.).+' 
 	st = stash
 	stp = stash pop
-[color "diff-highlight"]
-	oldNormal = red bold
-	oldHighlight = red bold 52
-	newNormal = green bold
-	newHighlight = green bold 22
-[color "diff"]
-	meta = yellow
-	frag = magenta bold
-	commit = yellow bold
-	old = red bold
-	new = green bold
-	whitespace = red reverse
 [gpg]
 	program = gpg
 [init]
