@@ -33,3 +33,4 @@ var/
 vault-password-file
 venv/
 wheels/
+.vault_pass

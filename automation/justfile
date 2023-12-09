@@ -2,16 +2,16 @@ install:
     ansible-galaxy install -r requirements.yml
 
 encrypt:
-	ansible-vault encrypt secrets.enc --vault-password-file vault-password-file
+	ansible-vault encrypt vault.yml
 
 decrypt:
-	ansible-vault decrypt secrets.enc --vault-password-file vault-password-file
+	ansible-vault decrypt vault.yml
 
 deploy-rpi:
-	ansible-playbook rpi.yml -e @secrets.enc --vault-password-file vault-password-file
+	ansible-playbook rpi.yml
 
 deploy-do-vps:
-	ansible-playbook do_vps.yml -e @secrets.enc --vault-password-file vault-password-file
+	ansible-playbook do_vps.yml
 
 syntax-check:
 	ansible-playbook do_vps.yml --syntax-check
