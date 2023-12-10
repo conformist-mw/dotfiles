@@ -1,0 +1,21 @@
+- name: qbittorrent container
+  community.docker.docker_container:
+    name: "qbittorrent"
+    image: "lscr.io/linuxserver/qbittorrent:latest"
+    pull: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ network }}"
+    ports:
+      - "6881:6881"
+      - "6881:6881/udp"
+      - "8081:8080"
+    env:
+      TZ: "{{ tz }}"
+      PUID: "{{ puid }}"
+      PGUID: "{{ pgid }}"
+      WEBUI_PORT: "8080"
+    volumes:
+      - "{{ data_dir }}/qbittorrent:/config"
+      - "{{ downloads_dir }}:/downloads"
+  when: ansible_devices.sda.partitions.sda1 is defined
