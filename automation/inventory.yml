@@ -10,7 +10,7 @@ machines:
       arch: linux/amd64
       ansible_python_interpreter: /usr/bin/python3
   vars:
-    tz: "Europe/Kiev"
+    tz: "Europe/Kyiv"
     puid: "1000"
     pgid: "1000"
     server_dir: "{{ ansible_env.HOME }}/server"
