@@ -20,6 +20,5 @@
     labels:
       traefik.enable: "true"
       traefik.http.routers.qb.entrypoints: "web"
-      traefik.http.routers.qb.tls: "true"
       traefik.http.routers.qb.rule: "Host(`torrent.{{ ansible_host }}`)"
       traefik.http.services.qb.loadbalancer.server.port: "8080"

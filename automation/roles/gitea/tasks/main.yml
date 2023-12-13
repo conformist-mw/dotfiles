@@ -1,0 +1,22 @@
+- name: Gitea
+  community.docker.docker_container:
+    name: "gitea"
+    image: "gitea/gitea:latest"
+    pull: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ network }}"
+    env:
+      TZ: "{{ tz }}"
+      DB_TYPE: sqlite3
+      START_SSH_SERVER: "false"
+      SSH_PORT: ""
+      DOMAIN: "git.{{ ansible_host }}"
+      ROOT_URL: "http://git.{{ ansible_host }}"
+    volumes:
+      - "{{ data_dir }}/gitea:/data"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.gitea.entrypoints: "web"
+      traefik.http.routers.gitea.rule: "Host(`git.{{ ansible_host }}`)"
+      traefik.http.services.gitea.loadbalancer.server.port: "3000"
