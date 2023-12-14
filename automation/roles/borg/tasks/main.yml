@@ -1,0 +1,31 @@
+- name: Install borg
+  ansible.builtin.pip:
+    name:
+      - borgbackup
+      - borgmatic
+  become: true
+
+- name: Copy borgmatic config
+  ansible.builtin.template:
+    dest: /etc/borgmatic/config.yaml
+    src: borgmatic.yaml.j2
+  become: true
+
+- name: Extend crontab path
+  ansible.builtin.cron:
+    name: PATH
+    env: yes
+    job: /usr/local/bin:$PATH
+    user: root
+    state: present
+  become: true
+
+- name: Run borgmatic by cron
+  ansible.builtin.cron:
+    name: "borgmatic"
+    minute: "0"
+    hour: "3"
+    job: "/usr/local/bin/borgmatic"
+    state: present
+    user: root
+  become: true
