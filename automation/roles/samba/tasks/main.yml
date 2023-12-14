@@ -1,0 +1,38 @@
+- name: Create admin user for samba
+  ansible.builtin.user:
+    name: admin
+    uid: 1011
+    create_home: false
+  become: true
+
+- name: Add admin to the 2TB share group
+  ansible.builtin.user:
+    name: admin
+    append: true
+    groups: "{{ ansible_user }}"
+  become: true
+
+- name: Copy smbpasswd
+  ansible.builtin.template:
+    dest: /etc/samba/smbpasswd
+    src: smbpasswd.j2
+  become: true
+
+- name: Install samba server
+  ansible.builtin.apt:
+    name: samba
+  become: true
+
+- name: Copy smb config
+  ansible.builtin.copy:
+    src: smb.conf
+    dest: /etc/samba/smb.conf
+  register: samba_config
+  become: true
+
+- name: Restart samba
+  ansible.builtin.systemd:
+    state: restarted
+    name: smbd
+  when: samba_config.changed
+  become: true
