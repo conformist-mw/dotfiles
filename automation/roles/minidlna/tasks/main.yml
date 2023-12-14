@@ -1,0 +1,19 @@
+- name: setup minidlna
+  ansible.builtin.apt:
+    name:
+      - minidlna
+  become: true
+
+- name: Copy minidlna config
+  ansible.builtin.copy:
+    src: minidlna.conf
+    dest: "/etc/minidlna.conf"
+  register: minidlna_config
+  become: true
+
+- name: Restart minidlna
+  ansible.builtin.systemd:
+    state: restarted
+    name: minidlna
+  when: minidlna_config.changed
+  become: true
