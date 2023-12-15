@@ -3,7 +3,16 @@
     - common
     - vim
     - docker
-    - traefik
-    - ha
-    - photo
+    - borg
+    - samba
+    - minidlna
     - jellyfin
+    # - traefik
+    # - homer
+    # - dozzle
+    # - gitea
+    # - ha
+    # - photo
+    # - torrent
+    #   vars:
+    #     downloads_dir: "/mnt/media/downloads"

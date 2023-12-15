@@ -13,9 +13,12 @@
   become: true
 
 - name: Copy smbpasswd
-  ansible.builtin.template:
+  ansible.builtin.copy:
+    content: "{{ SMB_PASSWD }}"
     dest: /etc/samba/smbpasswd
-    src: smbpasswd.j2
+    owner: root
+    group: root
+    mode: 0600
   become: true
 
 - name: Install samba server

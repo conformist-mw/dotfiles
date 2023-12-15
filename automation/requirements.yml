@@ -1,6 +1,6 @@
 ---
 collections:
-  - community.docker
   - ansible.posix
-  - community.postgresql
   - community.general
+  - community.docker
+  - community.postgresql

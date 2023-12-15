@@ -1,7 +1,7 @@
 ---
 - name: Copy htpasswd file
   ansible.builtin.copy:
-    content: "{{ dumbproxy_htpasswd }}"
+    content: "{{ DUMBPROXY_HTPASSWD }}"
     dest: /etc/dumbproxy.htpasswd
     owner: 9999
     group: 9999

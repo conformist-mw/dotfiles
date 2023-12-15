@@ -17,7 +17,7 @@
 
 - name: Copy htpasswd file
   ansible.builtin.copy:
-    content: "{{ dumbproxy_htpasswd }}"
+    content: "{{ DUMBPROXY_HTPASSWD }}"
     dest: "{{ server_dir }}/traefik.htpasswd"
 
 - name: Create main dir
@@ -115,4 +115,3 @@
       traefik.http.routers.segments.rule: "Host(`segments.{{ ansible_host }}`)"
       traefik.http.services.segments.loadbalancer.server.port: "8000"
       traefik.http.routers.segments.middlewares: "no-auth-chain@file"
-
