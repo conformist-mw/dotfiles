@@ -8,7 +8,7 @@ decrypt:
 	ansible-vault decrypt vault.yml
 
 deploy-rpi:
-	ansible-playbook rpi.yml
+	ansible-playbook rpi.yml -e "@vault.yml"
 
 deploy-do-vps:
 	ansible-playbook do_vps.yml

@@ -16,3 +16,4 @@ machines:
     server_dir: "{{ ansible_env.HOME }}/server"
     data_dir: "{{ server_dir }}/data"
     network: "traefik_net"
+    vim_dir: "~/.vim"

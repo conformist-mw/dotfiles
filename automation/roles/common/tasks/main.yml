@@ -43,93 +43,12 @@
     state: present
   become: true
 
-- name: setup minidlna
-  ansible.builtin.apt:
-    name:
-      - minidlna
-  become: true
+- name: Create server dir
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/server"
+    state: directory
 
-- name: Copy minidlna config
-  ansible.builtin.copy:
-    src: minidlna.conf
-    dest: "/etc/minidlna.conf"
-  register: minidlna_config
-  become: true
-
-- name: Restart minidlna
-  ansible.builtin.systemd:
-    state: restarted
-    name: minidlna
-  when: minidlna_config.changed
-  become: true
-
-- name: Create admin user for samba
-  ansible.builtin.user:
-    name: admin
-    uid: 1011
-    create_home: false
-  become: true
-
-- name: Add admin to the 2TB share group
-  ansible.builtin.user:
-    name: admin
-    append: true
-    groups: "{{ ansible_user }}"
-  become: true
-
-- name: Copy smbpasswd
-  ansible.builtin.template:
-    dest: /etc/samba/smbpasswd
-    src: smbpasswd.j2
-  become: true
-
-- name: Install samba server
-  ansible.builtin.apt:
-    name: samba
-  become: true
-
-- name: Copy smb config
-  ansible.builtin.copy:
-    src: smb.conf
-    dest: /etc/samba/smb.conf
-  register: samba_config
-  become: true
-
-- name: Restart samba
-  ansible.builtin.systemd:
-    state: restarted
-    name: smbd
-  when: samba_config.changed
-  become: true
-
-- name: Install borg
-  ansible.builtin.pip:
-    name:
-      - borgbackup
-      - borgmatic
-  become: true
-
-- name: Copy borgmatic config
-  ansible.builtin.copy:
-    src: borgmatic.yaml
-    dest: /etc/borgmatic/config.yaml
-  become: true
-
-- name: Extend crontab path
-  ansible.builtin.cron:
-    name: PATH
-    env: yes
-    job: /usr/local/bin:$PATH
-    user: root
-    state: present
-  become: true
-
-- name: Run borgmatic by cron
-  ansible.builtin.cron:
-    name: "borgmatic"
-    minute: "0"
-    hour: "3"
-    job: "/usr/local/bin/borgmatic"
-    state: present
-    user: root
-  become: true
+- name: Create data dir
+  ansible.builtin.file:
+    path: "{{ data_dir }}"
+    state: directory
