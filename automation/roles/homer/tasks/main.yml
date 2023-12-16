@@ -1,0 +1,20 @@
+- name: Copy homer config file
+  ansible.builtin.copy:
+    src: homer-config.yml
+    dest: "{{ data_dir }}/homer/config.yml"
+
+- name: homer container
+  community.docker.docker_container:
+    name: homer
+    image: b4bz/homer:latest
+    pull: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ network }}"
+    volumes:
+      - "{{ data_dir }}/homer:/www/assets"
+    user: "1000:1000"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.homer.rule: "Host(`{{ ansible_host }}`)"
+      traefik.http.services.homer.loadbalancer.server.port: "8080"

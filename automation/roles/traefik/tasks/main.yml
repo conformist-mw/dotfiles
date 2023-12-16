@@ -1,6 +1,29 @@
 ---
+- name: Copy traefik config file
+  ansible.builtin.copy:
+    src: traefik.yml
+    dest: "{{ server_dir }}/traefik.yml"
+
 - name: Create a network for traefik
   community.docker.docker_network:
     name: "{{ network }}"
     ipam_config:
       - subnet: 192.168.100.0/24
+
+- name: Traefik container
+  community.docker.docker_container:
+    name: traefik
+    image: "traefik:v2.10"
+    restart_policy: "unless-stopped"
+    ports:
+      - "80:80"
+    networks:
+      - name: "{{ network }}"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "{{ server_dir }}/traefik.yml:/traefik.yml:ro"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.traefik.entrypoints: "web"
+      traefik.http.routers.traefik.rule: "Host(`traefik.{{ ansible_host }}`)"
+      traefik.http.services.traefik.loadbalancer.server.port: "8080"
