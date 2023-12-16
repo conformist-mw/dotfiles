@@ -1,0 +1,14 @@
+- name: Dozzle
+  community.docker.docker_container:
+    name: dozzle
+    image: amir20/dozzle:latest
+    pull: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ network }}"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.dozzle.rule: "Host(`dozzle.{{ ansible_host }}`)"
+      traefik.http.services.dozzle.loadbalancer.server.port: "8080"
