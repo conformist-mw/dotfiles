@@ -11,7 +11,7 @@ deploy-rpi:
 	ansible-playbook rpi.yml -e "@vault.yml"
 
 deploy-do-vps:
-	ansible-playbook do_vps.yml
+	ansible-playbook do_vps.yml -e "@vault.yml"
 
 syntax-check:
 	ansible-playbook do_vps.yml --syntax-check

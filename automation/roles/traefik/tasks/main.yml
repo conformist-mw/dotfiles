@@ -27,3 +27,24 @@
       traefik.http.routers.traefik.entrypoints: "web"
       traefik.http.routers.traefik.rule: "Host(`traefik.{{ ansible_host }}`)"
       traefik.http.services.traefik.loadbalancer.server.port: "8080"
+
+
+- name: Copy ha-nginx config file
+  ansible.builtin.copy:
+    src: ha-nginx.conf
+    dest: "{{ server_dir }}/ha-nginx.conf"
+
+- name: Homeassistant Nginx
+  community.docker.docker_container:
+    name: ha-nginx
+    image: nginx:latest
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ network }}"
+    volumes:
+      - "{{ server_dir }}/ha-nginx.conf:/etc/nginx/nginx.conf:ro"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.ha.entrypoints: "web"
+      traefik.http.routers.ha.rule: "Host(`ha.{{ ansible_host }}`)"
+      traefik.http.services.ha.loadbalancer.server.port: "80"
