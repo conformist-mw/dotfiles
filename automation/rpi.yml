@@ -7,12 +7,12 @@
     - samba
     - minidlna
     - jellyfin
-    # - traefik
-    # - homer
-    # - dozzle
-    # - gitea
-    # - ha
-    # - photo
-    # - torrent
-    #   vars:
-    #     downloads_dir: "/mnt/media/downloads"
+    - traefik
+    - homer
+    - dozzle
+    - gitea
+    - ha
+    - photo
+    - role: torrent
+      vars:
+        downloads_dir: "/mnt/media/downloads"
