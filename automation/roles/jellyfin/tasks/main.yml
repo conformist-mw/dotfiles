@@ -7,8 +7,8 @@
     restart_policy: "unless-stopped"
     network_mode: host
     volumes:
-      - "{{ data_dir }}/jellyfin/config:/config"
-      - "{{ data_dir }}/jellyfin/cache:/cache"
+      - "{{ ssd_data_dir }}/jellyfin/config:/config"
+      - "{{ ssd_data_dir }}/jellyfin/cache:/cache"
       - "/mnt/media/downloads:/media"
     user: "1000:1000"
     groups:

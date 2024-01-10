@@ -33,7 +33,7 @@
     command: "postgres -c stats_temp_directory=/tmp"
     network_mode: host
     volumes:
-      - "{{ data_dir }}/pgdata:/var/lib/postgresql/data"
+      - "{{ ssd_data_dir }}/pgdata:/var/lib/postgresql/data"
       - "/var/run/postgresql:/var/run/postgresql"
     env:
       POSTGRES_PASSWORD: "postgres"

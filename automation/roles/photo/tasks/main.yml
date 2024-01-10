@@ -9,7 +9,7 @@
       - name: "{{ network }}"
     volumes:
       - "/mnt/media/photos:/photoprism/originals"
-      - "{{ data_dir }}/photoprism:/photoprism/storage"
+      - "{{ ssd_data_dir }}/photoprism:/photoprism/storage"
     user: "1000:1000"
     env:
       PHOTOPRISM_ADMIN_PASSWORD: "{{ PASSWORD }}"
@@ -22,12 +22,12 @@
 
 - name: Check if cache dir exists
   ansible.builtin.stat:
-    path: "{{ data_dir }}/photoprism/cache"
+    path: "{{ ssd_data_dir }}/photoprism/cache"
   register: cache_dir
 
 - name: Add nobackup to photoprism cache
   ansible.builtin.file:
-    path: "{{ data_dir }}/photoprism/cache/.nobackup"
+    path: "{{ ssd_data_dir }}/photoprism/cache/.nobackup"
     state: touch
     mode: 0666
   when: cache_dir.stat.exists

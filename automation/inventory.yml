@@ -15,5 +15,7 @@ machines:
     pgid: "1000"
     server_dir: "{{ ansible_env.HOME }}/server"
     data_dir: "{{ server_dir }}/data"
+    ssd_dir: "/mnt/data"
+    ssd_data_dir: "{{ ssd_dir }}/data"
     network: "traefik_net"
     vim_dir: "~/.vim"

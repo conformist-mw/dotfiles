@@ -43,6 +43,14 @@
     state: present
   become: true
 
+- name: data ssd disk
+  ansible.posix.mount:
+    path: /mnt/data
+    src: PARTUUID="4da92f13-01"
+    fstype: ext4
+    state: present
+  become: true
+
 - name: Create server dir
   ansible.builtin.file:
     path: "{{ ansible_env.HOME }}/server"
@@ -52,3 +60,10 @@
   ansible.builtin.file:
     path: "{{ data_dir }}"
     state: directory
+
+- name: Create ssd data dir
+  ansible.builtin.file:
+    path: "{{ ssd_dir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
