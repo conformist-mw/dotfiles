@@ -1,5 +1,5 @@
 - name: Install borg
-  ansible.builtin.pip:
+  ansible.builtin.apt:
     name:
       - borgbackup
       - borgmatic

@@ -24,7 +24,7 @@
 
 - name: Install tg sendmail
   ansible.builtin.apt:
-    deb: https://github.com/conformist-mw/sendmail/releases/download/v0.2.2/tg-sendmail_0.2.2_all.deb
+    deb: https://github.com/conformist-mw/sendmail/releases/download/0.3.2/tg-sendmail_0.3.2_all.deb
   become: true
 
 - name: Copy tg sendmail config
