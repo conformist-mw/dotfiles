@@ -3,6 +3,11 @@
     src: homer-config.yml
     dest: "{{ ssd_data_dir }}/homer/config.yml"
 
+- name: Copy homer icons dir
+  ansible.builtin.copy:
+    src: icons
+    dest: "{{ ssd_data_dir }}/homer"
+
 - name: homer container
   community.docker.docker_container:
     name: homer
