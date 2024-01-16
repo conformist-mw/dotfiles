@@ -34,3 +34,4 @@ vault-password-file
 venv/
 wheels/
 .vault_pass
+.mise.toml
