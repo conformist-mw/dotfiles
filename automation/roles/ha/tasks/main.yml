@@ -19,10 +19,11 @@
   become: true
 
 - name: Start systemd-journal-gatewayd
-  ansible.builtin.systemd:
+  ansible.builtin.systemd_service:
     state: started
     name: systemd-journal-gatewayd
     daemon_reload: yes
+    enabled: yes
   become: true
 
 - name: Database container
@@ -39,9 +40,9 @@
       POSTGRES_PASSWORD: "postgres"
 
 - name: Install psycopg2
-  ansible.builtin.pip:
+  ansible.builtin.apt:
     name:
-      - psycopg2-binary
+      - python3-psycopg2
   become: true
 
 - name: Create HA user
@@ -53,3 +54,10 @@
   community.postgresql.postgresql_db:
     name: "homeassistant"
     owner: "homeassistant"
+
+- name: Link /usr/share/hassio
+  ansible.builtin.file:
+    src: "/mnt/data/hassio"
+    dest: "/usr/share/hassio"
+    state: link
+  become: true
