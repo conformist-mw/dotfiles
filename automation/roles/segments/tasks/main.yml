@@ -59,63 +59,24 @@
       traefik.http.routers.traefik.service: "api@internal"
       traefik.http.routers.traefik.middlewares: "auth-chain@file"
 
-- name: Pull segments repo
-  ansible.builtin.git:
-    repo: git@github.com:conformist-mw/segments.git
-    dest: "{{ server_dir }}/segments"
-    update: yes
-  register: git_pull
-
-- name: Build base image
-  community.docker.docker_image:
-    name: segments
-    build:
-      path: "{{ server_dir }}/segments"
-    source: build
-    force_source: yes
-  when: git_pull.changed
-
-- name: Migrate
+- name: Run segments-go container
   community.docker.docker_container:
-    image: segments
-    name: segments_migrate
-    auto_remove: true
-    command: python manage.py migrate
-    volumes:
-      - "{{ data_dir }}/segments:/data"
-    env: "{{ django_vars }}"
-  when: git_pull.changed
-
-- name: Collect static
-  community.docker.docker_container:
-    image: segments
-    name: segments_statics
-    auto_remove: true
-    command: python manage.py collectstatic
-    volumes:
-      - "{{ data_dir }}/segments:/data"
-    env: "{{ django_vars }}"
-  when: git_pull.changed
-
-- name: Run segments container
-  community.docker.docker_container:
-    image: segments
-    name: segments
-    command: "gunicorn --error-logfile - --access-logfile - --workers 3 --bind 0:8000 config.wsgi:application"
+    image: segments-go
+    name: segments-go
+    restart: true
     restart_policy: "unless-stopped"
     networks:
       - name: "{{ network }}"
     volumes:
-      - "{{ data_dir }}/segments:/data"
-    env: "{{ django_vars }}"
+      - "{{ data_dir }}/segments-go/segments.db:/app/segments.db"
     labels:
       traefik.enable: "true"
-      traefik.http.routers.segments.entrypoints: "websecure"
-      traefik.http.routers.segments.tls: "true"
-      traefik.http.routers.segments.tls.certresolver: "letsencrypt"
-      traefik.http.routers.segments.rule: "Host(`segments.{{ ansible_host }}`)"
-      traefik.http.services.segments.loadbalancer.server.port: "8000"
-      traefik.http.routers.segments.middlewares: "no-auth-chain@file"
+      traefik.http.routers.segments-go.entrypoints: "websecure"
+      traefik.http.routers.segments-go.tls: "true"
+      traefik.http.routers.segments-go.tls.certresolver: "letsencrypt"
+      traefik.http.routers.segments-go.rule: "Host(`segments.{{ ansible_host }}`)"
+      traefik.http.services.segments-go.loadbalancer.server.port: "8080"
+      traefik.http.routers.segments-go.middlewares: "no-auth-chain@file"
 
 - name: Copy ha-nginx config file
   ansible.builtin.copy:
