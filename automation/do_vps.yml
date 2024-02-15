@@ -2,7 +2,8 @@
   roles:
     - segments
     - vim
-    - docker
-    - docs
+    - role: docker
+      vars:
+        ansible_distribution_release: "bookworm"
     - dumbproxy
     - logs
