@@ -1,0 +1,14 @@
+---
+- name: Syncthing container
+  community.docker.docker_container:
+    image: syncthing/syncthing:latest
+    pull: true
+    name: syncthing
+    hostname: "{{ ansible_host }}"
+    restart_policy: "unless-stopped"
+    network_mode: "host"
+    volumes:
+      - "/mnt/media/syncthing:/var/syncthing"
+    env:
+      PUID: "1000"
+      PGID: "1000"
