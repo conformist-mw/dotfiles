@@ -94,6 +94,11 @@ services:
         url: "http://rpi.local:8096"
         tag: "app"
         target: "_blank"
+      - name: "Syncthing"
+        logo: "assets/icons/syncthing.svg"
+        url: "http://rpi.local:8384"
+        tag: "app"
+        target: "_blank"
   - name: "Tools"
     icon: "fa-solid fa-screwdriver-wrench"
     items:
