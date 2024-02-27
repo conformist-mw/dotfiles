@@ -1,0 +1,28 @@
+- name: Create HackMD user
+  community.postgresql.postgresql_user:
+    name: "hackmd"
+    password: "hackmd"
+
+- name: Create HackMD database
+  community.postgresql.postgresql_db:
+    name: "hackmd"
+    owner: "hackmd"
+
+- name: HackMD container
+  community.docker.docker_container:
+    image: quay.io/hedgedoc/hedgedoc:latest
+    pull: true
+    name: hackmd
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ network }}"
+    volumes:
+      - "{{ ssd_data_dir }}/hackmd:/hedgedoc/public/uploads"
+    env:
+      CMD_DB_URL: "postgres://hackmd:hackmd@rpi.local:5432/hackmd"
+      CMD_DOMAIN: "hackmd.{{ ansible_host }}"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.hackmd.entrypoints: "web"
+      traefik.http.routers.hackmd.rule: "Host(`hackmd.{{ ansible_host }}`)"
+      traefik.http.services.hackmd.loadbalancer.server.port: "3000"
