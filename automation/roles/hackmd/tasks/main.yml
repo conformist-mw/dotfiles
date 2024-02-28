@@ -20,9 +20,9 @@
       - "{{ ssd_data_dir }}/hackmd:/hedgedoc/public/uploads"
     env:
       CMD_DB_URL: "postgres://hackmd:hackmd@rpi.local:5432/hackmd"
-      CMD_DOMAIN: "hackmd.{{ ansible_host }}"
+      CMD_DOMAIN: "md.{{ ansible_host }}"
     labels:
       traefik.enable: "true"
       traefik.http.routers.hackmd.entrypoints: "web"
-      traefik.http.routers.hackmd.rule: "Host(`hackmd.{{ ansible_host }}`)"
+      traefik.http.routers.hackmd.rule: "Host(`md.{{ ansible_host }}`)"
       traefik.http.services.hackmd.loadbalancer.server.port: "3000"
