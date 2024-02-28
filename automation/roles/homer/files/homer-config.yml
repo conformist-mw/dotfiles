@@ -99,6 +99,11 @@ services:
         url: "http://rpi.local:8384"
         tag: "app"
         target: "_blank"
+      - name: "Hackmd"
+        logo: "assets/icons/hedgedoc.svg"
+        url: "http://md.rpi.local"
+        tag: "app"
+        target: "_blank"
   - name: "Tools"
     icon: "fa-solid fa-screwdriver-wrench"
     items:
