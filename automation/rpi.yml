@@ -4,11 +4,12 @@
     - vim
     - docker
     - borg
-    - samba
+     - samba
     - minidlna
     - jellyfin
     - traefik
     - homer
+    - navidrome
     - dozzle
     - gitea
     - ha
@@ -16,3 +17,5 @@
     - role: torrent
       vars:
         downloads_dir: "/mnt/media/downloads"
+    - syncthing
+    - hackmd
