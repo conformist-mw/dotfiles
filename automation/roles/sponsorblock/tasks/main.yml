@@ -1,0 +1,9 @@
+---
+- name: SponsorBlock container
+  community.docker.docker_container:
+    image: ghcr.io/dmunozv04/isponsorblocktv:latest
+    pull: true
+    name: sponsorblock
+    restart_policy: "unless-stopped"
+    volumes:
+      - "{{ ssd_data_dir }}/sponsorblock:/app/data"
