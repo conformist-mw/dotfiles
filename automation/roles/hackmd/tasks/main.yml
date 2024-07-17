@@ -8,6 +8,14 @@
     name: "hackmd"
     owner: "hackmd"
 
+- name: Create HackMD data directory
+  ansible.builtin.file:
+    path: "{{ ssd_data_dir }}/hackmd"
+    state: directory
+    owner: "10000"
+    group: "10000"
+  become: true
+
 - name: HackMD container
   community.docker.docker_container:
     image: quay.io/hedgedoc/hedgedoc:latest
