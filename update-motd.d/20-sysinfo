@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# get load averages
+IFS=" " read LOAD1 LOAD5 LOAD15 <<<$(cat /proc/loadavg | awk '{ print $1,$2,$3 }')
+# get processes
+PROCESS=`ps -eo user=|sort|uniq -c | awk '{ print $2 " " $1 }'`
+PROCESS_ALL=`echo "$PROCESS"| awk {'print $2'} | awk '{ SUM += $1} END { print SUM }'`
+PROCESS_ROOT=`echo "$PROCESS"| grep root | awk {'print $2'}`
+PROCESS_USER=`echo "$PROCESS"| grep -v root | awk {'print $2'} | awk '{ SUM += $1} END { print SUM }'`
+# get processors
+PROCESSOR_NAME=`grep "model name" /proc/cpuinfo | cut -d ' ' -f3- | awk {'print $0'} | head -1`
+PROCESSOR_COUNT=`grep -ioP 'processor\t:' /proc/cpuinfo | wc -l`
+
+# get temperature
+TEMPERATURE=`/usr/bin/vcgencmd measure_temp | cut -c "6-9"`
+
+# Check all local interfaces
+INTERFACE=$(route | grep '^default' | grep -o '[^ ]*$')
+
+# Check and format the open ports on the machine
+OPEN_PORTS_IPV4=$(netstat -lnt | awk 'NR>2{print $4}' | grep -E '0.0.0.0:' | sed 's/.*://' | sort -n | uniq | awk -vORS=, '{print $1}' | sed 's/,$/\n/')
+OPEN_PORTS_IPV6=$(netstat -lnt | awk 'NR>2{print $4}' | grep -E ':::' | sed 's/.*://' | sort -n | uniq | awk -vORS=, '{print $1}' | sed 's/,$/\n/')
+
+# Get your local IP address
+local_ip="$(ip addr list "$INTERFACE" | grep "inet " | cut -d' ' -f6| cut -d/ -f1)"
+
+# Get memory usage to be displayed
+memory_percent="$(free -m | awk '/Mem/ { if($2 ~ /^[1-9]+/) memm=$3/$2*100; else memm=0; printf("%3.1f%%", memm) }')"
+memory_free_mb="$(free -t -m | grep "Mem" | awk '{print $4}')"
+memory_used_mb="$(free -t -m | grep "Mem" | awk '{print $3}')"
+memory_available_mb="$(free -t -m | grep "Mem" | awk '{print $2}')"
+
+# Get SWAP usage to be displayed
+swap_percent="$(free -m | awk '/Swap/ { if($2 ~ /^[1-9]+/) swapm=$3/$2*100; else swapm=0; printf("%3.1f%%", swapm) }')"
+swap_free_mb="$(free -t -m | grep "Swap" | awk '{print $4}')"
+swap_used_mb="$(free -t -m | grep "Swap" | awk '{print $3}')"
+swap_available_mb="$(free -t -m | grep "Swap" | awk '{print $2}')"
+
+# Get HDD usage to be displayed
+hdd_percent="$(df -H | grep "/$" | awk '{ print $5 }')"
+hdd_free="$(df -hT | grep "/$" | awk '{print $5}')"
+hdd_used="$(df -hT | grep "/$" | awk '{print $4}')"
+hdd_available="$(df -hT | grep "/$" | awk '{print $3}')"
+
+W="\e[0;39m"
+G="\e[1;32m"
+
+echo -e "
+${W}system info:
+$W  Distro.........: $W`cat /etc/*release | grep "PRETTY_NAME" | cut -d "=" -f 2- | sed 's/"//g'`
+$W  Kernel.........: $W`uname -sr`
+$W  CPU............: $W$PROCESSOR_NAME ($G$PROCESSOR_COUNT$W vCPU)
+$W  Temperature....: $G$TEMPERATUREºC$W
+
+$W  Time...........: $G`date`
+$W  Uptime.........: $W`uptime -p`
+$W  Load...........: $G$LOAD1$W (1m), $G$LOAD5$W (5m), $G$LOAD15$W (15m)
+$W  Processes......: $W $G$PROCESS_ROOT$W (root), $G$PROCESS_USER$W (user), $G$PROCESS_ALL$W (total)
+
+$W  Memory.........: $G$memory_percent/${memory_used_mb}MB $W(${memory_available_mb}MB)
+$W  Swap...........: $G$swap_percent/${swap_used_mb} $W(${swap_available_mb}MB)
+$W  HDD Usage......: $G$hdd_percent/${hdd_used}B $W(${hdd_available}B)
+
+$W  IPv4 Address...: $G$local_ip
+$W  IPv4 Ports.....: $G$OPEN_PORTS_IPV4
+$W  IPv6 Ports.....: $G$OPEN_PORTS_IPV6"
