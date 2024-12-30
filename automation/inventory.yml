@@ -9,6 +9,15 @@ machines:
       ansible_user: website
       arch: linux/amd64
       ansible_python_interpreter: /usr/bin/python3
+    bee:
+      ansible_host: bee.local
+      ansible_user: user
+      arch: linux/amd64
+      ansible_python_interpreter: /usr/bin/python
+      network: "homelab_net"
+      data_dir: "{{ ansible_env.HOME }}/homelab_data"
+      subnet: "10.1.1.0/24"
+
   vars:
     tz: "Europe/Kyiv"
     puid: "1000"
@@ -19,3 +28,4 @@ machines:
     ssd_data_dir: "{{ ssd_dir }}/data"
     network: "traefik_net"
     vim_dir: "~/.vim"
+    subnet: "192.168.1.0/24"

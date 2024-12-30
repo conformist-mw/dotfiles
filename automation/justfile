@@ -10,6 +10,9 @@ decrypt:
 deploy-rpi:
 	ansible-playbook rpi.yml -e "@vault.yml"
 
+deploy-bee:
+    ansible-playbook beelink.yml -e "@vault.yml"
+
 deploy-do-vps:
 	ansible-playbook do_vps.yml -e "@vault.yml"
 
