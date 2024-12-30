@@ -4,6 +4,7 @@
     image: "gitea/gitea:latest"
     pull: true
     restart_policy: "unless-stopped"
+    restart: true
     networks:
       - name: "{{ network }}"
     env:
@@ -14,7 +15,7 @@
       DOMAIN: "git.{{ ansible_host }}"
       ROOT_URL: "http://git.{{ ansible_host }}"
     volumes:
-      - "{{ ssd_data_dir }}/gitea:/data"
+      - "{{ data_dir }}/gitea:/data"
     labels:
       traefik.enable: "true"
       traefik.http.routers.gitea.entrypoints: "web"
