@@ -5,14 +5,19 @@
     pull: true
     name: navidrome
     restart_policy: "unless-stopped"
-    ports:
-      - "4533:4533"
+    networks:
+      - name: "{{ network }}"
     volumes:
-      - "{{ ssd_data_dir }}/navidrome:/data"
-      - "/mnt/media/downloads/music:/music:ro"
+      - "{{ data_dir }}/navidrome:/data"
+      - "/mnt/hdd/music:/music:ro"
     user: "1000:1000"
     env:
       ND_SCANSCHEDULE: "1h"
       ND_LOGLEVEL: "info"
       ND_SESSIONTIMEOUT: "24h"
-      ND_BASEURL: ""
+      ND_BASEURL: "http://navidrome.{{ ansible_host }}"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.navidrome.entrypoints: "web"
+      traefik.http.routers.navidrome.rule: "Host(`navidrome.{{ ansible_host }}`)"
+      traefik.http.services.navidrome.loadbalancer.server.port: "4533"
