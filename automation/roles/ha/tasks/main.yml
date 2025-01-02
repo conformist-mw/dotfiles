@@ -32,7 +32,10 @@
     image: postgres:14-alpine
     restart_policy: "always"
     command: "postgres -c stats_temp_directory=/tmp"
-    network_mode: host
+    networks:
+      - name: "{{ network }}"
+    ports:
+      - "5432:5432"
     volumes:
       - "{{ ssd_data_dir }}/pgdata:/var/lib/postgresql/data"
       - "/var/run/postgresql:/var/run/postgresql"
