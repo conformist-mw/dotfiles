@@ -1,0 +1,110 @@
+---
+- name: Install system requirements
+  ansible.builtin.apt:
+    name:
+      - apt-transport-https
+      - avahi-daemon
+      - bash-completion
+      - curl
+      - debian-archive-keyring
+      - htop
+      - libacl1
+      - libacl1-dev
+      - liblz4-dev
+      - libssl-dev
+      - libxxhash-dev
+      - libzstd-dev
+      - mc
+      - ncdu
+      - ntfs-3g
+      - python3-dev
+      - python3-pip
+      - python3-psycopg2
+      - rclone
+      - smartmontools
+    update_cache: yes
+  become: true
+
+- name: Install tg sendmail
+  ansible.builtin.apt:
+    deb: https://github.com/conformist-mw/sendmail/releases/download/0.3.2/tg-sendmail_0.3.2_all.deb
+  become: true
+
+- name: Install mailx
+  ansible.builtin.apt:
+    name: bsd-mailx
+  become: true
+
+- name: Copy tg sendmail config
+  ansible.builtin.template:
+    dest: /etc/tg-sendmail.ini
+    src: tg-sendmail.ini.j2
+  become: true
+
+- name: Create data dir
+  ansible.builtin.file:
+    path: "{{ data_dir }}"
+    state: directory
+
+- name: Create ssd data dir
+  ansible.builtin.file:
+    path: /mnt/ssd
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  become: true
+
+- name: data ssd disk
+  ansible.posix.mount:
+    path: /mnt/ssd
+    src: PARTUUID="1ae670cf-01"
+    fstype: ext4
+    state: present
+  become: true
+
+- name: Create hdd data dir
+  ansible.builtin.file:
+    path: /mnt/hdd
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  become: true
+
+- name: data hdd disk
+  ansible.posix.mount:
+    path: /mnt/hdd
+    src: UUID="281B99140849F384"
+    fstype: ntfs
+    opts: "auto,exec,rw,user,dmask=002,fmask=113,uid=1000,gid=1000"
+    passno: 2
+    state: present
+  become: true
+
+- name: Create a network for docker
+  community.docker.docker_network:
+    name: "{{ network }}"
+    ipam_config:
+      - subnet: "{{ subnet }}"
+
+- name: copy custom pg_hba.conf
+  ansible.builtin.template:
+    src: pg_hba.conf
+    dest: "{{ data_dir }}/postgres/data/pg_hba.conf"
+  register: pg_hba
+  become: true
+
+- name: Database container
+  community.docker.docker_container:
+    name: postgres
+    image: postgres:16-alpine
+    restart: "{{ pg_hba.changed | default(false) }}"
+    restart_policy: "always"
+    networks:
+      - name: "{{ network }}"
+    ports:
+      - "5432:5432"
+    volumes:
+      - "{{ data_dir }}/postgres/data:/var/lib/postgresql/data"
+      - "/var/run/postgresql:/var/run/postgresql"
+    env:
+      POSTGRES_PASSWORD: "postgres"
