@@ -10,7 +10,7 @@
 
 - name: Create HackMD data directory
   ansible.builtin.file:
-    path: "{{ ssd_data_dir }}/hackmd"
+    path: "{{ data_dir }}/hackmd"
     state: directory
     owner: "10000"
     group: "10000"
@@ -25,9 +25,9 @@
     networks:
       - name: "{{ network }}"
     volumes:
-      - "{{ ssd_data_dir }}/hackmd:/hedgedoc/public/uploads"
+      - "{{ data_dir }}/hackmd:/hedgedoc/public/uploads"
     env:
-      CMD_DB_URL: "postgres://hackmd:hackmd@rpi.local:5432/hackmd"
+      CMD_DB_URL: "postgres://hackmd:hackmd@postgres:5432/hackmd"
       CMD_DOMAIN: "md.{{ ansible_host }}"
     labels:
       traefik.enable: "true"
