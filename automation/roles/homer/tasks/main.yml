@@ -1,12 +1,12 @@
 - name: Copy homer config file
-  ansible.builtin.copy:
+  ansible.builtin.template:
     src: homer-config.yml
-    dest: "{{ ssd_data_dir }}/homer/config.yml"
+    dest: "{{ data_dir }}/homer/config.yml"
 
 - name: Copy homer icons dir
   ansible.builtin.copy:
     src: icons
-    dest: "{{ ssd_data_dir }}/homer"
+    dest: "{{ data_dir }}/homer"
 
 - name: homer container
   community.docker.docker_container:
@@ -17,7 +17,7 @@
     networks:
       - name: "{{ network }}"
     volumes:
-      - "{{ ssd_data_dir }}/homer:/www/assets"
+      - "{{ data_dir }}/homer:/www/assets"
     user: "1000:1000"
     labels:
       traefik.enable: "true"
