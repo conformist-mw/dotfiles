@@ -6,4 +6,4 @@
     name: sponsorblock
     restart_policy: "unless-stopped"
     volumes:
-      - "{{ ssd_data_dir }}/sponsorblock:/app/data"
+      - "{{ data_dir }}/sponsorblock:/app/data"

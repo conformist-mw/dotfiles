@@ -15,8 +15,8 @@
       PGUID: "1000"
       WEBUI_PORT: "8080"
     volumes:
-      - "{{ ssd_data_dir }}/qbittorrent:/config"
-      - "{{ downloads_dir }}:/downloads"
+      - "{{ data_dir }}/qbittorrent:/config"
+      - "/mnt/hdd:/downloads"
     labels:
       traefik.enable: "true"
       traefik.http.routers.qb.entrypoints: "web"
