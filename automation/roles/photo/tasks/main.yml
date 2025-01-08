@@ -1,33 +1,54 @@
 ---
+- name: Create photoprism user
+  community.postgresql.postgresql_user:
+    name: "{{ role_name }}"
+    password: "{{ role_name }}"
+
+- name: Create photoprism database
+  community.postgresql.postgresql_db:
+    name: "{{ role_name }}"
+    owner: "{{ role_name }}"
+
+- name: Create Traefik labels dictionary
+  set_fact:
+    labels: "{{ labels | default({}) | combine({ item.key: item.value }) }}"
+  with_items:
+    - { key: "traefik.enable", value: "true" }
+    - { key: "traefik.http.routers.{{ role_name }}.entrypoints", value: "web" }
+    - { key: "traefik.http.routers.{{ role_name }}.rule", value: "Host(`{{ role_name }}.{{ ansible_host }}`)" }
+    - { key: "traefik.http.services.{{ role_name }}.loadbalancer.server.port", value: "{{ role_port }}" }
+
 - name: Photoprism container
   community.docker.docker_container:
     image: photoprism/photoprism:latest
     pull: true
-    name: photoprism
+    name: "{{ role_name }}"
     restart_policy: "unless-stopped"
+    restart: true
     networks:
       - name: "{{ network }}"
     volumes:
       - "/mnt/ssd/photos:/photoprism/originals"
-      - "{{ data_dir }}/photoprism:/photoprism/storage"
+      - "{{ role_data_dir }}:/photoprism/storage"
     user: "1000:1000"
     env:
       PHOTOPRISM_ADMIN_PASSWORD: "{{ PASSWORD }}"
       PHOTOPRISM_UPLOAD_NSFW: "true"
-    labels:
-      traefik.enable: "true"
-      traefik.http.routers.photo.entrypoints: "web"
-      traefik.http.routers.photo.rule: "Host(`photo.{{ ansible_host }}`)"
-      traefik.http.services.photo.loadbalancer.server.port: "2342"
+      PHOTOPRISM_DATABASE_DRIVER: "postgres"
+      PHOTOPRISM_DATABASE_SERVER: "postgres:5432"
+      PHOTOPRISM_DATABASE_NAME: "{{ role_name }}"
+      PHOTOPRISM_DATABASE_USER: "{{ role_name }}"
+      PHOTOPRISM_DATABASE_PASSWORD: "{{ role_name }}"
+    labels: "{{ labels }}"
 
 - name: Check if cache dir exists
   ansible.builtin.stat:
-    path: "{{ data_dir }}/photoprism/cache"
+    path: "{{ role_data_dir }}/cache"
   register: cache_dir
 
 - name: Add nobackup to photoprism cache
   ansible.builtin.file:
-    path: "{{ data_dir }}/photoprism/cache/.nobackup"
+    path: "{{ role_data_dir }}/cache/.nobackup"
     state: touch
     mode: 0666
   when: cache_dir.stat.exists
