@@ -7,6 +7,7 @@
       - bash-completion
       - curl
       - debian-archive-keyring
+      - gdu
       - htop
       - libacl1
       - libacl1-dev
@@ -20,6 +21,7 @@
       - python3-dev
       - python3-pip
       - python3-psycopg2
+      - ranger
       - rclone
       - smartmontools
     update_cache: yes
