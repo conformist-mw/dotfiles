@@ -5,6 +5,7 @@
     pull: true
     name: jellyfin
     restart_policy: "unless-stopped"
+    restart: true
     network_mode: host
     volumes:
       - "{{ data_dir }}/jellyfin/config:/config"
