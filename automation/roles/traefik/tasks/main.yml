@@ -1,25 +1,25 @@
 ---
 - name: Create traefik dir
   ansible.builtin.file:
-    path: "{{ ssd_data_dir }}/traefik"
+    path: "{{ data_dir }}/traefik"
     state: directory
     mode: "0755"
 
 - name: Copy traefik config file
   ansible.builtin.copy:
     src: traefik.yml
-    dest: "{{ ssd_data_dir }}/traefik/traefik.yml"
+    dest: "{{ data_dir }}/traefik/traefik.yml"
 
 - name: Create a network for traefik
   community.docker.docker_network:
     name: "{{ network }}"
     ipam_config:
-      - subnet: 192.168.100.0/24
+      - subnet: 10.1.1.0/24
 
 - name: Traefik container
   community.docker.docker_container:
     name: traefik
-    image: "traefik:v2.10"
+    image: "traefik:v2.11"
     restart_policy: "unless-stopped"
     ports:
       - "80:80"
@@ -27,30 +27,9 @@
       - name: "{{ network }}"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "{{ ssd_data_dir }}/traefik/traefik.yml:/traefik.yml:ro"
+      - "{{ data_dir }}/traefik/traefik.yml:/traefik.yml:ro"
     labels:
       traefik.enable: "true"
       traefik.http.routers.traefik.entrypoints: "web"
       traefik.http.routers.traefik.rule: "Host(`traefik.{{ ansible_host }}`)"
       traefik.http.services.traefik.loadbalancer.server.port: "8080"
-
-
-- name: Copy ha-nginx config file
-  ansible.builtin.copy:
-    src: ha-nginx.conf
-    dest: "{{ ssd_data_dir }}/traefik/ha-nginx.conf"
-
-- name: Homeassistant Nginx
-  community.docker.docker_container:
-    name: ha-nginx
-    image: nginx:latest
-    restart_policy: "unless-stopped"
-    networks:
-      - name: "{{ network }}"
-    volumes:
-      - "{{ ssd_data_dir }}/traefik/ha-nginx.conf:/etc/nginx/nginx.conf:ro"
-    labels:
-      traefik.enable: "true"
-      traefik.http.routers.ha.entrypoints: "web"
-      traefik.http.routers.ha.rule: "Host(`ha.{{ ansible_host }}`)"
-      traefik.http.services.ha.loadbalancer.server.port: "80"
