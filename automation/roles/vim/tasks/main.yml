@@ -1,4 +1,9 @@
 ---
+- name: Set Vim as default editor
+  ansible.builtin.shell: >
+    update-alternatives --set editor /usr/bin/vim.basic
+  become: true
+
 - name: Install vim, git, fonts-powerline
   ansible.builtin.apt:
     name:
@@ -27,4 +32,4 @@
 - name: Install Vundle plugins
   ansible.builtin.shell: >
     echo -ne '\n' | vim -E -s -c "source {{ vim_dir }}/vimrc" -c PluginInstall -c qa || [ $? = 1 ] && exit 0 || exit 2
-  changed_when: false  # suppress changing
+  changed_when: false # suppress changing

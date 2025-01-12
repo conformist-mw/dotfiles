@@ -82,11 +82,13 @@
   ansible.builtin.copy:
     src: ha-nginx.conf
     dest: "{{ data_dir }}/nginx/ha-nginx.conf"
+  register: ha_nginx_config
 
 - name: Homeassistant Nginx
   community.docker.docker_container:
     name: ha-nginx
     image: nginx:latest
+    restart: "{{ ha_nginx_config.changed | default(false) }}"
     restart_policy: "unless-stopped"
     networks:
       - name: "{{ network }}"
