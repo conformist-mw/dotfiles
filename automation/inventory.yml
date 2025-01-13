@@ -27,5 +27,4 @@ machines:
     ssd_dir: "/mnt/data"
     ssd_data_dir: "{{ ssd_dir }}/data"
     network: "traefik_net"
-    vim_dir: "~/.vim"
     subnet: "192.168.1.0/24"

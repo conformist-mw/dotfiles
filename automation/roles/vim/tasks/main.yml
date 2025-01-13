@@ -1,4 +1,12 @@
 ---
+- name: Get home directory for user
+  ansible.builtin.command: "echo ~{{ user }}"
+  register: home_dir_output
+
+- name: Set home directory fact
+  ansible.builtin.set_fact:
+    home_dir: "{{ home_dir_output.stdout }}"
+
 - name: Set Vim as default editor
   ansible.builtin.shell: >
     update-alternatives --set editor /usr/bin/vim.basic
@@ -15,21 +23,29 @@
 
 - name: Create config dir
   ansible.builtin.file:
-    path: "{{ vim_dir }}"
+    path: "{{ home_dir }}/.vim"
     state: directory
     mode: "0755"
+  become: true
+  become_user: "{{ user }}"
 
 - name: Copy main configuration file
   ansible.builtin.copy:
     src: vimrc
-    dest: "{{ vim_dir }}/vimrc"
+    dest: "{{ home_dir }}/.vim/vimrc"
+  become: true
+  become_user: "{{ user }}"
 
 - name: Clone Vundle plugin
   ansible.builtin.git:
     repo: "https://github.com/VundleVim/Vundle.vim.git"
-    dest: "{{ vim_dir }}/bundle/Vundle.vim"
+    dest: "{{ home_dir }}/.vim/bundle/Vundle.vim"
+  become: true
+  become_user: "{{ user }}"
 
 - name: Install Vundle plugins
   ansible.builtin.shell: >
-    echo -ne '\n' | vim -E -s -c "source {{ vim_dir }}/vimrc" -c PluginInstall -c qa || [ $? = 1 ] && exit 0 || exit 2
+    echo -ne '\n' | vim -E -s -c "source {{ home_dir }}/.vim/vimrc" -c PluginInstall -c qa || [ $? = 1 ] && exit 0 || exit 2
+  become: true
+  become_user: "{{ user }}"
   changed_when: false # suppress changing
