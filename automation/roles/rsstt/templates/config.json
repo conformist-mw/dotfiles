@@ -1,0 +1,7 @@
+{
+  "DATABASE_PATH": "/data/feed.db",
+  "TELEGRAM_BOT_TOKEN": "{{ TG_RSSTT_TOKEN }}",
+  "TELEGRAM_BOT_URL": "https://rsstt.{{ ansible_host }}",
+  "TELEGRAM_ADMIN_ID": "{{ TG_SENDMAIL_CHAT_ID }}",
+  "LOG_LEVEL": "debug"
+}
