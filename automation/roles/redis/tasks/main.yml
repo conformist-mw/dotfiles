@@ -1,0 +1,11 @@
+- name: Redis
+  community.docker.docker_container:
+    name: redis
+    image: docker.io/library/redis:7
+    pull: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ network }}"
+    volumes:
+      - "{{ data_dir }}/redis:/data"
+
