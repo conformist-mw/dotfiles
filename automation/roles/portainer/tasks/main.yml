@@ -1,0 +1,18 @@
+---
+- name: Portainer container
+  community.docker.docker_container:
+    image: portainer/portainer-ce:latest
+    pull: true
+    name: portainer
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ network }}"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "{{ data_dir }}/portainer:/data"
+    command: "-H unix:///var/run/docker.sock"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.portainer.entrypoints: "web"
+      traefik.http.routers.portainer.rule: "Host(`portainer.{{ ansible_host }}`)"
+      traefik.http.services.portainer.loadbalancer.server.port: "9000"
