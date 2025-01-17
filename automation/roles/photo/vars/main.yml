@@ -1,0 +1,3 @@
+role_name: "photo"
+role_port: 2342
+role_data_dir: "{{ data_dir }}/photoprism"
