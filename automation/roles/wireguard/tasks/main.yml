@@ -1,0 +1,55 @@
+- name: install wireguard
+  ansible.builtin.apt:
+    name: wireguard
+    state: present
+  become: true
+
+- name: ensure peers dir exists
+  ansible.builtin.file:
+    path: "/etc/wireguard/peers"
+    state: directory
+    mode: "0700"
+    owner: root
+    group: root
+  become: true
+
+- name: copy peers configs
+  template:
+    src: peer.conf.j2
+    dest: "/etc/wireguard/peers/{{ item.0.key }}_{{ item.1.name }}.conf"
+    owner: root
+    group: root
+    mode: 0600
+  with_subelements:
+    - "{{ wg_configs | dict2items }}"
+    - value.peers
+  loop_control:
+    label: "{{ item.0.key }} -> {{ item.1.name }}"
+  vars:
+    interface: "{{ item.0.value }}"
+    peer: "{{ item.1 }}"
+  become: true
+
+- name: generate wg interface configurations
+  template:
+    src: wg.conf.j2
+    dest: "/etc/wireguard/{{ item.key }}.conf"
+    owner: root
+    group: root
+    mode: 0600
+  with_dict: "{{ wg_configs }}"
+  loop_control:
+    label: "{{ item.key }}"
+  vars:
+    interface: "{{ item.value }}"
+  become: true
+
+- name: enable and start wireguard
+  ansible.builtin.systemd:
+    name: "wg-quick@{{ item.key }}"
+    enabled: yes
+    state: started
+  with_dict: "{{ wg_configs }}"
+  loop_control:
+    label: "{{ item.key }}"
+  become: true

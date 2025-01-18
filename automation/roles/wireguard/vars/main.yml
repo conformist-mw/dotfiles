@@ -1,0 +1,45 @@
+wg_configs:
+  wg0:
+    endpoint: "{{ ansible_host }}"
+    address: "10.0.0.1/24"
+    port: "51820"
+    ipt_rules:
+      PostUp: "iptables -A FORWARD -i %i -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE"
+      PostDown: "iptables -D FORWARD -i %i -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE"
+    public_key: "{{ lookup('community.general.bitwarden_secrets_manager', '710f7fcd-74aa-44d6-a7cd-b265011518cb').note }}"
+    private_key: "{{ lookup('community.general.bitwarden_secrets_manager', '710f7fcd-74aa-44d6-a7cd-b265011518cb').value }}"
+    peers:
+      - name: conformist
+        address: "10.0.0.10/32"
+        public_key: "{{ lookup('community.general.bitwarden_secrets_manager', '3104d934-4711-4cfb-9754-b266015aa389').note }}"
+        private_key: "{{ lookup('community.general.bitwarden_secrets_manager', '3104d934-4711-4cfb-9754-b266015aa389').value }}"
+      - name: keenetic
+        address: "10.0.0.100/32"
+        public_key: "{{ lookup('community.general.bitwarden_secrets_manager', 'd3bc3a2a-92ea-4e15-82de-b266015acedf').note }}"
+        private_key: "{{ lookup('community.general.bitwarden_secrets_manager', 'd3bc3a2a-92ea-4e15-82de-b266015acedf').value }}"
+        allowed_ips:
+          - "10.0.0.100/32"
+          - "192.168.1.0/24"
+      - name: longero4ek
+        address: "10.0.0.13/32"
+        public_key: "{{ lookup('community.general.bitwarden_secrets_manager', 'e55ef72e-f63c-4809-957a-b266015af926').note }}"
+        private_key: "{{ lookup('community.general.bitwarden_secrets_manager', 'e55ef72e-f63c-4809-957a-b266015af926').value }}"
+      - name: macos
+        address: "10.0.0.11/32"
+        public_key: "{{ lookup('community.general.bitwarden_secrets_manager', '142e53a0-459a-4d33-adbf-b266015b1fcc').note }}"
+        private_key: "{{ lookup('community.general.bitwarden_secrets_manager', '142e53a0-459a-4d33-adbf-b266015b1fcc').value }}"
+  wg1:
+    endpoint: "{{ ansible_host }}"
+    address: "10.0.40.1/24"
+    port: "51830"
+    public_key: "{{ lookup('community.general.bitwarden_secrets_manager', '427e2c75-6525-4155-8eb7-b2660159c5db').note }}"
+    private_key: "{{ lookup('community.general.bitwarden_secrets_manager', '427e2c75-6525-4155-8eb7-b2660159c5db').value }}"
+    peers:
+      - name: sservik
+        address: "10.0.40.10/32"
+        public_key: "{{ lookup('community.general.bitwarden_secrets_manager', '41d58a2a-a318-4541-b477-b266015b6df5').note }}"
+        private_key: "{{ lookup('community.general.bitwarden_secrets_manager', '41d58a2a-a318-4541-b477-b266015b6df5').value }}"
+      - name: masha
+        address: "10.0.40.20/32"
+        public_key: "{{ lookup('community.general.bitwarden_secrets_manager', 'df359925-6f13-4594-a72d-b266015b498a').note }}"
+        private_key: "{{ lookup('community.general.bitwarden_secrets_manager', 'df359925-6f13-4594-a72d-b266015b498a').value }}"
