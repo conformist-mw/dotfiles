@@ -1,22 +1,27 @@
 machines:
   hosts:
-    pi:
-      ansible_host: rpi.local
-      ansible_user: pi
-      arch: linux/arm64
     website:
       ansible_host: conformist.name
       ansible_user: website
       arch: linux/amd64
       ansible_python_interpreter: /usr/bin/python3
+      docker_network: "traefik_net"
+      docker_subnet: "192.168.100.0/24"
     bee:
       ansible_host: bee.local
       ansible_user: user
       arch: linux/amd64
       ansible_python_interpreter: /usr/bin/python
-      network: "homelab_net"
       data_dir: "{{ ansible_env.HOME }}/homelab_data"
-      subnet: "10.1.1.0/24"
+      docker_network: "homelab_net"
+      docker_subnet: "10.1.1.0/24"
+    hetzner:
+      ansible_host: conformist.name
+      ansible_user: vps_user
+      arch: linux/amd64
+      ansible_python_interpreter: /usr/bin/python
+      server_dir: "{{ ansible_env.HOME }}/server"
+      data_dir: "{{ ansible_env.HOME }}/server_data"
 
   vars:
     tz: "Europe/Kyiv"
@@ -26,5 +31,5 @@ machines:
     data_dir: "{{ server_dir }}/data"
     ssd_dir: "/mnt/data"
     ssd_data_dir: "{{ ssd_dir }}/data"
-    network: "traefik_net"
-    subnet: "192.168.1.0/24"
+    docker_network: "docker_net"
+    docker_subnet: "10.11.12.0/24"
