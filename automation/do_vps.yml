@@ -1,9 +1,0 @@
-- hosts: website
-  roles:
-    - segments
-    - vim
-    - role: docker
-      vars:
-        ansible_distribution_release: "bookworm"
-    - dumbproxy
-    - logs
