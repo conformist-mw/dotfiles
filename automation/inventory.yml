@@ -1,12 +1,5 @@
 machines:
   hosts:
-    website:
-      ansible_host: conformist.name
-      ansible_user: website
-      arch: linux/amd64
-      ansible_python_interpreter: /usr/bin/python3
-      docker_network: "traefik_net"
-      docker_subnet: "192.168.100.0/24"
     bee:
       ansible_host: bee.local
       ansible_user: user

@@ -1,20 +1,13 @@
+set dotenv-load
+
 install:
     ansible-galaxy install -r requirements.yml
 
-encrypt:
-	ansible-vault encrypt vault.yml
-
-decrypt:
-	ansible-vault decrypt vault.yml
-
-deploy-rpi:
-	ansible-playbook rpi.yml -e "@vault.yml"
-
 deploy-bee:
-    ansible-playbook beelink.yml -e "@vault.yml"
+    ansible-playbook beelink.yml"
 
-deploy-do-vps:
-	ansible-playbook do_vps.yml -e "@vault.yml"
+deploy-hetzner:
+	ansible-playbook hetzner.yml
 
 syntax-check:
 	ansible-playbook do_vps.yml --syntax-check
