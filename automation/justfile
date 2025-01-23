@@ -4,11 +4,11 @@ install:
     ansible-galaxy install -r requirements.yml
 
 deploy-bee:
-    ansible-playbook beelink.yml"
+    ansible-playbook beelink.yml
 
 deploy-hetzner:
 	ansible-playbook hetzner.yml
 
 syntax-check:
-	ansible-playbook do_vps.yml --syntax-check
-	ansible-playbook rpi.yml --syntax-check
+	ansible-playbook beelink.yml --syntax-check
+	ansible-playbook hetzner.yml --syntax-check
