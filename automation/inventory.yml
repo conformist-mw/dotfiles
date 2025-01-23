@@ -1,20 +1,34 @@
 machines:
   hosts:
     bee:
-      ansible_host: bee.local
+      ansible_host: bee.home
       ansible_user: user
       arch: linux/amd64
       ansible_python_interpreter: /usr/bin/python
       data_dir: "{{ ansible_env.HOME }}/homelab_data"
       docker_network: "homelab_net"
       docker_subnet: "10.1.1.0/24"
+      traefik_labels:
+        - { key: "traefik.enable", value: "true" }
+        - { key: "traefik.http.routers.{{ app_name }}.entrypoints", value: "web" }
+        - { key: "traefik.http.routers.{{ app_name }}.rule", value: "Host(`{{ app_name }}.{{ ansible_host }}`)" }
+        - { key: "traefik.http.services.{{ app_name }}.loadbalancer.server.port", value: "{{ app_port }}" }
+
     hetzner:
       ansible_host: conformist.name
       ansible_user: vps_user
-      arch: linux/amd64
+      arch: linux/arm64
       ansible_python_interpreter: /usr/bin/python
       server_dir: "{{ ansible_env.HOME }}/server"
       data_dir: "{{ ansible_env.HOME }}/server_data"
+      traefik_labels:
+        - { key: "traefik.enable", value: "true" }
+        - { key: "traefik.http.routers.tls", value: "true" }
+        - { key: "traefik.http.routers.{{ app_name }}.entrypoints", value: "websecure" }
+        - { key: "traefik.http.routers.{{ app_name }}.rule", value: "Host(`{{ app_name }}.{{ ansible_host }}`)" }
+        - { key: "traefik.http.services.{{ app_name }}.loadbalancer.server.port", value: "{{ app_port }}" }
+        - { key: "traefik.http.routers.{{ app_name }}.tls.certresolver", value: "letsencrypt" }
+        - { key: "traefik.http.routers.{{ app_name }}.middlewares", value: "{{ middlewares | default('auth-chain@file') }}" }
 
   vars:
     tz: "Europe/Kyiv"
