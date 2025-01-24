@@ -29,19 +29,19 @@
   become: true
 
 - name: Install tg sendmail
-  ansible.builtin.apt:
-    deb: https://github.com/conformist-mw/sendmail/releases/download/0.3.2/tg-sendmail_0.3.2_all.deb
-  become: true
+  block:
+    - name: Install tg-sendmail deb
+      ansible.builtin.apt:
+        deb: https://github.com/conformist-mw/sendmail/releases/download/0.3.2/tg-sendmail_0.3.2_all.deb
 
-- name: Install mailx
-  ansible.builtin.apt:
-    name: bsd-mailx
-  become: true
+    - name: Install mailx
+      ansible.builtin.apt:
+        name: bsd-mailx
 
-- name: Copy tg sendmail config
-  ansible.builtin.template:
-    dest: /etc/tg-sendmail.ini
-    src: tg-sendmail.ini.j2
+    - name: Copy tg sendmail config
+      ansible.builtin.template:
+        dest: /etc/tg-sendmail.ini
+        src: tg-sendmail.ini.j2
   become: true
 
 - name: Create data dir
@@ -87,7 +87,7 @@
   community.docker.docker_network:
     name: "{{ docker_network }}"
     ipam_config:
-      - subnet: "{{ subnet }}"
+      - subnet: "{{ docker_subnet }}"
 
 - name: copy custom pg_hba.conf
   ansible.builtin.template:
@@ -111,3 +111,20 @@
       - "/var/run/postgresql:/var/run/postgresql"
     env:
       POSTGRES_PASSWORD: "postgres"
+
+- name: Adde cloudflare repo
+  block:
+    - name: add apt-key
+      ansible.builtin.get_url:
+        url: https://pkg.cloudflare.com/cloudflare-main.gpg
+        dest: /etc/apt/keyrings/cloudflare-main.gpg
+
+    - name: somerepo | apt source
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared {{ ansible_distribution_release }} main"
+        state: present
+    - name: Install cloudflared
+      ansible.builtin.apt:
+        name: cloudflared
+        update_cache: yes
+  become: true
