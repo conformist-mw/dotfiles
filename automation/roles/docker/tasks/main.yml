@@ -53,3 +53,10 @@
     groups: docker
     append: yes
   become: true
+
+- name: Create a network for docker
+  community.docker.docker_network:
+    name: "{{ docker_network }}"
+    ipam_config:
+      - subnet: "{{ docker_subnet }}"
+  become: true
