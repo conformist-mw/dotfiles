@@ -5,9 +5,11 @@
       - apt-transport-https
       - avahi-daemon
       - bash-completion
+      - btop  # htop alternative
       - curl
       - debian-archive-keyring
-      - gdu
+      - fd-find  # fast find replacement written in Rust
+      - gdu  # disk usage analyzer wiritten in Go (ncdu alternative)
       - htop
       - libacl1
       - libacl1-dev
