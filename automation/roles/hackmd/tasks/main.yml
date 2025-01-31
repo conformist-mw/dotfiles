@@ -1,36 +1,37 @@
 - name: Create HackMD user
   community.postgresql.postgresql_user:
-    name: "hackmd"
-    password: "hackmd"
+    name: "{{ app_name }}"
+    password: "{{ app_name }}"
 
 - name: Create HackMD database
   community.postgresql.postgresql_db:
-    name: "hackmd"
-    owner: "hackmd"
+    name: "{{ app_name }}"
+    owner: "{{ app_name }}"
 
 - name: Create HackMD data directory
   ansible.builtin.file:
-    path: "{{ data_dir }}/hackmd"
+    path: "{{ data_dir }}"
     state: directory
     owner: "10000"
     group: "10000"
   become: true
 
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+
 - name: HackMD container
   community.docker.docker_container:
     image: quay.io/hedgedoc/hedgedoc:latest
     pull: true
-    name: hackmd
+    name: "{{ app_name }}"
     restart_policy: "unless-stopped"
+    restart: true
     networks:
-      - name: "{{ network }}"
+      - name: "{{ docker_network }}"
     volumes:
-      - "{{ data_dir }}/hackmd:/hedgedoc/public/uploads"
+      - "{{ app_data_dir }}:/hedgedoc/public/uploads"
     env:
-      CMD_DB_URL: "postgres://hackmd:hackmd@postgres:5432/hackmd"
-      CMD_DOMAIN: "md.{{ ansible_host }}"
-    labels:
-      traefik.enable: "true"
-      traefik.http.routers.hackmd.entrypoints: "web"
-      traefik.http.routers.hackmd.rule: "Host(`md.{{ ansible_host }}`)"
-      traefik.http.services.hackmd.loadbalancer.server.port: "3000"
+      CMD_DB_URL: "postgres://{{ app_name }}:{{ app_name }}@postgres:5432/{{ app_name }}"
+      CMD_DOMAIN: "{{ app_name }}.{{ ansible_host }}"
+    labels: "{{ labels }}"
