@@ -130,3 +130,19 @@
         name: cloudflared
         update_cache: yes
   become: true
+
+- name: Install lf (like ranger written in go)
+  block:
+    - name: Download lf
+      ansible.builtin.get_url:
+        url: "https://github.com/gokcehan/lf/releases/latest/download/lf-linux-amd64.tar.gz"
+        dest: /tmp/lf-linux-amd64.tar.gz
+
+    - name: Extract lf
+      ansible.builtin.unarchive:
+        src: /tmp/lf-linux-amd64.tar.gz
+        dest: /usr/local/bin
+        remote_src: yes
+        creates: /usr/local/bin/lf
+        mode: 0755
+      become: true
