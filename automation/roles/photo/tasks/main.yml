@@ -1,54 +1,49 @@
 ---
 - name: Create photoprism user
   community.postgresql.postgresql_user:
-    name: "{{ role_name }}"
-    password: "{{ role_name }}"
+    name: "{{ app_name }}"
+    password: "{{ app_name }}"
 
 - name: Create photoprism database
   community.postgresql.postgresql_db:
-    name: "{{ role_name }}"
-    owner: "{{ role_name }}"
+    name: "{{ app_name }}"
+    owner: "{{ app_name }}"
 
-- name: Create Traefik labels dictionary
-  set_fact:
-    labels: "{{ labels | default({}) | combine({ item.key: item.value }) }}"
-  with_items:
-    - { key: "traefik.enable", value: "true" }
-    - { key: "traefik.http.routers.{{ role_name }}.entrypoints", value: "web" }
-    - { key: "traefik.http.routers.{{ role_name }}.rule", value: "Host(`{{ role_name }}.{{ ansible_host }}`)" }
-    - { key: "traefik.http.services.{{ role_name }}.loadbalancer.server.port", value: "{{ role_port }}" }
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
 
 - name: Photoprism container
   community.docker.docker_container:
     image: photoprism/photoprism:latest
     pull: true
-    name: "{{ role_name }}"
+    name: "{{ app_name }}"
     restart_policy: "unless-stopped"
     restart: true
     networks:
-      - name: "{{ network }}"
+      - name: "{{ docker_network }}"
     volumes:
       - "/mnt/ssd/photos:/photoprism/originals"
-      - "{{ role_data_dir }}:/photoprism/storage"
+      - "{{ app_data_dir }}:/photoprism/storage"
     user: "1000:1000"
     env:
-      PHOTOPRISM_ADMIN_PASSWORD: "{{ PASSWORD }}"
+      PHOTOPRISM_ADMIN_PASSWORD: "{{ lookup('community.general.bitwarden_secrets_manager', 'c6f1a5a9-a34f-404d-ad2a-b26d0130b756').value }}"
       PHOTOPRISM_UPLOAD_NSFW: "true"
       PHOTOPRISM_DATABASE_DRIVER: "postgres"
       PHOTOPRISM_DATABASE_SERVER: "postgres:5432"
-      PHOTOPRISM_DATABASE_NAME: "{{ role_name }}"
-      PHOTOPRISM_DATABASE_USER: "{{ role_name }}"
-      PHOTOPRISM_DATABASE_PASSWORD: "{{ role_name }}"
+      PHOTOPRISM_DATABASE_NAME: "{{ app_name }}"
+      PHOTOPRISM_DATABASE_USER: "{{ app_name }}"
+      PHOTOPRISM_DATABASE_PASSWORD: "{{ app_name }}"
     labels: "{{ labels }}"
 
 - name: Check if cache dir exists
   ansible.builtin.stat:
-    path: "{{ role_data_dir }}/cache"
+    path: "{{ app_data_dir }}/cache"
   register: cache_dir
 
 - name: Add nobackup to photoprism cache
   ansible.builtin.file:
-    path: "{{ role_data_dir }}/cache/.nobackup"
+    path: "{{ app_data_dir }}/cache/.nobackup"
     state: touch
     mode: 0666
   when: cache_dir.stat.exists
