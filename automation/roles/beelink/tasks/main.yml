@@ -19,6 +19,7 @@
       - libzstd-dev
       - mc
       - ncdu
+      - nnn  # terminal file manager
       - ntfs-3g
       - plocate
       - python3-dev
@@ -26,6 +27,7 @@
       - python3-psycopg2
       - ranger
       - rclone
+      - sqlite3
       - smartmontools
     update_cache: yes
   become: true
