@@ -13,7 +13,7 @@
     restart: true
     restart_policy: "unless-stopped"
     networks:
-      - name: "{{ network }}"
+      - name: "{{ docker_network }}"
     volumes:
       - "{{ data_dir }}/rsstt/config.json:/config.json:ro"
       - "{{ data_dir }}/rsstt/feed.db:/data/feed.db"
