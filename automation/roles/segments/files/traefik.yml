@@ -30,5 +30,5 @@ certificatesResolvers:
       email: "oleg.smedyuk@gmail.com"
       storage: "/letsencrypt/acme.json"
       dnsChallenge:
-        provider: digitalocean
+        provider: hetzner
         delayBeforeCheck: "0"
