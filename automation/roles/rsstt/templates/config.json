@@ -1,7 +1,7 @@
 {
   "DATABASE_PATH": "/data/feed.db",
-  "TELEGRAM_BOT_TOKEN": "{{ TG_RSSTT_TOKEN }}",
+  "TELEGRAM_ADMIN_ID": "{{ lookup('community.general.bitwarden_secrets_manager', '75fdb6a6-9528-4e3a-beae-b26901524c82').note }}",
+  "TELEGRAM_BOT_TOKEN": "{{ lookup('community.general.bitwarden_secrets_manager', '75fdb6a6-9528-4e3a-beae-b26901524c82').value }}",
   "TELEGRAM_BOT_URL": "https://rsstt.{{ ansible_host }}",
-  "TELEGRAM_ADMIN_ID": "{{ TG_SENDMAIL_CHAT_ID }}",
-  "LOG_LEVEL": "debug"
+  "LOG_LEVEL": "warning"
 }
