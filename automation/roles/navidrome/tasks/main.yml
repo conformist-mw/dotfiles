@@ -23,3 +23,38 @@
       ND_SESSIONTIMEOUT: "24h"
       ND_BASEURL: "http://navidrome.{{ ansible_host }}"
     labels: "{{ labels }}"
+
+- name: Copy autoremove script
+  ansible.builtin.template:
+    src: nd_autoremove_starred.sh
+    dest: "/usr/local/bin/nd_autoremove_starred.sh"
+    mode: "0755"
+    owner: "1000"
+    group: "1000"
+  vars:
+    DATABASE_PATH: "{{ app_data_dir }}/navidrome.db"
+    HDD_PATH: "/mnt/hdd"
+    AUTOREMOVE_LOG_FILE: "{{ app_data_dir }}/autoremove.log"
+  become: true
+
+- name: Copy systemd service
+  ansible.builtin.copy:
+    src: nd_autoremove.service
+    dest: "/etc/systemd/system/nd_autoremove.service"
+    mode: "0644"
+  become: true
+
+- name: Copy systemd timer
+  ansible.builtin.copy:
+    src: nd_autoremove.timer
+    dest: "/etc/systemd/system/nd_autoremove.timer"
+    mode: "0644"
+  become: true
+
+- name: Start and enable autoremove timer
+  ansible.builtin.systemd:
+    name: nd_autoremove.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true
