@@ -37,6 +37,13 @@ http:
           server: ""
     middlewares-compress:
       compress: {}
+    pihole-addprefix:
+      addPrefix:
+        prefix: "/admin"
+    pihole-redirectregex:
+      redirectRegex:
+        regex: /admin/$
+        replacement: /
     root-redirect:
       redirectRegex:
         regex: "^https?://conformist.name/(.*)"
