@@ -1,46 +1,36 @@
 ---
-- name: Create a network for traefik
-  community.docker.docker_network:
-    name: "{{ network }}"
-    ipam_config:
-      - subnet: 192.168.100.0/24
-
-- name: Copy traefik config file
+- name: Copy traefik static config file
   ansible.builtin.copy:
     src: traefik.yml
     dest: "{{ server_dir }}/traefik.yml"
 
-- name: Copy traefik config file
+- name: Copy traefik dynamic config file
   ansible.builtin.copy:
     src: dynamic.yml
     dest: "{{ server_dir }}/dynamic.yml"
 
-- name: Copy htpasswd file
-  ansible.builtin.copy:
-    content: "{{ DUMBPROXY_HTPASSWD }}"
-    dest: "{{ server_dir }}/traefik.htpasswd"
-
-- name: Create main dir
-  ansible.builtin.file:
-    path: "{{ server_dir }}"
-    state: directory
-
-- name: Create data dir
-  ansible.builtin.file:
-    path: "{{ data_dir }}"
-    state: directory
+- name: fill traefik htpasswd
+  community.general.htpasswd:
+    path: "{{ server_dir }}/traefik.htpasswd"
+    name: "{{ item.note }}"
+    password: "{{ item.value }}"
+  loop:
+    - "{{ lookup('community.general.bitwarden_secrets_manager', '30b3908f-6c67-4353-9bdc-b269014ab708') }}"
+    - "{{ lookup('community.general.bitwarden_secrets_manager', 'f75194eb-7ca6-4363-83ff-b269014a81f8') }}"
+  no_log: true
 
 - name: Traefik container
   community.docker.docker_container:
     name: traefik
     image: "traefik:v2.10"
     pull: true
+    restart: true
     restart_policy: "unless-stopped"
     ports:
       - "80:80"
       - "443:443"
     networks:
-      - name: "{{ network }}"
+      - name: "{{ docker_network }}"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "{{ server_dir }}/traefik.yml:/traefik.yml:ro"
@@ -48,7 +38,7 @@
       - "{{ server_dir }}/traefik.htpasswd:/traefik.htpasswd:ro"
       - "{{ server_dir }}/letsencrypt:/letsencrypt"
     env:
-      DO_AUTH_TOKEN: "{{ DNS_DIGITALOCEAN_TOKEN }}"
+      HETZNER_API_KEY: "{{ lookup('community.general.bitwarden_secrets_manager', '2ac2aa22-b53c-47d0-b1c5-b26901483380').value }}"
     labels:
       traefik.enable: "true"
       traefik.http.routers.traefik.entrypoints: "websecure"
@@ -61,12 +51,13 @@
 
 - name: Run segments-go container
   community.docker.docker_container:
-    image: segments-go
-    name: segments-go
+    image: olegsmedyuk/segments:latest
+    name: segments
+    pull: true
     restart: true
     restart_policy: "unless-stopped"
     networks:
-      - name: "{{ network }}"
+      - name: "{{ docker_network }}"
     volumes:
       - "{{ data_dir }}/segments-go/segments.db:/app/segments.db"
     labels:
@@ -91,7 +82,7 @@
     restart: "{{ ha_nginx_config.changed | default(false) }}"
     restart_policy: "unless-stopped"
     networks:
-      - name: "{{ network }}"
+      - name: "{{ docker_network }}"
     volumes:
       - "{{ data_dir }}/nginx/ha-nginx.conf:/etc/nginx/nginx.conf:ro"
     labels:
@@ -102,3 +93,45 @@
       traefik.http.routers.ha.rule: "Host(`ha.{{ ansible_host }}`)"
       traefik.http.services.ha.loadbalancer.server.port: "80"
       traefik.http.routers.ha.middlewares: "no-auth-chain@file"
+
+- name: Run dumbproxy container
+  community.docker.docker_container:
+    image: yarmak/dumbproxy
+    name: dumbproxy
+    restart: true
+    restart_policy: "unless-stopped"
+    command: "-auth 'basicfile://?path=/etc/dumbproxy.htpasswd'"
+    ports:
+      - "10000:8080"
+    volumes:
+      - "{{ server_dir }}/traefik.htpasswd:/etc/dumbproxy.htpasswd:ro"
+
+- name: Pi-Hole container
+  community.docker.docker_container:
+    name: pihole
+    image: pihole/pihole:latest
+    pull: true
+    restart: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    ports:
+      - "127.0.0.1:53:53/tcp"
+      - "127.0.0.1:53:53/udp"
+      - "127.0.0.1:67:67/udp"
+    volumes:
+      - "{{ data_dir }}/pihole/etc-pihole/:/etc/pihole/"
+      - "{{ data_dir }}/pihole/etc-dnsmasq.d/:/etc/dnsmasq.d/"
+    env:
+      TZ: "{{ tz }}"
+      VIRTUAL_HOST: "pihole.{{ ansible_host }}"
+      VIRTUAL_PORT: "80"
+      WEBPASSWORD: "{{ lookup('community.general.bitwarden_secrets_manager', '1aafcc89-8d5b-4e34-ba2e-b26b013bd90d').value }}"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.pihole.entrypoints: "websecure"
+      traefik.http.routers.pihole.tls: "true"
+      traefik.http.routers.pihole.tls.certresolver: "letsencrypt"
+      traefik.http.routers.pihole.rule: "Host(`pihole.{{ ansible_host }}`)"
+      traefik.http.routers.pihole.middlewares: "auth-chain@file,pihole-redirectregex@file,pihole-addprefix@file"
+      traefik.http.services.pihole.loadbalancer.server.port: "80"
