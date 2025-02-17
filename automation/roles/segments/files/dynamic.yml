@@ -1,5 +1,10 @@
 http:
   middlewares:
+    forward-auth:
+      forwardAuth:
+        address: "http://traefik-forward-auth:4181"
+        authResponseHeaders:
+          - "X-Forwarded-User"
     auth-chain:
       chain:
         middlewares:
