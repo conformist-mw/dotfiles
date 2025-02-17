@@ -47,7 +47,54 @@
       traefik.http.routers.traefik.rule: "Host(`traefik.{{ ansible_host }}`)"
       traefik.http.services.traefik.loadbalancer.server.port: "8080"
       traefik.http.routers.traefik.service: "api@internal"
-      traefik.http.routers.traefik.middlewares: "auth-chain@file"
+      traefik.http.routers.traefik.middlewares: "forward-auth@file"
+
+- name: GGet google oauth client id, secret
+  set_fact:
+    google_oauth: "{{ lookup('community.general.bitwarden_secrets_manager', 'acac7b02-8847-4ef6-b3ca-b28700cfb83b') }}"
+
+
+- name: traefik froward auth
+  community.docker.docker_container:
+    name: traefik-forward-auth
+    image: "thomseddon/traefik-forward-auth:2-arm64"
+    restart_policy: "unless-stopped"
+    command: "--whitelist=oleg.smedyuk@gmail.com"
+    networks:
+      - name: "{{ docker_network }}"
+    env:
+      LOG_LEVEL: "debug"
+      PROVIDERS_GOOGLE_CLIENT_ID: "{{ google_oauth.note }}"
+      PROVIDERS_GOOGLE_CLIENT_SECRET: "{{ google_oauth.value }}"
+      SECRET: "some-secret-string"
+      COOKIE_DOMAIN: "{{ ansible_host }}"
+      AUTH_HOST: "auth.{{ ansible_host }}"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.traefik-forward-auth.entrypoints: "websecure"
+      traefik.http.routers.traefik-forward-auth.tls: "true"
+      traefik.http.routers.traefik-forward-auth.tls.certresolver: "letsencrypt"
+      traefik.http.routers.traefik-forward-auth.rule: "Host(`auth.{{ ansible_host }}`)"
+      traefik.http.services.traefik-forward-auth.loadbalancer.server.port: "4181"
+      traefik.http.routers.traefik-forward-auth.middlewares: "forward-auth@file"
+
+- name: Run whoami container
+  community.docker.docker_container:
+    image: containous/whoami
+    name: whoami
+    pull: true
+    restart: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.whoami.entrypoints: "websecure"
+      traefik.http.routers.whoami.tls: "true"
+      traefik.http.routers.whoami.tls.certresolver: "letsencrypt"
+      traefik.http.routers.whoami.rule: "Host(`test.{{ ansible_host }}`)"
+      traefik.http.services.whoami.loadbalancer.server.port: "80"
+      traefik.http.routers.whoami.middlewares: "forward-auth@file"
 
 - name: Run segments-go container
   community.docker.docker_container:
@@ -133,5 +180,5 @@
       traefik.http.routers.pihole.tls: "true"
       traefik.http.routers.pihole.tls.certresolver: "letsencrypt"
       traefik.http.routers.pihole.rule: "Host(`pihole.{{ ansible_host }}`)"
-      traefik.http.routers.pihole.middlewares: "auth-chain@file,pihole-redirectregex@file,pihole-addprefix@file"
+      traefik.http.routers.pihole.middlewares: "forward-auth@file,pihole-redirectregex@file,pihole-addprefix@file"
       traefik.http.services.pihole.loadbalancer.server.port: "80"
