@@ -1,11 +1,15 @@
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+
 - name: qbittorrent
   community.docker.docker_container:
-    name: "qbittorrent"
+    name: "{{ app_name }}"
     image: "lscr.io/linuxserver/qbittorrent:latest"
     pull: true
     restart_policy: "unless-stopped"
     networks:
-      - name: "{{ network }}"
+      - name: "{{ docker_network }}"
     ports:
       - "6881:6881"
       - "6881:6881/udp"
@@ -15,10 +19,6 @@
       PGUID: "1000"
       WEBUI_PORT: "8080"
     volumes:
-      - "{{ data_dir }}/qbittorrent:/config"
+      - "{{ app_data_dir }}:/config"
       - "/mnt/hdd:/downloads"
-    labels:
-      traefik.enable: "true"
-      traefik.http.routers.qb.entrypoints: "web"
-      traefik.http.routers.qb.rule: "Host(`torrent.{{ ansible_host }}`)"
-      traefik.http.services.qb.loadbalancer.server.port: "8080"
+    labels: "{{ labels }}"
