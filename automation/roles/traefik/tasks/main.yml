@@ -1,35 +1,36 @@
 ---
 - name: Create traefik dir
   ansible.builtin.file:
-    path: "{{ data_dir }}/traefik"
+    path: "{{ app_data_dir }}"
     state: directory
     mode: "0755"
 
 - name: Copy traefik config file
   ansible.builtin.copy:
     src: traefik.yml
-    dest: "{{ data_dir }}/traefik/traefik.yml"
+    dest: "{{ app_data_dir }}/traefik.yml"
 
 - name: Create a network for traefik
   community.docker.docker_network:
-    name: "{{ network }}"
+    name: "{{ docker_network }}"
     ipam_config:
       - subnet: 10.1.1.0/24
 
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+
 - name: Traefik container
   community.docker.docker_container:
-    name: traefik
-    image: "traefik:v2.11"
+    name: "{{ app_name }}"
+    image: "traefik:latest"
+    restart: true
     restart_policy: "unless-stopped"
     ports:
       - "80:80"
     networks:
-      - name: "{{ network }}"
+      - name: "{{ docker_network }}"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "{{ data_dir }}/traefik/traefik.yml:/traefik.yml:ro"
-    labels:
-      traefik.enable: "true"
-      traefik.http.routers.traefik.entrypoints: "web"
-      traefik.http.routers.traefik.rule: "Host(`traefik.{{ ansible_host }}`)"
-      traefik.http.services.traefik.loadbalancer.server.port: "8080"
+      - "{{ app_data_dir }}/traefik.yml:/traefik.yml:ro"
+    labels: "{{ labels }}"
