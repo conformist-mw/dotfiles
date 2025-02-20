@@ -3,11 +3,8 @@ PrivateKey = {{ interface.private_key }}
 Address = {{ interface.address }}
 ListenPort = {{ interface.port }}
 
-{% if interface.ipt_rules is defined %}
-{% for rule, value in interface.ipt_rules.items() %}
-{{ rule }} = {{ value }}
-{% endfor %}
-{% endif %}
+PostUp = /etc/wireguard/post-up.sh %i
+PostDown = /etc/wireguard/post-down.sh %i
 
 {% for peer in interface.peers %}
 [Peer]
