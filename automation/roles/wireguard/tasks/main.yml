@@ -13,6 +13,18 @@
     group: root
   become: true
 
+- name: copy post shell scripts
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/etc/wireguard/{{ item }}"
+    owner: root
+    group: root
+    mode: 0700
+  loop:
+    - "post-down.sh"
+    - "post-up.sh"
+  become: true
+
 - name: copy peers configs
   template:
     src: peer.conf.j2
