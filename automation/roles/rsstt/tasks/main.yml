@@ -19,7 +19,7 @@
       - "{{ data_dir }}/rsstt/feed.db:/data/feed.db"
     labels:
       traefik.enable: "true"
-      raefik.http.routers.rsstt.entrypoints: "websecure"
+      traefik.http.routers.rsstt.entrypoints: "websecure"
       traefik.http.routers.rsstt.tls: "true"
       traefik.http.routers.rsstt.tls.certresolver: "letsencrypt"
       traefik.http.routers.rsstt.rule: "Host(`rsstt.{{ ansible_host }}`)"
