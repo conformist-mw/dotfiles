@@ -28,7 +28,7 @@ machines:
         - { key: "traefik.http.routers.{{ app_name }}.rule", value: "Host(`{{ app_name }}.{{ ansible_host }}`)" }
         - { key: "traefik.http.services.{{ app_name }}.loadbalancer.server.port", value: "{{ app_port }}" }
         - { key: "traefik.http.routers.{{ app_name }}.tls.certresolver", value: "letsencrypt" }
-        - { key: "traefik.http.routers.{{ app_name }}.middlewares", value: "{{ middlewares | default('authelia@docker') }}" }
+        - { key: "traefik.http.routers.{{ app_name }}.middlewares", value: "{{ middlewares | default('oauth2-proxy@docker') }}" }
 
   vars:
     tz: "Europe/Kyiv"
