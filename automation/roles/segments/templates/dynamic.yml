@@ -1,0 +1,83 @@
+http:
+  routers:
+    root-redirect-to-about:
+      rule: "Host(`{{ ansible_host }}`)"
+      entryPoints:
+        - web
+        - websecure
+      middlewares:
+        - root-redirect
+      service: noop@internal
+      tls:
+        certResolver: letsencrypt
+    music:
+      entryPoints:
+        - websecure
+      middlewares:
+        - oauth2-proxy@docker
+      service: music
+      rule: Host(`music.{{ ansible_host }}`)
+      tls:
+        certResolver: letsencrypt
+    homeassistant:
+      entryPoints:
+        - websecure
+      middlewares:
+        - no-auth-chain
+      service: homeassistant
+      rule: Host(`ha.{{ ansible_host }}`)
+      tls:
+        certResolver: letsencrypt
+
+  middlewares:
+    auth-chain:
+      chain:
+        middlewares:
+          - auth-headers
+          - rate-limit
+          - compression
+
+    no-auth-chain:
+      chain:
+        middlewares:
+          - rate-limit
+          - compression
+
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+
+    compression:
+      compress: {}
+
+    auth-headers:
+      headers:
+        stsSeconds: 315360000
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        frameDeny: true
+        referrerPolicy: "same-origin"
+        permissionsPolicy: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), vr=()"
+        customResponseHeaders:
+          X-Robots-Tag: "none,noarchive,nosnippet,notranslate,noimageindex"
+          server: ""
+
+    root-redirect:
+      redirectRegex:
+        regex: "^https?://[^/]+/?(.*)"
+        replacement: "https://about.{{ ansible_host }}"
+        permanent: true
+
+  services:
+    music:
+      loadBalancer:
+        servers:
+          - url: http://192.168.1.222:4533
+    homeassistant:
+      loadBalancer:
+        servers:
+          - url: http://192.168.1.223:8123
