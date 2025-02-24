@@ -1,0 +1,59 @@
+- Applications:
+    - Photoprism:
+        href: http://photo.{{ ansible_host }}
+        description: "Own photo collection"
+        icon: "photoprism.svg"
+
+    - QBittorrent:
+        href: http://torrent.{{ ansible_host }}
+        description: "Torrent client"
+        icon: "qbittorrent.svg"
+
+    - Jellyfin:
+        href: http://{{ ansible_host }}:8096
+        description: "Media server"
+        icon: "jellyfin.svg"
+    - Hackmd:
+        href: http://hackmd.{{ ansible_host }}
+        description: "Markdown editor"
+        icon: "hedgedoc.svg"
+    - Navidrome:
+        href: http://navidrome.{{ ansible_host }}
+        description: "Music server"
+        icon: "navidrome.svg"
+
+- Tools:
+    - Dozzle:
+        href: http://dozzle.{{ ansible_host }}
+        description: "Docker logs"
+        icon: "dozzle.svg"
+    - Traefik:
+        href: http://traefik.{{ ansible_host }}
+        description: "Reverse proxy"
+        icon: "traefik.svg"
+    - Portainer:
+        href: http://portainer.{{ ansible_host }}
+        description: "Docker management"
+        icon: "portainer.svg"
+    - Glances:
+        href: http://glances.{{ ansible_host }}
+        description: "System monitoring"
+        icon: "glances.svg"
+
+- Hetzner VPS:
+    - Home Assistant:
+        href: http://ha.conformist.name
+        description: "Home automation"
+        icon: "ha.svg"
+    - Traefik:
+        href: http://traefik.conformist.name
+        description: "Reverse proxy"
+        icon: "traefik.svg"
+    - About:
+        href: http://conformist.name
+        description: "About me"
+        icon: "about.svg"
+    - Segments:
+        href: http://segments.conformist.name
+        description: "Segments"
+        icon: "segments.svg"
