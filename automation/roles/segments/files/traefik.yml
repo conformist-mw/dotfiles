@@ -32,3 +32,10 @@ certificatesResolvers:
       dnsChallenge:
         provider: hetzner
         delayBeforeCheck: "0"
+
+accessLog:
+  filePath: "/var/log/traefik/access.log"
+  bufferingSize: 100
+  filters:
+    retryAttempts: true
+    statusCodes: "400-499,500-599"
