@@ -1,23 +1,52 @@
 ---
+- name: Copy oauth2-proxy config file
+  ansible.builtin.template:
+    src: oauth2-proxy.cfg
+    dest: "{{ server_dir }}/oauth2-proxy.cfg"
+  vars:
+    oauth_cookie_secret: "{{ lookup('community.general.bitwarden_secrets_manager', 'a7868291-5b11-43cc-99de-b28d00bcd215').value }}"
+    oauth_secret: "{{ lookup('community.general.bitwarden_secrets_manager', 'acac7b02-8847-4ef6-b3ca-b28700cfb83b') }}"
+
+- name: Copy authenticated-emails file
+  ansible.builtin.copy:
+    src: authenticated-emails.txt
+    dest: "{{ server_dir }}/authenticated-emails.txt"
+
+- name: oauth2-proxy container
+  community.docker.docker_container:
+    name: oauth2-proxy
+    image: "quay.io/oauth2-proxy/oauth2-proxy:latest"
+    restart: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    command: "--config=/oauth2-proxy.cfg"
+    volumes:
+      - "{{ server_dir }}/oauth2-proxy.cfg:/oauth2-proxy.cfg"
+      - "{{ server_dir }}/authenticated-emails.txt:/authenticated-emails.txt"
+    env:
+      OAUTH2_PROXY_CONFIG: "/oauth2-proxy.cfg"
+    labels:
+      traefik.enable: 'true'
+      traefik.http.routers.oauth2-proxy.entrypoints: 'websecure'
+      traefik.http.routers.oauth2-proxy.tls: 'true'
+      traefik.http.routers.oauth2-proxy.rule: 'Host(`auth.{{ ansible_host }}`)'
+      traefik.http.services.oauth2-proxy.loadbalancer.server.port: "4180"
+      traefik.http.routers.oauth2-proxy.tls.certresolver: "letsencrypt"
+      traefik.http.middlewares.oauth2-proxy.forwardauth.address: 'http://oauth2-proxy:4180'
+      traefik.http.middlewares.oauth2-proxy.forwardauth.trustForwardHeader: 'true'
+      traefik.http.middlewares.oauth2-proxy.forwardauth.authResponseHeaders: 'X-Auth-Request-Access-Token,Authorization,X-Auth-Request-Email,X-Auth-Request-User'
+      traefik.http.middlewares.oauth2-proxy: 'auth-headers@file'
+
 - name: Copy traefik static config file
   ansible.builtin.copy:
     src: traefik.yml
     dest: "{{ server_dir }}/traefik.yml"
 
 - name: Copy traefik dynamic config file
-  ansible.builtin.copy:
+  ansible.builtin.template:
     src: dynamic.yml
     dest: "{{ server_dir }}/dynamic.yml"
-
-- name: fill traefik htpasswd
-  community.general.htpasswd:
-    path: "{{ server_dir }}/traefik.htpasswd"
-    name: "{{ item.note }}"
-    password: "{{ item.value }}"
-  loop:
-    - "{{ lookup('community.general.bitwarden_secrets_manager', '30b3908f-6c67-4353-9bdc-b269014ab708') }}"
-    - "{{ lookup('community.general.bitwarden_secrets_manager', 'f75194eb-7ca6-4363-83ff-b269014a81f8') }}"
-  no_log: true
 
 - name: Traefik container
   community.docker.docker_container:
@@ -35,8 +64,8 @@
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "{{ server_dir }}/traefik.yml:/traefik.yml:ro"
       - "{{ server_dir }}/dynamic.yml:/dynamic.yml:ro"
-      - "{{ server_dir }}/traefik.htpasswd:/traefik.htpasswd:ro"
       - "{{ server_dir }}/letsencrypt:/letsencrypt"
+      - "{{ server_dir }}/logs/traefik:/var/log/traefik"
     env:
       HETZNER_API_KEY: "{{ lookup('community.general.bitwarden_secrets_manager', '2ac2aa22-b53c-47d0-b1c5-b26901483380').value }}"
     labels:
@@ -47,37 +76,7 @@
       traefik.http.routers.traefik.rule: "Host(`traefik.{{ ansible_host }}`)"
       traefik.http.services.traefik.loadbalancer.server.port: "8080"
       traefik.http.routers.traefik.service: "api@internal"
-      traefik.http.routers.traefik.middlewares: "authelia@docker"
-
-- name: copy authelia config file
-  ansible.builtin.template:
-    src: authelia.yaml
-    dest: "{{ data_dir }}/authelia/configuration.yml"
-  vars:
-    authelia_session_secret: "session_secret_super_session_secret_super"
-    authelia_jwt_secret: "jwt_secret_super_session_secret_super"
-  become: true
-
-- name: authelia container
-  community.docker.docker_container:
-    name: authelia
-    image: "authelia/authelia:latest"
-    restart_policy: "unless-stopped"
-    networks:
-      - name: "{{ docker_network }}"
-    volumes:
-      - "{{ data_dir }}/authelia:/config"
-    env:
-      TZ: "{{ tz }}"
-    labels:
-      traefik.enable: 'true'
-      traefik.http.routers.authelia.entrypoints: 'websecure'
-      traefik.http.routers.authelia.tls: 'true'
-      traefik.http.routers.authelia.rule: 'Host(`auth.{{ ansible_host }}`)'
-      traefik.http.routers.authelia.tls.certresolver: 'letsencrypt'
-      traefik.http.middlewares.authelia.forwardauth.address: 'http://authelia:9091/api/authz/forward-auth'
-      traefik.http.middlewares.authelia.forwardauth.trustForwardHeader: 'true'
-      traefik.http.middlewares.authelia.forwardauth.authResponseHeaders: 'Remote-User,Remote-Groups,Remote-Name,Remote-Email'
+      traefik.http.routers.traefik.middlewares: "auth-chain@file"
 
 - name: Run whoami container
   community.docker.docker_container:
@@ -93,9 +92,9 @@
       traefik.http.routers.whoami.entrypoints: "websecure"
       traefik.http.routers.whoami.tls: "true"
       traefik.http.routers.whoami.tls.certresolver: "letsencrypt"
-      traefik.http.routers.whoami.rule: "Host(`test.{{ ansible_host }}`)"
+      traefik.http.routers.whoami.rule: "Host(`whoami.{{ ansible_host }}`)"
       traefik.http.services.whoami.loadbalancer.server.port: "80"
-      traefik.http.routers.whoami.middlewares: "authelia@docker"
+      traefik.http.routers.whoami.middlewares: "auth-chain@file"
 
 - name: Run segments-go container
   community.docker.docker_container:
@@ -116,43 +115,6 @@
       traefik.http.routers.segments-go.rule: "Host(`segments.{{ ansible_host }}`)"
       traefik.http.services.segments-go.loadbalancer.server.port: "8080"
       traefik.http.routers.segments-go.middlewares: "no-auth-chain@file"
-
-- name: Copy ha-nginx config file
-  ansible.builtin.copy:
-    src: ha-nginx.conf
-    dest: "{{ data_dir }}/nginx/ha-nginx.conf"
-  register: ha_nginx_config
-
-- name: Homeassistant Nginx
-  community.docker.docker_container:
-    name: ha-nginx
-    image: nginx:latest
-    restart: "{{ ha_nginx_config.changed | default(false) }}"
-    restart_policy: "unless-stopped"
-    networks:
-      - name: "{{ docker_network }}"
-    volumes:
-      - "{{ data_dir }}/nginx/ha-nginx.conf:/etc/nginx/nginx.conf:ro"
-    labels:
-      traefik.enable: "true"
-      traefik.http.routers.ha.entrypoints: "websecure"
-      traefik.http.routers.ha.tls: "true"
-      traefik.http.routers.ha.tls.certresolver: "letsencrypt"
-      traefik.http.routers.ha.rule: "Host(`ha.{{ ansible_host }}`)"
-      traefik.http.services.ha.loadbalancer.server.port: "80"
-      traefik.http.routers.ha.middlewares: "no-auth-chain@file"
-
-- name: Run dumbproxy container
-  community.docker.docker_container:
-    image: yarmak/dumbproxy
-    name: dumbproxy
-    restart: true
-    restart_policy: "unless-stopped"
-    command: "-auth 'basicfile://?path=/etc/dumbproxy.htpasswd'"
-    ports:
-      - "10000:8080"
-    volumes:
-      - "{{ server_dir }}/traefik.htpasswd:/etc/dumbproxy.htpasswd:ro"
 
 - name: Pi-Hole container
   community.docker.docker_container:
@@ -181,5 +143,5 @@
       traefik.http.routers.pihole.tls: "true"
       traefik.http.routers.pihole.tls.certresolver: "letsencrypt"
       traefik.http.routers.pihole.rule: "Host(`pihole.{{ ansible_host }}`)"
-      traefik.http.routers.pihole.middlewares: "authelia@docker,pihole-redirectregex@file,pihole-addprefix@file"
+      traefik.http.routers.pihole.middlewares: "auth-chain@file"
       traefik.http.services.pihole.loadbalancer.server.port: "80"
