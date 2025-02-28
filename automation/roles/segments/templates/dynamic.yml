@@ -14,9 +14,27 @@ http:
       entryPoints:
         - websecure
       middlewares:
-        - oauth2-proxy@docker
+        - no-auth-chain
       service: music
       rule: Host(`music.{{ ansible_host }}`)
+      tls:
+        certResolver: letsencrypt
+    movies:
+      entryPoints:
+        - websecure
+      middlewares:
+        - auth-chain
+      service: movies
+      rule: Host(`movies.{{ ansible_host }}`)
+      tls:
+        certResolver: letsencrypt
+    files:
+      entryPoints:
+        - websecure
+      middlewares:
+        - no-auth-chain
+      service: files
+      rule: Host(`files.{{ ansible_host }}`)
       tls:
         certResolver: letsencrypt
     homeassistant:
@@ -33,6 +51,7 @@ http:
     auth-chain:
       chain:
         middlewares:
+          - oauth2-proxy@docker
           - auth-headers
           - rate-limit
           - compression
@@ -63,6 +82,7 @@ http:
         referrerPolicy: "same-origin"
         permissionsPolicy: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), vr=()"
         customResponseHeaders:
+          Strict-Transport-Security: "max-age=63072000"
           X-Robots-Tag: "none,noarchive,nosnippet,notranslate,noimageindex"
           server: ""
 
@@ -77,7 +97,25 @@ http:
       loadBalancer:
         servers:
           - url: http://192.168.1.222:4533
+    movies:
+      loadBalancer:
+        servers:
+          - url: http://192.168.1.222:8096
     homeassistant:
       loadBalancer:
         servers:
           - url: http://192.168.1.223:8123
+    files:
+      loadBalancer:
+        servers:
+          - url: http://192.168.1.222:10080
+
+# https://ssl-config.mozilla.org/#server=traefik&version=3.3.3&config=modern&guideline=5.7
+tls:
+  options:
+    modern:
+      minVersion: VersionTLS13
+      curvePreferences:
+        - X25519
+        - CurveP256
+        - CurveP384
