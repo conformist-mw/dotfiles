@@ -1,0 +1,10 @@
+[Unit]
+Description=Bitwarden Backup
+After=network.target
+
+[Service]
+User={{ ansible_user }}
+Type=oneshot
+EnvironmentFile={{ bw_env_filepath }}
+WorkingDirectory={{ bw_backup_path }}
+ExecStart=/usr/local/bin/bw_backup.sh

@@ -1,0 +1,9 @@
+[Unit]
+Description=Run Bitwarden Backup Daily
+
+[Timer]
+OnCalendar=daily
+Unit=bw_backup.service
+
+[Install]
+WantedBy=timers.target
