@@ -149,7 +149,7 @@
         mode: 0755
       become: true
 
-- name: Geg telegram bot token, chat id
+- name: Get telegram bot token, chat id
   set_fact:
     telegram_bot: "{{ lookup('community.general.bitwarden_secrets_manager', '26e16cc8-09d8-4636-b0ab-b2690130a690') }}"
 
@@ -169,3 +169,71 @@
       WATCHTOWER_NOTIFICATION_URL: "telegram://{{ telegram_bot.value }}@telegram?chats={{ telegram_bot.note }}"
       WATCHTOWER_NOTIFICATIONS_HOSTNAME: "{{ ansible_host }}"
       WATCHTOWER_SCHEDULE: "0 0 9 * * *"
+
+- name: check if bw cli is installed
+  stat:
+    path: /usr/local/bin/bw
+  register: bw_cli
+
+- name: Install bw cli
+  block:
+    - name: download bw cli
+      get_url:
+        url: "https://github.com/bitwarden/clients/releases/download/cli-v2025.1.3/bw-oss-linux-2025.1.3.zip"
+        dest: /tmp/bw-latest.zip
+
+    - name: install bw cli
+      unarchive:
+        src: /tmp/bw-latest.zip
+        dest: /usr/local/bin
+        remote_src: true
+      become: true
+  when: not bw_cli.stat.exists
+
+- name: Get bw client, secret
+  set_fact:
+    bw_secrets: "{{ lookup('community.general.bitwarden_secrets_manager', '3407121d-6e9f-4f71-ba40-b29400a29a13') }}"
+
+- name: setup bitwarden backup job
+  block:
+    - name: Create Bitwarden environment file
+      copy:
+        dest: /etc/bw.env
+        content: |
+          BW_CLIENTID={{ bw_secrets.note }}
+          BW_CLIENTSECRET={{ bw_secrets.value }}
+          BW_PASSWORD={{ lookup('community.general.bitwarden_secrets_manager', '45db43c7-e937-45c3-9fe5-b2940131f23a').value }}
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0600"
+      become: true
+
+    - name: copy bw_backup script
+      ansible.builtin.copy:
+        src: "bw_backup.sh"
+        dest: "/usr/local/bin/bw_backup.sh"
+        mode: "0755"
+      become: true
+
+    - name: copy bw backup systemd service
+      ansible.builtin.template:
+        src: "bw_backup.service"
+        dest: "/etc/systemd/system/bw_backup.service"
+      vars:
+        bw_env_filepath: "/etc/bw.env"
+        bw_backup_path: "{{ data_dir }}/bw"
+      become: true
+
+    - name: copy bw backup systemd timer
+      ansible.builtin.copy:
+        src: "bw_backup.timer"
+        dest: "/etc/systemd/system/bw_backup.timer"
+      become: true
+
+    - name: enable bw backup timer
+      ansible.builtin.systemd:
+        name: bw_backup.timer
+        enabled: yes
+        state: started
+        daemon_reload: yes
+      become: true
