@@ -1,3 +1,5 @@
 app_name: "homepage"
 app_port: 3000
 app_data_dir: "{{ data_dir }}/homepage"
+template_prefix: ""
+hostname_prefix: ""
