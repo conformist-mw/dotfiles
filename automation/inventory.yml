@@ -23,11 +23,11 @@ machines:
       data_dir: "{{ ansible_env.HOME }}/server_data"
       traefik_labels:
         - { key: "traefik.enable", value: "true" }
-        - { key: "traefik.http.routers.tls", value: "true" }
         - { key: "traefik.http.routers.{{ app_name }}.entrypoints", value: "websecure" }
+        - { key: "traefik.http.routers.{{ app_name }}.tls", value: "true" }
+        - { key: "traefik.http.routers.{{ app_name }}.tls.certresolver", value: "letsencrypt" }
         - { key: "traefik.http.routers.{{ app_name }}.rule", value: "Host(`{{ app_name }}.{{ ansible_host }}`)" }
         - { key: "traefik.http.services.{{ app_name }}.loadbalancer.server.port", value: "{{ app_port }}" }
-        - { key: "traefik.http.routers.{{ app_name }}.tls.certresolver", value: "letsencrypt" }
         - { key: "traefik.http.routers.{{ app_name }}.middlewares", value: "{{ middlewares | default('auth-chain@file') }}" }
 
   vars:
