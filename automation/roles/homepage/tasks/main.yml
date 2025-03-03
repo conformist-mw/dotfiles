@@ -6,31 +6,31 @@
     group: "{{ ansible_user }}"
     mode: "0755"
     recurse: true
-  become: true
 
 - name: Copy homepage services
   ansible.builtin.template:
-    src: services.yaml
-    dest: "{{ app_data_dir }}/services.yaml"
-  register: homepage_config
+    src: "{{ template_prefix }}{{ item }}.yaml"
+    dest: "{{ app_data_dir }}/{{ item }}.yaml"
+  loop:
+    - "services"
+    - "settings"
+    - "widgets"
 
-- name: Copy homepage settings
-  ansible.builtin.template:
-    src: settings.yaml
-    dest: "{{ app_data_dir }}/settings.yaml"
+- name: override labels
+  set_fact:
+    additional_labels:
+      - key: "traefik.http.routers.{{ app_name }}.rule"
+        value: "Host(`{{ hostname_prefix }}{{ ansible_host }}`)"
 
-- name: Copy homepage widgets
-  ansible.builtin.template:
-    src: widgets.yaml
-    dest: "{{ app_data_dir }}/widgets.yaml"
-  register: homepage_config
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
 
 - name: homepage container
   community.docker.docker_container:
     name: "{{ app_name }}"
     image: ghcr.io/gethomepage/homepage:latest
-    pull: true
-    restart: "{{ homepage_config.changed | default(false) }}"
+    restart: true
     restart_policy: "unless-stopped"
     networks:
       - name: "{{ docker_network }}"
@@ -40,7 +40,4 @@
     env:
       PUID: "1000"
       PGID: "1000"
-    labels:
-      traefik.enable: "true"
-      traefik.http.routers.homepage.rule: "Host(`{{ ansible_host }}`)"
-      traefik.http.services.homepage.loadbalancer.server.port: "3000"
+    labels: "{{ labels }}"
