@@ -52,7 +52,6 @@
   community.docker.docker_container:
     name: traefik
     image: "traefik:latest"
-    pull: true
     restart: true
     restart_policy: "unless-stopped"
     ports:
@@ -82,7 +81,6 @@
   community.docker.docker_container:
     image: traefik/whoami:latest-arm64
     name: whoami
-    pull: true
     restart: true
     restart_policy: "unless-stopped"
     networks:
@@ -100,7 +98,6 @@
   community.docker.docker_container:
     image: olegsmedyuk/segments:latest
     name: segments
-    pull: true
     restart: true
     restart_policy: "unless-stopped"
     networks:
@@ -120,7 +117,6 @@
   community.docker.docker_container:
     name: pihole
     image: pihole/pihole:latest
-    pull: true
     restart: true
     restart_policy: "unless-stopped"
     networks:
