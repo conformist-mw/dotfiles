@@ -46,6 +46,15 @@ http:
       rule: Host(`ha.{{ ansible_host }}`)
       tls:
         certResolver: letsencrypt
+    router:
+      entryPoints:
+        - websecure
+      middlewares:
+        - auth-chain
+      service: router
+      rule: Host(`router.{{ ansible_host }}`)
+      tls:
+        certResolver: letsencrypt
 
   middlewares:
     auth-chain:
@@ -109,6 +118,11 @@ http:
       loadBalancer:
         servers:
           - url: http://192.168.1.222:10080
+
+    router:
+      loadBalancer:
+        servers:
+          - url: http://192.168.1.1:80
 
 # https://ssl-config.mozilla.org/#server=traefik&version=3.3.3&config=modern&guideline=5.7
 tls:
