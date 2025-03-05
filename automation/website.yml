@@ -1,4 +1,0 @@
-- hosts: website
-  roles:
-    - common
-    - vim
