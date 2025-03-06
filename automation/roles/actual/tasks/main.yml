@@ -1,0 +1,16 @@
+---
+- name: Actual container
+  community.docker.docker_container:
+    image: actualbudget/actual-server:latest
+    pull: true
+    name: actual-server
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    volumes:
+      - "{{ ssd_data_dir }}/actual-server:/data"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.actual.entrypoints: "web"
+      traefik.http.routers.actual.rule: "Host(`actual.{{ ansible_host }}`)"
+      traefik.http.services.actual.loadbalancer.server.port: "5006"
