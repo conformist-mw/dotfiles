@@ -1,5 +1,6 @@
 [Unit]
 Description=Bitwarden Backup
+OnFailure=systemd-notify@%i.service
 After=network.target
 
 [Service]
