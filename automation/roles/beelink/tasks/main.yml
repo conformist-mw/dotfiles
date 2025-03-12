@@ -40,38 +40,30 @@
     path: "{{ data_dir }}"
     state: directory
 
-- name: Create ssd data dir
-  ansible.builtin.file:
-    path: /mnt/ssd
-    state: directory
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-  become: true
+- name: Setup external drives
+  block:
+    - name: Create dirs for external drives
+      ansible.builtin.file:
+        path: /mnt/{{ item }}
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+      with_items:
+        - ssd
+        - hdd
 
-- name: data ssd disk
-  ansible.posix.mount:
-    path: /mnt/ssd
-    src: PARTUUID="1ae670cf-01"
-    fstype: ext4
-    state: present
-  become: true
-
-- name: Create hdd data dir
-  ansible.builtin.file:
-    path: /mnt/hdd
-    state: directory
-    owner: "{{ ansible_user }}"
-    group: "{{ ansible_user }}"
-  become: true
-
-- name: data hdd disk
-  ansible.posix.mount:
-    path: /mnt/hdd
-    src: UUID="281B99140849F384"
-    fstype: ntfs
-    opts: "auto,exec,rw,user,dmask=002,fmask=113,uid=1000,gid=1000"
-    passno: 2
-    state: present
+    - name: mount data disks
+      ansible.posix.mount:
+        path: "/mnt/{{ item.path }}"
+        src: PARTUUID="{{ item.partuuid }}"
+        fstype: ext4
+        opts: "{{ item.opts | default('defaults') }}"
+        dump: "{{ item.dump | default('0') }}"
+        passno: "{{ item.passno | default('0') }}"
+        state: present
+      with_items:
+        - {"path": "ssd", "partuuid": "1ae670cf-01"}
+        - {"path": "hdd", "partuuid": "d5dcdc68-01", "opts": "defaults,nofail"}
   become: true
 
 - name: Create a network for docker
