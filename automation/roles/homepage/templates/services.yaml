@@ -1,59 +1,112 @@
-- Applications:
-    - Photoprism:
-        href: http://photo.{{ ansible_host }}
-        description: "Own photo collection"
-        icon: "photoprism.svg"
 
+- media:
+  - Jellyfin:
+      href: http://{{ ansible_host }}:8096
+      description: "Media server"
+      icon: "jellyfin"
+      server: "local-docker"
+      container: "jellyfin"
+      showStats: true
+  - Navidrome:
+      href: http://navidrome.{{ ansible_host }}
+      description: "Music server"
+      icon: "navidrome"
+      server: "local-docker"
+      container: "navidrome"
+      showStats: true
+  - Photoprism:
+      href: http://photo.{{ ansible_host }}
+      description: "Own photo collection"
+      icon: "photoprism"
+      server: "local-docker"
+      container: "photo"
+      showStats: true
+  - Filebrowser:
+      href: http://filebrowser.{{ ansible_host }}
+      description: "File manager"
+      icon: "filebrowser"
+      server: "local-docker"
+      container: "filebrowser"
+      showStats: true
+
+- applications:
     - QBittorrent:
         href: http://torrent.{{ ansible_host }}
         description: "Torrent client"
-        icon: "qbittorrent.svg"
-
-    - Jellyfin:
-        href: http://{{ ansible_host }}:8096
-        description: "Media server"
-        icon: "jellyfin.svg"
+        icon: "qbittorrent"
+        server: "local-docker"
+        container: "torrent"
     - Hackmd:
         href: http://hackmd.{{ ansible_host }}
         description: "Markdown editor"
-        icon: "hedgedoc.svg"
-    - Navidrome:
-        href: http://navidrome.{{ ansible_host }}
-        description: "Music server"
-        icon: "navidrome.svg"
+        icon: "hedgedoc"
+        server: "local-docker"
+        container: "hackmd"
+    - Gitea:
+        href: http://gitea.{{ ansible_host }}
+        description: "Git server"
+        icon: "gitea"
+        server: "local-docker"
+        container: "gitea"
+    - Nextcloud:
+        href: http://nextcloud.{{ ansible_host }}
+        description: "File storage"
+        icon: "nextcloud"
+        server: "local-docker"
+        container: "nextcloud"
+    - Paperless:
+        href: http://paperless.{{ ansible_host }}
+        description: "Document management"
+        icon: "paperless"
+        server: "local-docker"
+        container: "paperless"
 
-- Tools:
+- tools:
     - Dozzle:
         href: http://dozzle.{{ ansible_host }}
         description: "Docker logs"
-        icon: "dozzle.svg"
+        icon: "dozzle"
+        server: "local-docker"
+        container: "dozzle"
     - Traefik:
         href: http://traefik.{{ ansible_host }}
         description: "Reverse proxy"
-        icon: "traefik.svg"
+        icon: "traefik"
+        server: "local-docker"
+        container: "traefik"
     - Portainer:
         href: http://portainer.{{ ansible_host }}
         description: "Docker management"
-        icon: "portainer.svg"
+        icon: "portainer"
+        server: "local-docker"
+        container: "portainer"
     - Glances:
         href: http://glances.{{ ansible_host }}
         description: "System monitoring"
-        icon: "glances.svg"
+        icon: "glances"
+        server: "local-docker"
+        container: "glances"
+    - PGAdmin:
+        href: http://pgadmin.{{ ansible_host }}
+        description: "PostgreSQL management"
+        icon: "pgadmin"
+        server: "local-docker"
+        container: "pgadmin"
 
-- Hetzner VPS:
+- vps:
     - Home Assistant:
         href: http://ha.conformist.name
         description: "Home automation"
-        icon: "ha.svg"
+        icon: "home-assistant"
     - Traefik:
         href: http://traefik.conformist.name
         description: "Reverse proxy"
-        icon: "traefik.svg"
+        icon: "traefik"
     - About:
         href: http://conformist.name
         description: "About me"
-        icon: "about.svg"
+        icon: "mdi-account"
     - Segments:
         href: http://segments.conformist.name
         description: "Segments"
-        icon: "segments.svg"
+        icon: "mdi-segment"
