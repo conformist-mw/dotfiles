@@ -1,5 +1,9 @@
 machines:
   hosts:
+    macos:
+      arch: darwin/arm64
+      ansible_connection: local
+      ansible_python_interpreter: /Users/oleh/.local/share/mise/shims/python
     bee:
       ansible_host: bee.home
       ansible_user: user
