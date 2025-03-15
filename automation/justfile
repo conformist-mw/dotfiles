@@ -9,6 +9,9 @@ deploy-bee:
 deploy-hetzner:
 	ansible-playbook hetzner.yml
 
+deploy-mac:
+  ansible-playbook macos.yml
+
 syntax-check:
 	ansible-playbook beelink.yml --syntax-check
 	ansible-playbook hetzner.yml --syntax-check
