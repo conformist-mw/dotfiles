@@ -3,7 +3,7 @@ machines:
     macos:
       arch: darwin/arm64
       ansible_connection: local
-      ansible_python_interpreter: /Users/oleh/.local/share/mise/shims/python
+      # ansible_python_interpreter: /Users/oleh/.local/share/mise/shims/python
     bee:
       ansible_host: bee.home
       ansible_user: user
@@ -12,6 +12,7 @@ machines:
       data_dir: "{{ ansible_env.HOME }}/homelab_data"
       docker_network: "homelab_net"
       docker_subnet: "10.1.1.0/24"
+      docker_gateway: "10.1.1.1"
       traefik_labels:
         - { key: "traefik.enable", value: "true" }
         - { key: "traefik.http.routers.{{ app_name }}.entrypoints", value: "web" }
@@ -25,6 +26,9 @@ machines:
       ansible_python_interpreter: /usr/bin/python
       server_dir: "{{ ansible_env.HOME }}/server"
       data_dir: "{{ ansible_env.HOME }}/server_data"
+      docker_network: "docker_net"
+      docker_subnet: "10.11.12.0/24"
+      docker_gateway: "10.11.12.1"
       traefik_labels:
         - { key: "traefik.enable", value: "true" }
         - { key: "traefik.http.routers.{{ app_name }}.entrypoints", value: "websecure" }
@@ -44,3 +48,4 @@ machines:
     ssd_data_dir: "{{ ssd_dir }}/data"
     docker_network: "docker_net"
     docker_subnet: "10.11.12.0/24"
+    docker_gateway: "10.11.12.1"
