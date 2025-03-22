@@ -57,6 +57,9 @@
 - name: Create a network for docker
   community.docker.docker_network:
     name: "{{ docker_network }}"
+    driver: bridge
+    driver_options:
+      com.docker.network.bridge.name: "{{ docker_network }}"
     ipam_config:
       - subnet: "{{ docker_subnet }}"
   become: true
