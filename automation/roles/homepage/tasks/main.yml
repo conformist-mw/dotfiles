@@ -1,18 +1,19 @@
 - name: Copy homepage services
   ansible.builtin.template:
-    src: "{{ template_prefix }}{{ item }}.yaml"
+    src: "{{ path_prefix }}{{ item }}.yaml"
     dest: "{{ app_data_dir }}/config/{{ item }}.yaml"
   loop:
+    - "bookmarks"
+    - "docker"
     - "services"
     - "settings"
     - "widgets"
-    - "docker"
   vars:
     open_weather_api_key: "{{ lookup('community.general.bitwarden_secrets_manager', '4344ffde-2d4a-46cd-9270-b29b01185379').value }}"
 
 - name: Copy favicon
   ansible.builtin.copy:
-    src: "{{ template_prefix }}favicon.ico"
+    src: "{{ path_prefix }}favicon.ico"
     dest: "{{ app_data_dir }}/images/favicon.ico"
 
 - name: Include labels generator
@@ -31,6 +32,8 @@
     restart_policy: "unless-stopped"
     networks:
       - name: "{{ docker_network }}"
+    env:
+      HOMEPAGE_ALLOWED_HOSTS: "{{ hostname_prefix }}{{ ansible_host }}"
     volumes:
       - "{{ app_data_dir }}/config:/app/config"
       - "{{ app_data_dir }}/images:/app/public/images"
