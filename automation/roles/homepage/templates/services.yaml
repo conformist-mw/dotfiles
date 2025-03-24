@@ -60,6 +60,10 @@
         icon: "paperless"
         server: "local-docker"
         container: "paperless"
+    - Home Assistant:
+        href: http://ha.{{ ansible_host }}
+        description: "Home automation"
+        icon: "home-assistant"
 
 - tools:
     - Dozzle:
@@ -84,8 +88,6 @@
         href: http://glances.{{ ansible_host }}
         description: "System monitoring"
         icon: "glances"
-        server: "local-docker"
-        container: "glances"
     - PGAdmin:
         href: http://pgadmin.{{ ansible_host }}
         description: "PostgreSQL management"
@@ -94,6 +96,14 @@
         container: "pgadmin"
 
 - vps:
+    - Router:
+        href: http://router.{{ ansible_host }}
+        description: "Router"
+        icon: "keenetic"
+    - Dashboard:
+        href: http://dash.{{ ansible_host }}
+        description: "Dashboard"
+        icon: "homepage"
     - Home Assistant:
         href: http://ha.conformist.name
         description: "Home automation"
