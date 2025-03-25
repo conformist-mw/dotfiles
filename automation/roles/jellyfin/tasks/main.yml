@@ -2,11 +2,13 @@
 - name: Jellyfin container
   community.docker.docker_container:
     image: jellyfin/jellyfin:latest
-    pull: true
     name: jellyfin
     restart_policy: "unless-stopped"
     restart: true
-    network_mode: host
+    networks:
+      - name: "{{ docker_network }}"
+    ports:
+      - "8096:8096"
     volumes:
       - "{{ data_dir }}/jellyfin/config:/config"
       - "{{ data_dir }}/jellyfin/cache:/cache"
