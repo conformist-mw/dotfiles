@@ -10,6 +10,15 @@ http:
       service: noop@internal
       tls:
         certResolver: letsencrypt
+    glances:
+      entryPoints:
+        - websecure
+      middlewares:
+        - auth-chain
+      service: glances
+      rule: Host(`glances.{{ ansible_host }}`)
+      tls:
+        certResolver: letsencrypt
     music:
       entryPoints:
         - websecure
@@ -50,7 +59,8 @@ http:
       entryPoints:
         - websecure
       middlewares:
-        - auth-chain
+        - strip-headers
+        - oauth2-proxy@docker
       service: router
       rule: Host(`router.{{ ansible_host }}`)
       tls:
@@ -95,6 +105,23 @@ http:
           X-Robots-Tag: "none,noarchive,nosnippet,notranslate,noimageindex"
           server: ""
 
+    strip-headers:
+      headers:
+        customRequestHeaders:
+          accept: ""
+          accept-language: ""
+          cache-control: ""
+          priority: ""
+          sec-ch-ua: ""
+          sec-ch-ua-mobile: ""
+          sec-ch-ua-platform: ""
+          sec-fetch-dest: ""
+          sec-fetch-mode: ""
+          sec-fetch-site: ""
+          sec-fetch-user: ""
+          upgrade-insecure-requests: ""
+          user-agent: ""
+
     root-redirect:
       redirectRegex:
         regex: "^https?://[^/]+/?(.*)"
@@ -102,6 +129,10 @@ http:
         permanent: true
 
   services:
+    glances:
+      loadBalancer:
+        servers:
+          - url: http://{{ docker_gateway }}:61208
     music:
       loadBalancer:
         servers:
