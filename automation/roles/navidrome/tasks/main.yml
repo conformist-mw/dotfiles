@@ -59,3 +59,55 @@
     state: started
     daemon_reload: true
   become: true
+
+- name: setup nd remove missing files job
+  block:
+    - name: Create nd remove missing files environment file
+      copy:
+        dest: /etc/nd.env
+        content: |
+          ND_USERNAME={{ admin_creds.note }}
+          ND_PASSWORD={{ admin_creds.value }}
+          ND_BASE_URL=http://{{ app_name }}.{{ ansible_host }}
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0600"
+      become: true
+      vars:
+        admin_creds: "{{ lookup('community.general.bitwarden_secrets_manager', '1aafcc89-8d5b-4e34-ba2e-b26b013bd90d') }}"
+
+    - name: Install httpx
+      ansible.builtin.pip:
+        name: "httpx"
+        state: present
+        virtualenv: "{{ app_data_dir }}/.venv"
+
+    - name: copy remove missing script
+      ansible.builtin.copy:
+        src: "nd_remove_missing.py"
+        dest: "{{ app_data_dir }}/nd_remove_missing.py"
+        mode: "0755"
+
+    - name: copy remove missing systemd service
+      ansible.builtin.template:
+        src: "nd_remove_missing.service"
+        dest: "/etc/systemd/system/nd_remove_missing.service"
+      vars:
+        nd_env_filepath: "/etc/nd.env"
+        nd_exec_path: "{{ app_data_dir }}/.venv/bin/python {{ app_data_dir }}/nd_remove_missing.py"
+        nd_work_dir: "{{ app_data_dir }}"
+      become: true
+
+    - name: copy nc remove missing systemd timer
+      ansible.builtin.copy:
+        src: "nd_remove_missing.timer"
+        dest: "/etc/systemd/system/nd_remove_missing.timer"
+      become: true
+
+    - name: enable nd remove missing timer
+      ansible.builtin.systemd:
+        name: nd_remove_missing.timer
+        enabled: yes
+        state: started
+        daemon_reload: yes
+      become: true
