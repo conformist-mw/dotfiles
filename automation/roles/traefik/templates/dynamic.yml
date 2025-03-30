@@ -1,0 +1,31 @@
+http:
+  routers:
+    glances:
+      entryPoints:
+        - web
+      service: glances
+      rule: Host(`glances.{{ ansible_host }}`)
+    ha:
+      entryPoints:
+        - web
+      service: ha
+      rule: Host(`ha.{{ ansible_host }}`)
+    router:
+      entryPoints:
+        - web
+      service: router
+      rule: Host(`router.{{ ansible_host }}`)
+
+  services:
+    glances:
+      loadBalancer:
+        servers:
+          - url: http://{{ docker_gateway }}:61208
+    ha:
+      loadBalancer:
+        servers:
+          - url: http://192.168.1.223:8123
+    router:
+      loadbalancer:
+        servers:
+          - url: http://192.168.1.1:80
