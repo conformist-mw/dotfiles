@@ -1,0 +1,6 @@
+[main]
+log_level=info
+log_path=/var/log/tg-sendmail.log
+[telegram]
+chat_id={{ lookup('community.general.bitwarden_secrets_manager', '26e16cc8-09d8-4636-b0ab-b2690130a690').note }}
+bot_token={{ lookup('community.general.bitwarden_secrets_manager', '26e16cc8-09d8-4636-b0ab-b2690130a690').value }}
