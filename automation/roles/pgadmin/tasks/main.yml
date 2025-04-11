@@ -1,0 +1,17 @@
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+
+- name: PGAdmin4 container
+  community.docker.docker_container:
+    image: dpage/pgadmin4:latest
+    pull: true
+    name: "{{ app_name }}"
+    restart: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    env:
+      PGADMIN_DEFAULT_EMAIL=oleg.smedyuk@gmail.com
+      PGADMIN_DEFAULT_PASSWORD={{ lookup('community.general.bitwarden_secrets_manager', 'c6f1a5a9-a34f-404d-ad2a-b26d0130b756').value }}
+    labels: "{{ labels }}"
