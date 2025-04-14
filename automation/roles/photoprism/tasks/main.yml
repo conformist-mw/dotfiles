@@ -1,0 +1,49 @@
+---
+- name: Create photoprism user
+  community.postgresql.postgresql_user:
+    name: "{{ app_name }}"
+    password: "{{ app_name }}"
+
+- name: Create photoprism database
+  community.postgresql.postgresql_db:
+    name: "{{ app_name }}"
+    owner: "{{ app_name }}"
+
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+
+- name: Photoprism container
+  community.docker.docker_container:
+    image: photoprism/photoprism:latest
+    pull: true
+    name: "{{ app_name }}"
+    restart_policy: "unless-stopped"
+    restart: true
+    networks:
+      - name: "{{ docker_network }}"
+    volumes:
+      - "/mnt/ssd/photos:/photoprism/originals"
+      - "{{ app_data_dir }}:/photoprism/storage"
+    user: "1000:1000"
+    env:
+      PHOTOPRISM_ADMIN_PASSWORD: "{{ lookup('community.general.bitwarden_secrets_manager', 'c6f1a5a9-a34f-404d-ad2a-b26d0130b756').value }}"
+      PHOTOPRISM_UPLOAD_NSFW: "true"
+      PHOTOPRISM_DATABASE_DRIVER: "postgres"
+      PHOTOPRISM_DATABASE_SERVER: "postgres:5432"
+      PHOTOPRISM_DATABASE_NAME: "{{ app_name }}"
+      PHOTOPRISM_DATABASE_USER: "{{ app_name }}"
+      PHOTOPRISM_DATABASE_PASSWORD: "{{ app_name }}"
+    labels: "{{ labels }}"
+
+- name: Check if cache dir exists
+  ansible.builtin.stat:
+    path: "{{ app_data_dir }}/cache"
+  register: cache_dir
+
+- name: Add nobackup to photoprism cache
+  ansible.builtin.file:
+    path: "{{ app_data_dir }}/cache/.nobackup"
+    state: touch
+    mode: 0666
+  when: cache_dir.stat.exists
