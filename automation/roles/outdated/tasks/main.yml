@@ -1,0 +1,21 @@
+- name: fill traefik htpasswd
+  community.general.htpasswd:
+    path: "{{ server_dir }}/traefik.htpasswd"
+    name: "{{ item.note }}"
+    password: "{{ item.value }}"
+  loop:
+    - "{{ lookup('community.general.bitwarden_secrets_manager', '30b3908f-6c67-4353-9bdc-b269014ab708') }}"
+    - "{{ lookup('community.general.bitwarden_secrets_manager', 'f75194eb-7ca6-4363-83ff-b269014a81f8') }}"
+  no_log: true
+
+- name: Run dumbproxy container
+  community.docker.docker_container:
+    image: yarmak/dumbproxy
+    name: dumbproxy
+    restart: true
+    restart_policy: "unless-stopped"
+    command: "-auth 'basicfile://?path=/etc/dumbproxy.htpasswd'"
+    ports:
+      - "10000:8080"
+    volumes:
+      - "{{ server_dir }}/traefik.htpasswd:/etc/dumbproxy.htpasswd:ro"
