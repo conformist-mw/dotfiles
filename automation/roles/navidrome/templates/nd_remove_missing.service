@@ -1,0 +1,11 @@
+[Unit]
+Description=ND remove missing
+OnFailure=systemd-notify@%i.service
+After=network.target
+
+[Service]
+User={{ ansible_user }}
+Type=oneshot
+EnvironmentFile={{ nd_env_filepath }}
+WorkingDirectory={{ nd_work_dir }}
+ExecStart={{ nd_exec_path }}
