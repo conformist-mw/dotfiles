@@ -1,0 +1,9 @@
+[Unit]
+Description=Run navidrome autoremove
+
+[Timer]
+OnCalendar=*:30
+Persistent=true
+
+[Install]
+WantedBy=timers.target
