@@ -1,0 +1,3 @@
+app_name: "navidrome"
+app_port: 4533
+app_data_dir: "{{ data_dir }}/navidrome"

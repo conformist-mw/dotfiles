@@ -1,0 +1,11 @@
+[Unit]
+Description=Delete starred navidrome music files
+OnFailure=systemd-notify@%i.service
+After=network.target
+
+[Service]
+Type=oneshot
+User=user
+ExecStart=/usr/local/bin/nd_autoremove_starred.sh
+StandardOutput=journal
+StandardError=journal
