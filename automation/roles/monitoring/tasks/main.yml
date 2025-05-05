@@ -1,0 +1,69 @@
+---
+- name: Install exporter
+  ansible.builtin.apt:
+    name:
+      - prometheus-node-exporter
+      - prometheus-libvirt-exporter
+    update_cache: yes
+  become: true
+
+- name: Create prometheus dir
+  ansible.builtin.file:
+    path: "{{ data_dir }}/prometheus"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+
+- name: Copy Prometheus configuration
+  ansible.builtin.template:
+    src: "config.yml"
+    dest: "{{ data_dir }}/prometheus/prometheus.yml"
+  register: prometheus_config
+
+- name: Prometheus container
+  community.docker.docker_container:
+    image: prom/prometheus:latest
+    pull: true
+    name: prometheus
+    restart_policy: "unless-stopped"
+    restart: "{{ prometheus_config.changed | default(false) }}"
+    user: "1000:1000"
+    networks:
+      - name: "{{ docker_network }}"
+    volumes:
+      - "{{ data_dir }}/prometheus/data:/prometheus"
+      - "{{ data_dir }}/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.prometheus.entrypoints: "web"
+      traefik.http.routers.prometheus.rule: "Host(`prometheus.{{ ansible_host }}`)"
+      traefik.http.services.prometheus.loadbalancer.server.port: "9090"
+
+- name: Create grafana dir
+  ansible.builtin.file:
+    path: "{{ data_dir }}/grafana"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0755"
+
+- name: Grafana container
+  community.docker.docker_container:
+    image: grafana/grafana:latest
+    pull: true
+    name: grafana
+    user: "1000:1000"
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    volumes:
+      - "{{ data_dir }}/grafana:/var/lib/grafana"
+    env:
+      GF_SECURITY_ADMIN_PASSWORD: "{{ lookup('community.general.bitwarden_secrets_manager', 'c6f1a5a9-a34f-404d-ad2a-b26d0130b756').value }}"
+      GF_SERVER_ROOT_URL: "http://grafana.{{ ansible_host }}"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.grafana.entrypoints: "web"
+      traefik.http.routers.grafana.rule: "Host(`grafana.{{ ansible_host }}`)"
+      traefik.http.services.grafana.loadbalancer.server.port: "3000"
