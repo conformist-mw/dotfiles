@@ -1,0 +1,20 @@
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+  vars:
+    additional_labels:
+      - key: "traefik.http.routers.{{ app_name }}.middlewares"
+        value: "no-auth-chain@file"
+
+- name: Memos container
+  community.docker.docker_container:
+    image: neosmemo/memos:stable
+    pull: true
+    name: "{{ app_name }}"
+    restart: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    volumes:
+      - "{{ app_data_dir }}:/var/opt/memos"
+    labels: "{{ labels }}"
