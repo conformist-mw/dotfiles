@@ -1,0 +1,121 @@
+- name: Install you-should-use zsh plugin
+  git:
+    repo: https://github.com/MichaelAquilina/zsh-you-should-use.git
+    dest: ~/.oh-my-zsh/custom/plugins/you-should-use
+
+- name: config dirs
+  file:
+    path: "~/.{{ item }}"
+    state: directory
+  loop:
+    - config/git
+
+- name: Copy Git config and ignore files
+  copy:
+    src: "dotfiles/{{ item }}"
+    dest: "~/.{{ item }}"
+    mode: '0644'
+  loop:
+    - justfile
+    - zshrc
+    - config/git/config
+    - config/git/ignore
+    - config/git/wt-config
+    - config/starship.toml
+
+- name: configure mise
+  block:
+    - name: mise ignore python
+      command: mise settings set disable_tools python
+
+    - name: mise install tools
+      command: >
+        mise use -g go@latest node@22
+
+    - name: mise reshim
+      command: mise reshim
+  tags: install
+
+- name: install homebrew packages
+  community.general.homebrew:
+    name:
+      - autojump
+      - awscli
+      - csvlens
+      - fd
+      - ffmpeg
+      - fzf
+      - gdu
+      - git
+      - git-delta
+      - httpie
+      - hyperfine
+      - imagemagick
+      - ipython
+      - jq
+      - just
+      - libpq
+      - mise
+      - poppler
+      - ripgrep
+      - rmlint
+      - ruff
+      - sevenzip
+      - starship
+      - telnet
+      - tmux
+      - tree
+      - uv
+      - watch
+      - xclip
+      - yazi
+      - zoxide
+      - zsh-autosuggestions
+      - zsh-completions
+      - zsh-history-substring-search
+      - zsh-syntax-highlighting
+      - zsh-you-should-use
+    update_homebrew: yes
+    state: present
+  tags: install
+
+- name: install homebrew casks
+  community.general.homebrew_cask:
+    name:
+      - anki
+      - db-browser-for-sqlite
+      - font-fira-code-nerd-font
+      - iterm2
+      - jetbrains-toolbox
+      - maccy
+      - orbstack
+      - stats
+      - sublime-merge
+      - telegram-desktop
+      - visual-studio-code
+      - vivaldi
+      - zed
+    state: present
+  tags: install
+
+- name: Manage uv
+  block:
+    - name: uv install python
+      command: >
+        uv python install
+        3.9
+        3.10
+        3.11
+        3.12
+        3.13
+
+    - name: uv install tools
+      command: uv tool install --python 3.12 {{ item }}
+      loop:
+        - black
+        - ruff
+        - ipython
+        - smbclientng
+        - spotdl
+        - yt-dlp
+  tags: uv
