@@ -1,0 +1,141 @@
+set dotenv-load
+
+export aws_profile := "welltech-dev"
+export aws_region := "us-east-1"
+export aws_domain := "wikr-packages"
+export aws_domain_owner := "756650017283"
+export aws_repository := "vendor-lambda"
+
+# list all available commands
+default:
+  @just --list --unsorted
+
+# create virtual environment
+create-venv version="3.12":
+  uv venv --python {{ version }}
+
+############ AWS SSO START ############
+
+aws-sso-login:
+  aws sso login --profile {{ aws_profile }}
+
+aws-login: && pip-login
+  aws sso login --profile {{ aws_profile }}
+
+# login to aws codeartifact
+pip-login:
+  aws codeartifact login \
+    --profile {{ aws_profile }} \
+    --tool pip \
+    --repository {{ aws_repository }} \
+    --domain {{ aws_domain }} \
+    --domain-owner {{ aws_domain_owner }}
+
+# check if aws sso is expired
+check-aws-login:
+    @aws --profile {{ aws_profile }} sts get-caller-identity >/dev/null 2>&1 \
+      || (echo "{{ style('error') }}AWS SSO expired! Please run 'just aws-login'{{ NORMAL }}" \
+      && exit 1)
+
+# install dev requirements with uv
+uv-install-dev: check-aws-login
+  @URL_TEMPLATE=$(printf "https://aws:TOKEN@%s-%s.d.codeartifact.%s.amazonaws.com/pypi/%s/simple" \
+    "{{ aws_domain }}" "{{ aws_domain_owner }}" "{{ aws_region }}" "{{ aws_repository }}") && \
+  TOKEN=$(aws codeartifact get-authorization-token \
+    --profile {{ aws_profile }} \
+    --domain {{ aws_domain }} \
+    --domain-owner {{ aws_domain_owner }} | jq -r '.authorizationToken') && \
+  export UV_INDEX_URL=$(echo "$URL_TEMPLATE" | sed "s/TOKEN/$TOKEN/") && \
+  uv pip install -r requirements-dev.txt
+
+# run command with uv
+[no-cd]
+uv-exec *args: check-aws-login
+  @URL_TEMPLATE=$(printf "https://aws:TOKEN@%s-%s.d.codeartifact.%s.amazonaws.com/pypi/%s/simple" \
+    "{{ aws_domain }}" "{{ aws_domain_owner }}" "{{ aws_region }}" "{{ aws_repository }}") && \
+  TOKEN=$(aws codeartifact get-authorization-token \
+    --profile {{ aws_profile }} \
+    --domain {{ aws_domain }} \
+    --domain-owner {{ aws_domain_owner }} | jq -r '.authorizationToken') && \
+  export UV_INDEX_URL=$(echo "$URL_TEMPLATE" | sed "s/TOKEN/$TOKEN/") && \
+  uv {{ args }}
+
+
+# install dev requirements with pip
+pip-install-dev: check-aws-login
+  @pip install -r requirements-dev.txt
+
+# pip show outdated packages
+pip-outdated:
+  @pip list --outdated
+
+############ AWS SSO END ############
+
+
+# run all tests
+tests:
+  @pytest -v tests --username "${DB_USER}" --password "${DB_PASSWORD}" --host "${DB_HOST}"
+
+# run all tests with coverage
+tests-cov:
+  @pytest -v tests --cov=handlers --cov=src --username "${DB_USER}" --password "${DB_PASSWORD}" --host "${DB_HOST}"
+
+# run specific test file
+test FILE:
+  pytest -vvrP --username "${DB_USER}" --password "${DB_PASSWORD}" --host "${DB_HOST}" {{FILE}}
+
+# run specific test by pattern
+test-pattern PATTERN:
+  pytest -vvrP tests --username "${DB_USER}" --password "${DB_PASSWORD}" --host "${DB_HOST}" -k {{PATTERN}}
+
+# run tests with coverage
+coverage:
+  pytest --cov=src --cov-report=xml --username "${DB_USER}" --password "${DB_PASSWORD}" --host "${DB_HOST}"
+
+# consecvently run ruff, black, mypy
+lint:
+  -ruff check .
+  -black .
+  -mypy .
+
+# lint markdown files
+lint-md:
+  docker run --rm -v ${PWD}:/data markdownlint/markdownlint -r ~MD024 *.md
+
+# run all pre-commit hooks
+pre-commit:
+  @pre-commit run --all-files
+
+# update pre-commit hooks
+pre-commit-update:
+  @pre-commit autoupdate
+
+# generate revision
+revision MESSAGE:
+  alembic revision --autogenerate -m "{{MESSAGE}}"
+
+# upgrade revision
+upgrade:
+  alembic upgrade head
+
+# downgrade revision
+downgrade:
+  alembic downgrade -1
+
+# current
+current:
+  alembic current
+
+# history
+history:
+  alembic history
+
+generate-env:
+  #!/bin/bash
+  truncate -s 0 .env
+  while read -rd $'' line
+  do
+      echo "$line" >> .env
+  done < <(jq -r <<<`cat parameters.json` \
+           'to_entries|map("\(.key)=\(.value|@json)\u0000")[]')
+
