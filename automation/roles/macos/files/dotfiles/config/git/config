@@ -1,0 +1,35 @@
+[core]
+    excludesFile = ~/.config/git/ignore
+[user]
+    email = oleg.smedyuk@gmail.com
+    name = Oleg Smedyuk
+    signingkey = FF9C6EB4F3603E3E
+[color]
+    ui = true
+[interactive]
+    diffFilter = delta --color-only
+[alias]
+    s = status
+    b = branch
+    l = log --pretty=format:"%C(yellow)%h\\ %ad%Cred%d\\ %Creset%s%Cblue\\ [%cn]" --decorate --date=short
+    a = add
+    cm = commit -m
+    d = diff
+    ds = diff --stat
+    dm = diff master@{1}
+    co = checkout
+    com = checkout master
+    cob = checkout -b
+    la = !git config --list | grep -oP '(?<=alias.).+'
+    st = stash
+    stp = stash pop
+[gpg]
+    program = gpg
+[init]
+    defaultBranch = master
+[delta]
+    navigate = true
+    dark = true
+
+[includeIf "gitdir:~/wt/"]
+    path = ~/.config/git/wt-config
