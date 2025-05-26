@@ -1,0 +1,21 @@
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+
+- name: Lidarr container
+  community.docker.docker_container:
+    name: "{{ app_name }}"
+    image: lscr.io/linuxserver/lidarr:latest
+    pull: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    volumes:
+      - "{{ app_data_dir }}:/config"
+      - "/mnt/hdd/music:/music"
+      - "/mnt/hdd/downloads:/downloads"
+    env:
+      TZ: "{{ tz }}"
+      PUID: "1000"
+      PGID: "1000"
+    labels: "{{ labels }}"
