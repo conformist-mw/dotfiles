@@ -1,0 +1,14 @@
+- name: Initialize labels as empty dictionary
+  set_fact:
+    labels: {}
+
+- name: Create Traefik labels dictionary for {{ app_name }}
+  set_fact:
+    labels: "{{ labels | default({}) | combine({ item.key: item.value }) }}"
+  with_items:
+    - "{{ traefik_labels }}"
+    - "{{ additional_labels | default([]) }}"
+
+- name: print labels
+  debug:
+    var: labels
