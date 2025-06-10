@@ -1,0 +1,9 @@
+[Unit]
+Description=Backblaze rclone timer
+
+[Timer]
+OnCalendar=3:0:0
+Persistent=true
+
+[Install]
+WantedBy=timers.target
