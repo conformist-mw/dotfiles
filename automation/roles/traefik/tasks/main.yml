@@ -10,6 +10,11 @@
     src: traefik.yml
     dest: "{{ app_data_dir }}/traefik.yml"
 
+- name: Copy traefik dynamic config file
+  ansible.builtin.template:
+    src: dynamic.yml
+    dest: "{{ app_data_dir }}/dynamic.yml"
+
 - name: Create a network for traefik
   community.docker.docker_network:
     name: "{{ docker_network }}"
@@ -33,4 +38,5 @@
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "{{ app_data_dir }}/traefik.yml:/traefik.yml:ro"
+      - "{{ app_data_dir }}/dynamic.yml:/dynamic.yml:ro"
     labels: "{{ labels }}"
