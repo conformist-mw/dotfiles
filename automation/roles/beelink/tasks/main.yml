@@ -39,8 +39,11 @@
 
 - name: Create data dir
   ansible.builtin.file:
-    path: "{{ data_dir }}"
+    path: "{{ item }}"
     state: directory
+  loop:
+    - "{{ data_dir }}"
+    - "{{ logs_dir }}"
 
 - name: Setup external drives
   block:

@@ -10,13 +10,14 @@ machines:
       arch: linux/amd64
       ansible_python_interpreter: /usr/bin/python
       data_dir: "{{ ansible_env.HOME }}/homelab_data"
+      logs_dir: "{{ ansible_env.HOME }}/homelab_logs"
       docker_network: "homelab_net"
       docker_subnet: "10.1.1.0/24"
       docker_gateway: "10.1.1.1"
       traefik_labels:
         - { key: "traefik.enable", value: "true" }
         - { key: "traefik.http.routers.{{ app_name }}.entrypoints", value: "web" }
-        - { key: "traefik.http.routers.{{ app_name }}.rule", value: "Host(`{{ app_name }}.{{ ansible_host }}`)" }
+        - { key: "traefik.http.routers.{{ app_name }}.rule", value: "Host(`{{ app_subdomain | default(app_name) }}.{{ ansible_host }}`)" }
         - { key: "traefik.http.services.{{ app_name }}.loadbalancer.server.port", value: "{{ app_port }}" }
 
     hetzner:
