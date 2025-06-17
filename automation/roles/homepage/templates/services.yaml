@@ -14,12 +14,12 @@
       server: "local-docker"
       container: "navidrome"
       showStats: true
-  - Photoprism:
+  - Immich:
       href: http://photo.{{ ansible_host }}
       description: "Own photo collection"
-      icon: "photoprism"
+      icon: "immich"
       server: "local-docker"
-      container: "photo"
+      container: "immich"
       showStats: true
   - Filebrowser:
       href: http://filebrowser.{{ ansible_host }}
@@ -101,7 +101,7 @@
         description: "Router"
         icon: "keenetic"
     - Dashboard:
-        href: http://dash.{{ ansible_host }}
+        href: http://dash.conformist.name
         description: "Dashboard"
         icon: "homepage"
     - Home Assistant:
