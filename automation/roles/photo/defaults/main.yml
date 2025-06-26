@@ -1,3 +1,0 @@
-app_name: "photo"
-app_port: 2342
-app_data_dir: "{{ data_dir }}/photoprism"
