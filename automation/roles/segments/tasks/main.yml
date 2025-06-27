@@ -113,6 +113,12 @@
       traefik.http.services.segments-go.loadbalancer.server.port: "8080"
       traefik.http.routers.segments-go.middlewares: "no-auth-chain@file"
 
+- name: Copy dnsmasq configuration for automatic local domain resolution
+  ansible.builtin.copy:
+    src: pihole-dnsmask.conf
+    dest: "{{ data_dir }}/pihole/etc-dnsmasq.d/local.conf"
+    mode: '0644'
+
 - name: Pi-Hole container
   community.docker.docker_container:
     name: pihole
