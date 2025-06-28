@@ -1,0 +1,98 @@
+- name: Ensure rclone dir exists
+  ansible.builtin.file:
+    dest: ~/.config/rclone
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0700"
+- name: Copy rclone backblaze config
+  ansible.builtin.copy:
+    dest: ~/.config/rclone/rclone.conf
+    content: |
+      [backblaze]
+      type = b2
+      account = {{ b2_account.note }}
+      key = {{ b2_account.value }}
+
+      [keenetic]
+      type = smb
+      host = 192.168.1.1
+
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0600"
+  vars:
+    b2_account: "{{ lookup('community.general.bitwarden_secrets_manager', '332aed6d-c7a0-4067-b2cb-b2bd013a0bb1') }}"
+
+- name: Copy backup scripts
+  ansible.builtin.template:
+    src: "{{ item }}_backup.sh.j2"
+    dest: "/usr/local/bin/{{ item }}_backup.sh"
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "backblaze"
+    - "keenetic"
+  become: true
+
+- name: Copy systemd service
+  ansible.builtin.template:
+    src: "{{ item }}_backup.service"
+    dest: "/etc/systemd/system/{{ item }}_backup.service"
+  loop:
+    - "backblaze"
+    - "keenetic"
+  become: true
+
+- name: Copy systemd timer
+  ansible.builtin.copy:
+    src: "{{ item }}_backup.timer"
+    dest: "/etc/systemd/system/{{ item }}_backup.timer"
+  loop:
+    - "backblaze"
+    - "keenetic"
+  become: true
+
+- name: enable backup timer
+  ansible.builtin.systemd:
+    name: "{{ item }}_backup.timer"
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  loop:
+    - "backblaze"
+    - "keenetic"
+  become: true
+
+# - name: Install borg
+#   ansible.builtin.apt:
+#     name:
+#       - borgbackup
+#       - borgmatic
+#   become: true
+
+# - name: Copy borgmatic config
+#   ansible.builtin.template:
+#     dest: /etc/borgmatic/config.yaml
+#     src: borgmatic.yaml.j2
+#   become: true
+
+# - name: Extend crontab path
+#   ansible.builtin.cron:
+#     name: PATH
+#     env: yes
+#     job: /usr/local/bin:$PATH
+#     user: root
+#     state: present
+#   become: true
+
+# - name: Run borgmatic by cron
+#   ansible.builtin.cron:
+#     name: "borgmatic"
+#     minute: "0"
+#     hour: "3"
+#     job: "/usr/local/bin/borgmatic"
+#     state: present
+#     user: root
+#   become: true
