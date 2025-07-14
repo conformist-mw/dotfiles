@@ -65,6 +65,28 @@ http:
       rule: Host(`router.{{ ansible_host }}`)
       tls:
         certResolver: letsencrypt
+    
+    commeilfaut-static:
+      rule: "Host(`commeilfaut.{{ ansible_host }}`) && (PathPrefix(`/static`) || PathPrefix(`/media`))"
+      priority: 10
+      service: commeilfaut-proxy
+      tls:
+        certResolver: letsencrypt
+
+    commeilfaut-django:
+      rule: "Host(`commeilfaut.{{ ansible_host }}`)"
+      priority: 1
+      service: commeilfaut-django
+      tls:
+        certResolver: letsencrypt
+
+    commeilfaut-flower:
+      rule: "Host(`flower.{{ ansible_host }}`)"
+      service: commeilfaut-flower
+      middlewares:
+        - auth-chain
+      tls:
+        certResolver: letsencrypt
 
   middlewares:
     auth-chain:
@@ -133,6 +155,22 @@ http:
       loadBalancer:
         servers:
           - url: http://{{ docker_gateway }}:61208
+
+    # commeilfaut
+    commeilfaut-django:
+      loadBalancer:
+        servers:
+          - url: http://ceilings-app:8000
+    commeilfaut-proxy:
+      loadBalancer:
+        servers:
+          - url: http://ceilings-proxy:80
+    commeilfaut-flower:
+      loadBalancer:
+        servers:
+          - url: http://ceilings-flower:5555
+
+    # home network
     music:
       loadBalancer:
         servers:
