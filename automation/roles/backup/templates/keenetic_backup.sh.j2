@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+
+/usr/bin/rclone copy /mnt/ssd/photos keenetic:/backup/photos --delete-during --log-file={{ logs_dir }}/keenetic.log --log-level=INFO --transfers=8 --size-only
+/usr/bin/rclone copy /mnt/ssd/photos-upload/library keenetic:/backup/library --delete-during --log-file={{ logs_dir }}/keenetic-library.log --log-level=INFO --transfers=8 --size-only

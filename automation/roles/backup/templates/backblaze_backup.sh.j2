@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+
+/usr/bin/rclone copy /mnt/ssd/photos backblaze:xxxxx-photos --delete-during --log-file={{ logs_dir }}/backblaze.log --log-level=INFO --transfers=8 --size-only
+/usr/bin/rclone copy /mnt/ssd/photos-upload/library backblaze:xxxxx-library --delete-during --log-file={{ logs_dir }}/backblaze-library.log --log-level=INFO --transfers=8 --size-only 
