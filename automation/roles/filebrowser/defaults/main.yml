@@ -1,0 +1,4 @@
+app_name: "filebrowser"
+app_subdomain: "filebrowser"
+app_port: 80
+app_data_dir: "{{ data_dir }}/filebrowser"
