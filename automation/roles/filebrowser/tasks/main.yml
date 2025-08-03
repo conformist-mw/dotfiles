@@ -1,0 +1,34 @@
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+
+- name: Copy filebrowser config
+  ansible.builtin.copy:
+    dest: "{{ app_data_dir }}/filebrowser.json"
+    content: |
+      {
+        "port": 80,
+        "baseURL": "",
+        "address": "",
+        "log": "stdout",
+        "database": "/.filebrowser.db",
+        "root": "/srv"
+      }
+
+- name: Filebrowser container
+  community.docker.docker_container:
+    image: filebrowser/filebrowser:latest
+    pull: true
+    name: filebrowser
+    restart: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    user: "1000:1000"
+    volumes:
+      - "{{ app_data_dir }}/filebrowser.json:/.filebrowser.json:ro"
+      - "{{ app_data_dir }}/filebrowser.db:/.filebrowser.db"
+      - "{{ ansible_env.HOME }}:/srv"
+      - "/mnt/ssd:/srv/ssd"
+      - "/mnt/hdd:/srv/hdd"
+    labels: "{{ labels }}"
