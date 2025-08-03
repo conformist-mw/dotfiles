@@ -1,0 +1,15 @@
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+
+- name: Filestash container
+  community.docker.docker_container:
+    name: "{{ app_name }}"
+    image: machines/filestash:latest
+    pull: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    volumes:
+      - "{{ app_data_dir }}:/app/data"
+    labels: "{{ labels }}"
