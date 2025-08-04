@@ -1,0 +1,4 @@
+- hosts: macos
+  gather_facts: no
+  roles:
+    - macos
