@@ -1,0 +1,20 @@
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+
+- name: Flatnotes container
+  community.docker.docker_container:
+    image: dullage/flatnotes:latest
+    pull: true
+    name: "{{ app_name }}"
+    restart: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    volumes:
+      - "{{ app_data_dir }}:/data"
+    env:
+      PUID: "1000"
+      PGID: "1000"
+      FLATNOTES_AUTH_TYPE: "none"
+    labels: "{{ labels }}"
