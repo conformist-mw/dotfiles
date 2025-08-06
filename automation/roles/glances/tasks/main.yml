@@ -1,0 +1,44 @@
+- name: Ensure data directory exists
+  ansible.builtin.file:
+    path: "{{ app_data_dir }}"
+    state: directory
+
+- name: Install glances from pip
+  ansible.builtin.pip:
+    name: "glances[all]"
+    state: present
+    virtualenv: "{{ app_data_dir }}/.venv"
+
+- name: Copy glances systemd service
+  ansible.builtin.template:
+    src: glances.service
+    dest: /etc/systemd/system/glances.service
+  become: true
+
+- name: Enable glances
+  ansible.builtin.systemd:
+    name: glances.service
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  become: true
+
+- name: Add iptables rule for allowing traffic to port 61208 from container network
+  ansible.builtin.iptables:
+    chain: INPUT
+    in_interface: "{{ docker_network }}"
+    protocol: tcp
+    destination_port: 61208
+    jump: ACCEPT
+  become: true
+
+- name: Add iptables rule for DNAT from container network to localhost
+  ansible.builtin.iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: "{{ docker_network }}"
+    protocol: tcp
+    destination_port: 61208
+    jump: DNAT
+    to_destination: 127.0.0.1:61208
+  become: true

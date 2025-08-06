@@ -1,0 +1,12 @@
+[Unit]
+Description=Glances
+OnFailure=systemd-notify@%i.service
+After=network.target
+
+[Service]
+ExecStart={{ app_data_dir }}/.venv/bin/glances --webserver --bind=127.0.0.1
+Restart=always
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,3 @@
+app_name: "glances"
+app_port: 61208
+app_data_dir: "{{ data_dir }}/glances"
