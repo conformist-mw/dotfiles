@@ -1,0 +1,26 @@
+- Developer:
+    - BW Vault:
+        - abbr: BW
+          href: https://vault.bitwarden.com
+    - Github:
+        - abbr: GH
+          href: https://github.com/conformist-mw
+    - CrowdSec:
+        - abbr: CS
+          href: https://app.crowdsec.net
+    - GC Auth:
+        - abbr: GCA
+          href: https://console.cloud.google.com/welcome?inv=1&invt=AbsLmA&project=auth-conformist-name
+
+- Dark:
+    - Rutracker:
+        - abbr: RT
+          href: https://rutracker.org
+    - Toloka:
+        - abbr: TK
+          href: https://toloka.to
+
+- VPS:
+    - Hetzner:
+        - abbr: HZ
+          href: https://accounts.hetzner.com
