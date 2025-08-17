@@ -1,0 +1,22 @@
+showStats: false
+favicon: "/images/favicon.ico"
+theme: "light"
+color: "amber"
+layout:
+  media:
+    style: row
+    columns: 4
+  applications:
+  tools:
+    iconsOnly: true
+  vps:
+
+quicklaunch:
+  searchDescriptions: true
+  hideInternetSearch: true
+  showSearchSuggestions: true
+  hideVisitURL: true
+  provider: google
+
+providers:
+  openweathermap: "{{ open_weather_api_key }}"
