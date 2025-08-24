@@ -8,9 +8,6 @@
   ansible.builtin.set_fact:
     gid_render: "{{ getent_group['render'][1] }}"
 
-- ansible.builtin.debug:
-    var: gid_render
-
 - name: Get video group info
   ansible.builtin.getent:
     database: group
@@ -19,9 +16,6 @@
 - name: Set video group facts
   ansible.builtin.set_fact:
     gid_video: "{{ getent_group['video'][1] }}"
-
-- ansible.builtin.debug:
-    var: gid_video
 
 - name: Jellyfin container
   community.docker.docker_container:
@@ -35,7 +29,6 @@
       - "8096:8096"
     volumes:
       - "{{ data_dir }}/jellyfin/config:/config"
-      - "{{ data_dir }}/jellyfin/cache:/cache"
       - "/mnt/hdd:/media"
     user: "1000:1000"
     groups:
@@ -47,3 +40,5 @@
       LIBVA_DRIVER_NAME: "iHD"
       QSV_DEVICE: "/dev/dri/renderD128"
     shm_size: "2g"
+    tmpfs:
+      - "/cache/transcodes:size=4g,mode=1777"
