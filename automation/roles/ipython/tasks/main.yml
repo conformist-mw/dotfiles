@@ -1,0 +1,36 @@
+---
+- name: Create ipython dir
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+    recurse: true
+  loop:
+    - "{{ app_data_dir }}/notebooks"
+    - "{{ app_data_dir }}/jupyter"
+
+- name: Copy config files
+  ansible.builtin.copy:
+    src: "{{ item.name }}"
+    dest: "{{ item.dest }}"
+  loop:
+    - {"name": "config.py", "dest": "{{ app_data_dir }}/jupyter/jupyter_server_config.py"}
+    - {"name": "requirements.txt", "dest": "{{ app_data_dir }}/requirements.txt"}
+
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+
+- name: Jupyter container
+  community.docker.docker_container:
+    name: "{{ app_name }}"
+    image: "quay.io/jupyter/base-notebook:aarch64-latest"
+    restart: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    volumes:
+      - "{{ app_data_dir }}/requirements.txt:/tmp/requirements.txt:ro"
+      - "{{ app_data_dir }}/jupyter:/home/jovyan/.jupyter"
+      - "{{ app_data_dir }}/notebooks:/home/jovyan/work"
+    labels: "{{ labels }}"
