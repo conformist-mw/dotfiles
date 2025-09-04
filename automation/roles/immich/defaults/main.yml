@@ -1,0 +1,4 @@
+app_name: "immich"
+app_subdomain: "photo"
+app_port: 2283
+app_data_dir: "{{ data_dir }}/immich"

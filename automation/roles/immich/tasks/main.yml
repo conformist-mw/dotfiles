@@ -1,0 +1,65 @@
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+
+- name: Immich database
+  community.docker.docker_container:
+    image: docker.io/tensorchord/pgvecto-rs:pg14-v0.2.0
+    pull: true
+    name: "{{ app_name }}_database"
+    restart_policy: "unless-stopped"
+    restart: true
+    command: >-
+      postgres -c shared_preload_libraries=vectors.so -c 'search_path="$$user", public, vectors' -c logging_collector=on -c max_wal_size=2GB -c shared_buffers=512MB -c wal_compression=on
+    networks:
+      - name: "{{ docker_network }}"
+    volumes:
+      - "{{ app_data_dir }}/postgres/data:/var/lib/postgresql/data"
+    env:
+      POSTGRES_PASSWORD: "{{ app_name }}"
+      POSTGRES_USER: "{{ app_name }}"
+      POSTGRES_DB: "{{ app_name }}"
+      POSTGRES_INITDB_ARGS: '--data-checksums'
+
+- name: Immich container
+  community.docker.docker_container:
+    image: ghcr.io/immich-app/immich-server:release
+    pull: true
+    name: "{{ app_name }}"
+    restart_policy: "unless-stopped"
+    restart: true
+    networks:
+      - name: "{{ docker_network }}"
+    volumes:
+      - "/mnt/ssd/photos-upload:/usr/src/app/upload"
+      - "/mnt/ssd/photos:/home/user/photos"
+      - "/etc/localtime:/etc/localtime:ro"
+    user: "1000:1000"
+    env:
+      IMMICH_VERSION: "release"
+      DB_USERNAME: "{{ app_name }}"
+      DB_PASSWORD: "{{ app_name }}"
+      DB_DATABASE_NAME: "{{ app_name }}"
+      DB_HOSTNAME: "{{ app_name }}_database"
+      REDIS_HOSTNAME: "redis"
+      IMMICH_LOG_LEVEL: "debug"
+    labels: "{{ labels }}"
+
+- name: Check if cache dir exists
+  ansible.builtin.stat:
+    path: "{{ app_data_dir }}/cache"
+  register: cache_dir
+
+- name: Immich machine learning container
+  community.docker.docker_container:
+    image: ghcr.io/immich-app/immich-machine-learning:release
+    pull: true
+    name: "{{ app_name }}_machine_learning"
+    restart_policy: "unless-stopped"
+    restart: true
+    networks:
+      - name: "{{ docker_network }}"
+        aliases:
+          - "{{ app_name }}-machine-learning"
+    volumes:
+      - "{{ app_data_dir }}/cache:/cache"
