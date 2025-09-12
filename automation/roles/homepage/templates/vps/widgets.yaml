@@ -1,0 +1,22 @@
+- resources: false
+
+- glances:
+    url: "http://{{ docker_gateway }}:61208"
+    version: 4
+    cpu: true
+    mem: true
+    uptime: true
+    cputemp: true
+    disk: /
+    label: Hetzner
+
+- search:
+    provider: google
+    target: _blank
+
+- openweathermap:
+    label: "Dnipro"
+    latitude: 48.45
+    longitude: 34.9833
+    units: metric
+    provider: openweathermap
