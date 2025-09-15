@@ -1,0 +1,19 @@
+showStats: false
+favicon: "/images/favicon.ico"
+theme: "light"
+color: "rose"
+layout:
+  applications:
+  tools:
+  proxy:
+  home:
+
+quicklaunch:
+  searchDescriptions: true
+  hideInternetSearch: true
+  showSearchSuggestions: true
+  hideVisitURL: true
+  provider: google
+
+providers:
+  openweathermap: "{{ open_weather_api_key }}"
