@@ -1,0 +1,66 @@
+- applications:
+    - whoami:
+        href: https://whoami.{{ ansible_host }}
+        description: "Whoami to debug"
+        icon: "mdi-head-question"
+        container: "whoami"
+        server: "local-docker"
+
+    - Traefik:
+        href: https://traefik.{{ ansible_host }}
+        description: "Traefik dashboard"
+        icon: "traefik"
+        container: "traefik"
+        server: "local-docker"
+
+    - Dozzle:
+        href: https://dozzle.{{ ansible_host }}
+        description: "Docker logs"
+        icon: "dozzle"
+        container: "dozzle"
+        server: "local-docker"
+
+    - Pihole:
+        href: https://pihole.{{ ansible_host }}/admin
+        description: "Network-wide ad blocking"
+        icon: "pi-hole"
+        container: "pihole"
+        server: "local-docker"
+
+- tools:
+    - Segments:
+        href: https://segments.{{ ansible_host }}
+        description: "Segments app"
+        icon: "mdi-segment"
+        container: "segments"
+        server: "local-docker"
+    - Glances:
+        href: https://glances.{{ ansible_host }}
+        description: "System monitoring"
+        icon: "glances"
+
+- proxy:
+    - Home Assistant:
+        href: https://ha.conformist.name
+        description: "Home automation"
+        icon: "home-assistant"
+    - Nextcloud:
+        href: https://files.conformist.name
+        description: "Nextcloud"
+        icon: "nextcloud"
+
+    - Navidrome:
+        href: https://music.{{ ansible_host }}
+        description: "Music server"
+        icon: "navidrome"
+
+    - Router:
+        href: https://router.conformist.name
+        description: "Router"
+        icon: "keenetic"
+
+- home:
+   - Home:
+        href: http://bee.home
+        description: "Beelink homepage"
+        icon: "homepage"
