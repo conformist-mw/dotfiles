@@ -1,0 +1,25 @@
+- hosts: bee
+  roles:
+    - beelink
+    - backup
+    - docker
+    - vim
+    - role: vim
+      vars:
+        user: "root"
+    - samba
+    - jellyfin
+    - traefik
+    - navidrome
+    - dozzle
+    - torrent
+    - sponsorblock
+    - glances
+    - portainer
+    - homepage
+    - gitea
+    - pgadmin
+    - bw
+    - filebrowser
+    - redis
+    - immich
