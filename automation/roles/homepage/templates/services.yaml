@@ -36,12 +36,6 @@
         icon: "qbittorrent"
         server: "local-docker"
         container: "torrent"
-    - Hackmd:
-        href: http://hackmd.{{ ansible_host }}
-        description: "Markdown editor"
-        icon: "hedgedoc"
-        server: "local-docker"
-        container: "hackmd"
     - Gitea:
         href: http://gitea.{{ ansible_host }}
         description: "Git server"
