@@ -22,7 +22,7 @@
       container: "immich"
       showStats: true
   - Filebrowser:
-      href: http://filebrowser.{{ ansible_host }}
+      href: http://files.{{ ansible_host }}
       description: "File manager"
       icon: "filebrowser"
       server: "local-docker"
