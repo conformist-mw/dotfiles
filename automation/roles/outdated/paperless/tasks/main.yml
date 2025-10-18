@@ -1,0 +1,33 @@
+---
+- name: Create paperless user
+  community.postgresql.postgresql_user:
+    name: "{{ app_name }}"
+    password: "{{ app_name }}"
+
+- name: Create paperless database
+  community.postgresql.postgresql_db:
+    name: "{{ app_name }}"
+    owner: "{{ app_name }}"
+
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+
+- name: Paperless container
+  community.docker.docker_container:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    pull: true
+    name: "{{ app_name }}"
+    restart: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    volumes:
+      - "{{ app_data_dir }}/data:/usr/src/paperless/data"
+      - "{{ app_data_dir }}/media:/usr/src/paperless/media"
+      - "{{ app_data_dir }}/export:/usr/src/paperless/export"
+      - "{{ app_data_dir }}/consume:/usr/src/paperless/consume"
+    env:
+      PAPERLESS_REDIS: redis://redis:6379
+      PAPERLESS_DBHOST: postgres
+    labels: "{{ labels }}"
