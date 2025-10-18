@@ -42,12 +42,6 @@
         icon: "gitea"
         server: "local-docker"
         container: "gitea"
-    - Paperless:
-        href: http://paperless.{{ ansible_host }}
-        description: "Document management"
-        icon: "paperless"
-        server: "local-docker"
-        container: "paperless"
     - Home Assistant:
         href: http://ha.{{ ansible_host }}
         description: "Home automation"
