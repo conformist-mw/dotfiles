@@ -42,12 +42,6 @@
         icon: "gitea"
         server: "local-docker"
         container: "gitea"
-    - Nextcloud:
-        href: http://nextcloud.{{ ansible_host }}
-        description: "File storage"
-        icon: "nextcloud"
-        server: "local-docker"
-        container: "nextcloud"
     - Paperless:
         href: http://paperless.{{ ansible_host }}
         description: "Document management"
