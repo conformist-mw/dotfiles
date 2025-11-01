@@ -1,3 +1,0 @@
-#!/bin/bash
-
-/usr/bin/figlet "$(hostname)" | /usr/games/lolcat -f
