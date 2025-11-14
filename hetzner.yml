@@ -1,0 +1,23 @@
+- hosts: hetzner
+  roles:
+    # - vps
+    # - role: docker
+    #   vars:
+    #     ansible_distribution_release: "bookworm"
+    # - vim
+    # - role: vim
+    #   vars:
+    #     user: "root"
+    # - wireguard
+    # - ipython
+    # - dozzle
+    # - rsstt
+    # - glances
+    # - role: homepage
+    #   vars:
+    #     hostname_prefix: "dash."
+    #     path_prefix: "vps/"
+    # - memos
+    # - flatnotes
+    - commeilfaut
+    # - segments
