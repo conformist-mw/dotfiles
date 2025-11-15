@@ -1,2 +1,3 @@
 app_name: "dozzle"
+app_subdomain: "dozzle"
 app_port: 8080
