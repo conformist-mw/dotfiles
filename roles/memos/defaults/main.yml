@@ -1,3 +1,4 @@
 app_name: "memos"
+app_subdomain: "memos"
 app_port: 5230
 app_data_dir: "{{ data_dir }}/memos"
