@@ -1,33 +1,32 @@
-
 - media:
-  - Jellyfin:
-      href: http://{{ ansible_host }}:8096
-      description: "Media server"
-      icon: "jellyfin"
-      server: "local-docker"
-      container: "jellyfin"
-      showStats: true
-  - Navidrome:
-      href: http://navidrome.{{ ansible_host }}
-      description: "Music server"
-      icon: "navidrome"
-      server: "local-docker"
-      container: "navidrome"
-      showStats: true
-  - Immich:
-      href: http://photo.{{ ansible_host }}
-      description: "Own photo collection"
-      icon: "immich"
-      server: "local-docker"
-      container: "immich"
-      showStats: true
-  - Filebrowser:
-      href: http://files.{{ ansible_host }}
-      description: "File manager"
-      icon: "filebrowser"
-      server: "local-docker"
-      container: "filebrowser"
-      showStats: true
+    - Jellyfin:
+        href: http://{{ ansible_host }}:8096
+        description: "Media server"
+        icon: "jellyfin"
+        server: "local-docker"
+        container: "jellyfin"
+        showStats: true
+    - Navidrome:
+        href: http://navidrome.{{ ansible_host }}
+        description: "Music server"
+        icon: "navidrome"
+        server: "local-docker"
+        container: "navidrome"
+        showStats: true
+    - Immich:
+        href: http://photo.{{ ansible_host }}
+        description: "Own photo collection"
+        icon: "immich"
+        server: "local-docker"
+        container: "immich"
+        showStats: true
+    - Filebrowser:
+        href: http://files.{{ ansible_host }}
+        description: "File manager"
+        icon: "filebrowser"
+        server: "local-docker"
+        container: "filebrowser"
+        showStats: true
 
 - applications:
     - QBittorrent:
@@ -79,15 +78,15 @@
 
 - vps:
     - Router:
-        href: http://router.{{ ansible_host }}
+        href: https://router.{{ ansible_host }}
         description: "Router"
         icon: "keenetic"
     - Dashboard:
-        href: http://dash.conformist.name
+        href: https://dash.conformist.name
         description: "Dashboard"
         icon: "homepage"
     - Home Assistant:
-        href: http://ha.conformist.name
+        href: https://ha.conformist.name
         description: "Home automation"
         icon: "home-assistant"
     - Traefik:
@@ -95,10 +94,14 @@
         description: "Reverse proxy"
         icon: "traefik"
     - About:
-        href: http://conformist.name
+        href: https://conformist.name
         description: "About me"
         icon: "mdi-account"
     - Segments:
-        href: http://segments.conformist.name
+        href: https://segments.conformist.name
         description: "Segments"
         icon: "mdi-segment"
+    - Commeilfaut:
+        href: https://commeilfaut.conformist.name/admin/
+        description: "Commeilfaut"
+        icon: "mdi-alien"
