@@ -1,3 +1,4 @@
 app_name: "filestash"
+app_subdomain: "filestash"
 app_port: 8334
 app_data_dir: "{{ data_dir }}/filestash"
