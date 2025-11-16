@@ -1,3 +1,4 @@
 app_name: "notes"
+app_subdomain: "notes"
 app_port: 8080
 app_data_dir: "{{ data_dir }}/notes"
