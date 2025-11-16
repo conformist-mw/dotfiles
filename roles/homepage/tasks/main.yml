@@ -10,11 +10,22 @@
     - "widgets"
   vars:
     open_weather_api_key: "{{ lookup('community.general.bitwarden_secrets_manager', '4344ffde-2d4a-46cd-9270-b29b01185379').value }}"
+  become: true
 
 - name: Copy favicon
   ansible.builtin.copy:
     src: "{{ path_prefix }}favicon.ico"
     dest: "{{ app_data_dir }}/images/favicon.ico"
+  become: true
+
+- name: fix permissions
+  ansible.builtin.file:
+    path: "{{ app_data_dir }}"
+    state: directory
+    mode: 0755
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  become: true
 
 - name: Include labels generator
   ansible.builtin.include_role:
