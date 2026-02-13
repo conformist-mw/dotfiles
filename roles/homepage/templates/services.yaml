@@ -75,6 +75,10 @@
         icon: "pgadmin"
         server: "local-docker"
         container: "pgadmin"
+    - Cockpit:
+        href: http://cockpit.{{ ansible_host }}
+        description: "System management"
+        icon: "cockpit"
 
 - vps:
     - Router:

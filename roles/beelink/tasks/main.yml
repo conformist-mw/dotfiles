@@ -11,6 +11,7 @@
       - fd-find # fast find replacement written in Rust
       - gdu # disk usage analyzer wiritten in Go (ncdu alternative)
       - htop
+      - iptables-persistent
       - libacl1
       - libacl1-dev
       - liblz4-dev
@@ -32,10 +33,20 @@
       - smartmontools
       - virtualenv
     update_cache: yes
+    state: present
   become: true
 
 - name: Include notifications tasks
   ansible.builtin.include_tasks: tasks/notifications.yml
+
+- name: Ensure iptables persistent dir exists
+  ansible.builtin.file:
+    path: /etc/iptables
+    state: directory
+    owner: root
+    group: root
+    mode: 0755
+  become: true
 
 - name: Create data dir
   ansible.builtin.file:

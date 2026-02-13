@@ -31,6 +31,9 @@
     destination_port: 61208
     jump: ACCEPT
   become: true
+  notify:
+    - save iptables ipv4
+    - save iptables ipv6
 
 - name: Add iptables rule for DNAT from container network to localhost
   ansible.builtin.iptables:
@@ -42,3 +45,6 @@
     jump: DNAT
     to_destination: 127.0.0.1:61208
   become: true
+  notify:
+    - save iptables ipv4
+    - save iptables ipv6

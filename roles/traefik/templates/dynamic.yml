@@ -5,6 +5,11 @@ http:
         - web
       service: glances
       rule: Host(`glances.{{ ansible_host }}`)
+    cockpit:
+      entryPoints:
+        - web
+      service: cockpit
+      rule: Host(`cockpit.{{ ansible_host }}`)
     ha:
       entryPoints:
         - web
@@ -21,6 +26,10 @@ http:
       loadBalancer:
         servers:
           - url: http://{{ docker_gateway }}:61208
+    cockpit:
+      loadbalancer:
+        servers:
+          - url: http://{{ docker_gateway }}:9090
     ha:
       loadBalancer:
         servers:
