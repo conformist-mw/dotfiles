@@ -4,10 +4,10 @@
     name:
       - apt-transport-https
       - bash-completion
-      - btop  # htop alternative
+      - btop # htop alternative
       - curl
       - debian-archive-keyring
-      - fd-find  # fast find replacement written in Rust
+      - fd-find # fast find replacement written in Rust
       - gdu
       - htop
       - libacl1
@@ -21,7 +21,7 @@
       - plocate
       - python3-dev
       - python3-pip
-      - python3-passlib  # htpasswd
+      - python3-passlib # htpasswd
       - python3-psycopg2
       - python3-venv
       - ranger
@@ -50,10 +50,10 @@
     state: present
     reload: yes
   with_items:
-    - 'net.ipv4.ip_forward'
-    - 'net.ipv4.conf.lo.route_localnet'
-    - 'net.ipv4.conf.wg0.route_localnet'
-    - 'net.ipv4.conf.{{ docker_network }}.route_localnet'
+    - "net.ipv4.ip_forward"
+    - "net.ipv4.conf.lo.route_localnet"
+    - "net.ipv4.conf.wg0.route_localnet"
+    - "net.ipv4.conf.{{ docker_network }}.route_localnet"
   become: true
 
 - name: Install crowdsec
@@ -80,7 +80,7 @@
 - name: Watchtower
   community.docker.docker_container:
     name: watchtower
-    image: containrrr/watchtower
+    image: nickfedor/watchtower
     restart_policy: "always"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
@@ -91,6 +91,6 @@
     env:
       WATCHTOWER_NOTIFICATION_URL: "telegram://{{ tg_bot.value }}@telegram?chats={{ tg_bot.note }}"
       WATCHTOWER_NOTIFICATIONS_HOSTNAME: "{{ ansible_host }}"
-      WATCHTOWER_SCHEDULE: "0 0 12 * * *"
+      WATCHTOWER_SCHEDULE: "0 0 10 * * *"
   vars:
     tg_bot: "{{ lookup('community.general.bitwarden_secrets_manager', '26e16cc8-09d8-4636-b0ab-b2690130a690') }}"

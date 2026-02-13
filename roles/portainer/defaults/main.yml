@@ -1,3 +1,4 @@
 app_name: "portainer"
+app_subdomain: "portainer"
 app_port: 9000
 app_data_dir: "{{ data_dir }}/portainer"

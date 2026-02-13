@@ -1,3 +1,4 @@
 app_name: "traefik"
+app_subdomain: "traefik"
 app_port: 8080
 app_data_dir: "{{ data_dir }}/traefik"
