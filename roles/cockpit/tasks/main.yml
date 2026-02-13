@@ -1,0 +1,58 @@
+- name: Install cockpit from backports
+  ansible.builtin.apt:
+    name:
+      - cockpit
+      - cockpit-machines
+    state: present
+    update_cache: yes
+    default_release: "{{ ansible_distribution_release }}-backports"
+  become: true
+
+- name: Copy templates
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: 0644
+  loop:
+    - { src: "cockpit.socket", dest: "/etc/systemd/system/cockpit.socket" }
+    - { src: "cockpit.conf", dest: "/etc/cockpit/cockpit.conf" }
+  become: true
+
+- name: reload cockpit
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  loop:
+    - "cockpit.socket"
+    - "cockpit.service"
+  become: true
+
+- name: Add iptables rule for allowing traffic to port 9090 from container network
+  ansible.builtin.iptables:
+    chain: INPUT
+    in_interface: "{{ docker_network }}"
+    protocol: tcp
+    destination_port: 9090
+    jump: ACCEPT
+  become: true
+  notify:
+    - save iptables ipv4
+    - save iptables ipv6
+
+- name: Add iptables rule for DNAT from container network to localhost
+  ansible.builtin.iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: "{{ docker_network }}"
+    protocol: tcp
+    destination_port: 9090
+    jump: DNAT
+    to_destination: 127.0.0.1:9090
+  become: true
+  notify:
+    - save iptables ipv4
+    - save iptables ipv6

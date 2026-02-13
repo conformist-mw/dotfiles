@@ -1,0 +1,14 @@
+[Unit]
+Description=Cockpit Web Service Socket
+Documentation=man:cockpit-ws(8)
+Wants=cockpit-issue.service
+
+[Socket]
+ListenStream=
+ListenStream=127.0.0.1:9090
+ExecStartPost=-/usr/share/cockpit/issue/update-issue '' localhost
+ExecStartPost=-/bin/ln -snf active.issue /run/cockpit/issue
+ExecStopPost=-/bin/ln -snf inactive.issue /run/cockpit/issue
+
+[Install]
+WantedBy=sockets.target

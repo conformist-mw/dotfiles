@@ -1,0 +1,13 @@
+- name: save iptables ipv4
+  community.general.iptables_state:
+    state: saved
+    path: /etc/iptables/rules.v4
+    ip_version: ipv4
+  become: true
+
+- name: save iptables ipv6
+  community.general.iptables_state:
+    state: saved
+    path: /etc/iptables/rules.v6
+    ip_version: ipv6
+  become: true
