@@ -1,23 +1,18 @@
 - hosts: hetzner
   roles:
-    # - vps
-    # - role: docker
-    #   vars:
-    #     ansible_distribution_release: "bookworm"
-    # - vim
-    # - role: vim
-    #   vars:
-    #     user: "root"
-    # - wireguard
-    # - ipython
-    # - dozzle
-    # - rsstt
-    # - glances
-    # - role: homepage
-    #   vars:
-    #     hostname_prefix: "dash."
-    #     path_prefix: "vps/"
-    # - memos
-    # - flatnotes
-    - commeilfaut
-    # - segments
+    # Base system setup
+    - { role: vps, tags: [base, vps] }
+    - { role: docker, tags: [base, docker], vars: { ansible_distribution_release: "bookworm" } }
+    - { role: vim, tags: [base, vim] }
+    - { role: vim, tags: [base, vim-root], vars: { user: "root" } }
+    - { role: wireguard, tags: [base, wireguard] }
+
+    # Applications
+    - { role: dozzle, tags: [apps, dozzle] }
+    - { role: glances, tags: [apps, glances] }
+    - { role: homepage, tags: [apps, homepage], vars: { hostname_prefix: "dash.", path_prefix: "vps/" } }
+    - { role: rsstt, tags: [apps, rsstt] }
+    - { role: memos, tags: [apps, memos] }
+    - { role: flatnotes, tags: [apps, flatnotes] }
+    - { role: commeilfaut, tags: [apps, commeilfaut] }
+    - { role: segments, tags: [apps, segments] }

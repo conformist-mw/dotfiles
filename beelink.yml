@@ -1,25 +1,30 @@
 - hosts: bee
+  handlers:
+    - import_tasks: handlers/main.yml
   roles:
-    - beelink
-    - backup
-    - docker
-    - vim
-    - role: vim
-      vars:
-        user: "root"
-    - samba
-    - jellyfin
-    - traefik
-    - navidrome
-    - dozzle
-    - torrent
-    - sponsorblock
-    - glances
-    - portainer
-    - homepage
-    - gitea
-    - pgadmin
-    - bw
-    - filebrowser
-    - redis
-    - immich
+    # Base system setup
+    - { role: beelink, tags: [base, beelink] }
+    - { role: docker, tags: [base, docker] }
+    - { role: vim, tags: [base, vim] }
+    - { role: vim, tags: [base, vim-root], vars: { user: "root" } }
+
+    # Infrastructure
+    - { role: traefik, tags: [infra, traefik] }
+    - { role: cockpit, tags: [infra, cockpit] }
+
+    # Applications
+    - { role: samba, tags: [apps, samba] }
+    - { role: jellyfin, tags: [apps, jellyfin] }
+    - { role: navidrome, tags: [apps, navidrome] }
+    - { role: dozzle, tags: [apps, dozzle] }
+    - { role: torrent, tags: [apps, torrent] }
+    - { role: sponsorblock, tags: [apps, sponsorblock] }
+    - { role: glances, tags: [apps, glances] }
+    - { role: portainer, tags: [apps, portainer] }
+    - { role: homepage, tags: [apps, homepage] }
+    - { role: gitea, tags: [apps, gitea] }
+    - { role: pgadmin, tags: [apps, pgadmin] }
+    - { role: filebrowser, tags: [apps, filebrowser] }
+    - { role: redis, tags: [apps, redis] }
+    - { role: immich, tags: [apps, immich] }
+    - { role: backup, tags: [apps, backup] }
