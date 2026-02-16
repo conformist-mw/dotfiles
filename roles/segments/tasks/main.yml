@@ -17,6 +17,7 @@
     name: oauth2-proxy
     image: "quay.io/oauth2-proxy/oauth2-proxy:latest"
     restart: true
+    pull: true
     restart_policy: "unless-stopped"
     networks:
       - name: "{{ docker_network }}"
@@ -27,16 +28,16 @@
     env:
       OAUTH2_PROXY_CONFIG: "/oauth2-proxy.cfg"
     labels:
-      traefik.enable: 'true'
-      traefik.http.routers.oauth2-proxy.entrypoints: 'websecure'
-      traefik.http.routers.oauth2-proxy.tls: 'true'
-      traefik.http.routers.oauth2-proxy.rule: 'Host(`auth.{{ ansible_host }}`)'
+      traefik.enable: "true"
+      traefik.http.routers.oauth2-proxy.entrypoints: "websecure"
+      traefik.http.routers.oauth2-proxy.tls: "true"
+      traefik.http.routers.oauth2-proxy.rule: "Host(`auth.{{ ansible_host }}`)"
       traefik.http.services.oauth2-proxy.loadbalancer.server.port: "4180"
       traefik.http.routers.oauth2-proxy.tls.certresolver: "letsencrypt"
-      traefik.http.middlewares.oauth2-proxy.forwardauth.address: 'http://oauth2-proxy:4180'
-      traefik.http.middlewares.oauth2-proxy.forwardauth.trustForwardHeader: 'true'
-      traefik.http.middlewares.oauth2-proxy.forwardauth.authResponseHeaders: 'X-Auth-Request-Access-Token,Authorization,X-Auth-Request-Email,X-Auth-Request-User'
-      traefik.http.middlewares.oauth2-proxy: 'auth-headers@file'
+      traefik.http.middlewares.oauth2-proxy.forwardauth.address: "http://oauth2-proxy:4180"
+      traefik.http.middlewares.oauth2-proxy.forwardauth.trustForwardHeader: "true"
+      traefik.http.middlewares.oauth2-proxy.forwardauth.authResponseHeaders: "X-Auth-Request-Access-Token,Authorization,X-Auth-Request-Email,X-Auth-Request-User"
+      traefik.http.middlewares.oauth2-proxy: "auth-headers@file"
 
 - name: Copy traefik static config file
   ansible.builtin.copy:
@@ -53,6 +54,7 @@
     name: traefik
     image: "traefik:latest"
     restart: true
+    pull: true
     restart_policy: "unless-stopped"
     ports:
       - "80:80"
@@ -117,7 +119,8 @@
   ansible.builtin.copy:
     src: pihole-dnsmask.conf
     dest: "{{ data_dir }}/pihole/etc-dnsmasq.d/local.conf"
-    mode: '0644'
+    mode: "0644"
+  become: true
 
 - name: Pi-Hole container
   community.docker.docker_container:
