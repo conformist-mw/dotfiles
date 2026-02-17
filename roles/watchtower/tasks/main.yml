@@ -1,0 +1,21 @@
+---
+- name: Get telegram bot credentials
+  set_fact:
+    tg_bot: "{{ lookup('community.general.bitwarden_secrets_manager', '26e16cc8-09d8-4636-b0ab-b2690130a690') }}"
+
+- name: Watchtower container
+  community.docker.docker_container:
+    name: watchtower
+    image: nickfedor/watchtower
+    pull: true
+    restart_policy: "always"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/etc/localtime:/etc/localtime:ro"
+    command: --cleanup
+    networks:
+      - name: "{{ docker_network }}"
+    env:
+      WATCHTOWER_NOTIFICATION_URL: "telegram://{{ tg_bot.value }}@telegram?chats={{ tg_bot.note }}"
+      WATCHTOWER_NOTIFICATIONS_HOSTNAME: "{{ ansible_host }}"
+      WATCHTOWER_SCHEDULE: "{{ watchtower_schedule | default('0 0 9 * * *') }}"
