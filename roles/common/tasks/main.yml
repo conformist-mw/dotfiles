@@ -1,11 +1,14 @@
 ---
-- name: Install system requirements
+- name: Install common system packages
   ansible.builtin.apt:
     name:
       - apt-transport-https
       - bash-completion
+      - btop
       - curl
       - debian-archive-keyring
+      - fd-find
+      - gdu
       - htop
       - libacl1
       - libacl1-dev
@@ -15,24 +18,76 @@
       - libzstd-dev
       - mc
       - ncdu
-      - ntfs-3g
+      - plocate
       - python3-dev
       - python3-pip
+      - python3-psycopg2
+      - ranger
+      - virtualenv
     update_cache: yes
+    state: present
   become: true
 
-- name: Install tg sendmail
-  ansible.builtin.apt:
-    deb: https://github.com/conformist-mw/sendmail/releases/download/0.3.2/tg-sendmail_0.3.2_all.deb
+- name: Install tg-sendmail for notifications
+  block:
+    - name: Install tg-sendmail deb
+      ansible.builtin.apt:
+        deb: https://github.com/conformist-mw/sendmail/releases/download/0.3.2/tg-sendmail_0.3.2_all.deb
+
+    - name: Install mailx
+      ansible.builtin.apt:
+        name: bsd-mailx
+
+    - name: Copy tg sendmail config
+      ansible.builtin.copy:
+        dest: /etc/tg-sendmail.ini
+        content: |
+          [main]
+          log_level=info
+          log_path=/var/log/tg-sendmail.log
+          [telegram]
+          chat_id={{ tg_bot.note }}
+          bot_token={{ tg_bot.value }}
+      vars:
+        tg_bot: "{{ lookup('community.general.bitwarden_secrets_manager', '26e16cc8-09d8-4636-b0ab-b2690130a690') }}"
   become: true
 
-- name: Install mailx
-  ansible.builtin.apt:
-    name: bsd-mailx
+- name: Create systemd-notify service
+  block:
+    - name: Copy systemd-notify service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/systemd-notify@.service
+        content: |
+          [Unit]
+          Description=Send systemd notifications to Telegram
+          After=network.target
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/bin/bash -c '/usr/bin/systemctl status %i | /usr/bin/mailx -s "[SYSTEMD_%i] Fail" root@{{ ansible_host }}'
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Enable notify service
+      ansible.builtin.systemd:
+        daemon_reload: yes
   become: true
 
-- name: Copy tg sendmail config
-  ansible.builtin.template:
-    dest: /etc/tg-sendmail.ini
-    src: tg-sendmail.ini.j2
+- name: Create data directory
+  ansible.builtin.file:
+    path: "{{ data_dir }}"
+    state: directory
+
+- name: Configure sysctl for IP forwarding
+  ansible.posix.sysctl:
+    name: "{{ item }}"
+    value: "1"
+    sysctl_set: true
+    state: present
+    reload: yes
+  with_items:
+    - "net.ipv4.ip_forward"
+    - "net.ipv4.conf.lo.route_localnet"
+    - "net.ipv4.conf.{{ docker_network }}.route_localnet"
   become: true
