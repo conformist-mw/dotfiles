@@ -1,0 +1,25 @@
+---
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+
+- name: Weblist container
+  community.docker.docker_container:
+    image: ghcr.io/umputun/weblist:latest
+    pull: true
+    name: weblist
+    restart: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    volumes:
+      - "{{ ansible_env.HOME }}:/data/home:ro"
+      - "/mnt/ssd:/data/ssd:ro"
+      - "/mnt/hdd:/data/hdd:ro"
+    env:
+      ROOT_DIR: "/data"
+      THEME: "dark"
+      LISTEN: ":8080"
+      TITLE: "{{ ansible_host }}"
+      EXCLUDE: ".git,.env,node_modules,__pycache__,.venv"
+    labels: "{{ labels }}"
