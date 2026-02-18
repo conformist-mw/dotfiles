@@ -1,59 +1,25 @@
 ---
-- name: Install system requirements
+# VPS-specific packages (not in common)
+- name: Install vps-specific packages
   ansible.builtin.apt:
     name:
-      - apt-transport-https
-      - bash-completion
-      - btop # htop alternative
-      - curl
-      - debian-archive-keyring
-      - fd-find # fast find replacement written in Rust
-      - gdu
-      - htop
-      - libacl1
-      - libacl1-dev
-      - liblz4-dev
-      - libssl-dev
-      - libxxhash-dev
-      - libzstd-dev
-      - mc
-      - ncdu
-      - plocate
-      - python3-dev
-      - python3-pip
-      - python3-passlib # htpasswd
-      - python3-psycopg2
+      - python3-passlib
       - python3-venv
-      - ranger
-      - virtualenv
     update_cache: yes
   become: true
-
-- name: Include notifications tasks
-  ansible.builtin.include_tasks: tasks/notifications.yml
 
 - name: Create server dir
   ansible.builtin.file:
     path: "{{ server_dir }}"
     state: directory
 
-- name: Create data dir
-  ansible.builtin.file:
-    path: "{{ data_dir }}"
-    state: directory
-
-- name: Configure sysctl for route_localnet and IP forwarding
+- name: Configure sysctl for wg0 interface
   ansible.posix.sysctl:
-    name: "{{ item }}"
+    name: "net.ipv4.conf.wg0.route_localnet"
     value: "1"
     sysctl_set: true
     state: present
     reload: yes
-  with_items:
-    - "net.ipv4.ip_forward"
-    - "net.ipv4.conf.lo.route_localnet"
-    - "net.ipv4.conf.wg0.route_localnet"
-    - "net.ipv4.conf.{{ docker_network }}.route_localnet"
   become: true
 
 - name: Install crowdsec
@@ -76,21 +42,3 @@
           - crowdsec-firewall-bouncer-iptables
         update_cache: yes
   become: true
-
-- name: Watchtower
-  community.docker.docker_container:
-    name: watchtower
-    image: nickfedor/watchtower
-    restart_policy: "always"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock"
-      - "/etc/localtime:/etc/localtime:ro"
-    command: --cleanup
-    networks:
-      - name: "{{ docker_network }}"
-    env:
-      WATCHTOWER_NOTIFICATION_URL: "telegram://{{ tg_bot.value }}@telegram?chats={{ tg_bot.note }}"
-      WATCHTOWER_NOTIFICATIONS_HOSTNAME: "{{ ansible_host }}"
-      WATCHTOWER_SCHEDULE: "0 0 10 * * *"
-  vars:
-    tg_bot: "{{ lookup('community.general.bitwarden_secrets_manager', '26e16cc8-09d8-4636-b0ab-b2690130a690') }}"
