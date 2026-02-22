@@ -3,10 +3,12 @@
     - import_tasks: handlers/main.yml
   roles:
     # Base system setup
+    - { role: common, tags: [base, common] }
     - { role: beelink, tags: [base, beelink] }
     - { role: docker, tags: [base, docker] }
     - { role: vim, tags: [base, vim] }
     - { role: vim, tags: [base, vim-root], vars: { user: "root" } }
+    - { role: watchtower, tags: [base, watchtower] }
 
     # Infrastructure
     - { role: traefik, tags: [infra, traefik] }
@@ -24,7 +26,7 @@
     - { role: homepage, tags: [apps, homepage] }
     - { role: gitea, tags: [apps, gitea] }
     - { role: pgadmin, tags: [apps, pgadmin] }
-    - { role: filebrowser, tags: [apps, filebrowser] }
+    - { role: weblist, tags: [apps, weblist, files] }
     - { role: redis, tags: [apps, redis] }
     - { role: immich, tags: [apps, immich] }
     - { role: backup, tags: [apps, backup] }
