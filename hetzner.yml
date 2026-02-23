@@ -1,11 +1,13 @@
 - hosts: hetzner
   roles:
     # Base system setup
+    - { role: common, tags: [base, common] }
     - { role: vps, tags: [base, vps] }
     - { role: docker, tags: [base, docker], vars: { ansible_distribution_release: "bookworm" } }
     - { role: vim, tags: [base, vim] }
     - { role: vim, tags: [base, vim-root], vars: { user: "root" } }
     - { role: wireguard, tags: [base, wireguard] }
+    - { role: watchtower, tags: [base, watchtower], vars: { watchtower_schedule: "0 0 10 * * *" } }
 
     # Applications
     - { role: dozzle, tags: [apps, dozzle] }
