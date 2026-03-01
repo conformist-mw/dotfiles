@@ -36,6 +36,7 @@
       traefik.http.routers.oauth2-proxy.tls.certresolver: "letsencrypt"
       traefik.http.middlewares.oauth2-proxy.forwardauth.address: "http://oauth2-proxy:4180"
       traefik.http.middlewares.oauth2-proxy.forwardauth.trustForwardHeader: "true"
+      traefik.http.middlewares.oauth2-proxy.forwardauth.maxResponseBodySize: "1048576"
       traefik.http.middlewares.oauth2-proxy.forwardauth.authResponseHeaders: "X-Auth-Request-Access-Token,Authorization,X-Auth-Request-Email,X-Auth-Request-User"
       traefik.http.middlewares.oauth2-proxy: "auth-headers@file"
 
