@@ -1,0 +1,60 @@
+---
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+
+- name: Create n8n data directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ app_data_dir }}"
+    - "{{ app_data_dir }}/n8n_postgres"
+    - "{{ app_data_dir }}/n8n"
+
+- name: n8n PostgreSQL container
+  community.docker.docker_container:
+    image: "postgres:16-alpine"
+    pull: true
+    name: "{{ app_name }}_postgres"
+    restart: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    volumes:
+      - "{{ app_data_dir }}/n8n_postgres:/var/lib/postgresql/data"
+    env:
+      POSTGRES_DB: "{{ app_name }}"
+      POSTGRES_USER: "{{ app_name }}"
+      POSTGRES_PASSWORD: "{{ app_name }}"
+
+- name: n8n container
+  community.docker.docker_container:
+    image: "docker.n8n.io/n8nio/n8n:stable"
+    pull: true
+    name: "{{ app_name }}"
+    restart: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    volumes:
+      - "{{ app_data_dir }}/n8n:/home/node/.n8n"
+    env:
+      TZ: "{{ tz }}"
+      GENERIC_TIMEZONE: "{{ tz }}"
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: "true"
+      N8N_RUNNERS_ENABLED: "true"
+      DB_TYPE: "postgresdb"
+      DB_POSTGRESDB_HOST: "{{ app_name }}_postgres"
+      DB_POSTGRESDB_PORT: "5432"
+      DB_POSTGRESDB_DATABASE: "{{ app_name }}"
+      DB_POSTGRESDB_USER: "{{ app_name }}"
+      DB_POSTGRESDB_PASSWORD: "{{ app_name }}"
+      N8N_HOST: "{{ app_name }}.{{ ansible_host }}"
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: "https"
+      N8N_EDITOR_BASE_URL: "https://{{ app_name }}.{{ ansible_host }}"
+      WEBHOOK_URL: "https://{{ app_name }}.{{ ansible_host }}"
+      N8N_PROXY_HOPS: "1"
+    labels: "{{ labels }}"

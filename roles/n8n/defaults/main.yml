@@ -1,0 +1,12 @@
+app_name: "n8n"
+app_port: 5678
+app_data_dir: "{{ data_dir }}/n8n"
+
+
+n8n_postgres_container_name: "{{ app_name }}_postgres"
+n8n_postgres_db: "{{ app_name }}"
+n8n_postgres_user: "{{ app_name }}"
+n8n_postgres_password: "{{ app_name }}"
+n8n_postgres_schema: "public"
+n8n_postgres_port: "5432"
+n8n_public_url: "https://{{ app_name }}.{{ ansible_host }}"
