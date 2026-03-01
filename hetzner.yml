@@ -3,18 +3,31 @@
     # Base system setup
     - { role: common, tags: [base, common] }
     - { role: vps, tags: [base, vps] }
-    - { role: docker, tags: [base, docker], vars: { ansible_distribution_release: "bookworm" } }
+    - {
+        role: docker,
+        tags: [base, docker],
+        vars: { ansible_distribution_release: "bookworm" },
+      }
     - { role: vim, tags: [base, vim] }
     - { role: vim, tags: [base, vim-root], vars: { user: "root" } }
     - { role: wireguard, tags: [base, wireguard] }
-    - { role: watchtower, tags: [base, watchtower], vars: { watchtower_schedule: "0 0 10 * * *" } }
+    - {
+        role: watchtower,
+        tags: [base, watchtower],
+        vars: { watchtower_schedule: "0 0 10 * * *" },
+      }
 
     # Applications
     - { role: dozzle, tags: [apps, dozzle] }
     - { role: glances, tags: [apps, glances] }
-    - { role: homepage, tags: [apps, homepage], vars: { hostname_prefix: "dash.", path_prefix: "vps/" } }
+    - {
+        role: homepage,
+        tags: [apps, homepage],
+        vars: { hostname_prefix: "dash.", path_prefix: "vps/" },
+      }
     - { role: rsstt, tags: [apps, rsstt] }
     - { role: memos, tags: [apps, memos] }
     - { role: flatnotes, tags: [apps, flatnotes] }
+    - { role: n8n, tags: [apps, n8n] }
     - { role: commeilfaut, tags: [apps, commeilfaut] }
     - { role: segments, tags: [apps, segments] }
