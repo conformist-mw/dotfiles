@@ -20,11 +20,18 @@
         container: "dozzle"
         server: "local-docker"
 
-    - n8n:
-        href: https://n8n.{{ ansible_host }}
-        description: "Workflow automation"
-        icon: "n8n"
-        container: "n8n"
+    - rsstt:
+        href: https://rsstt.{{ ansible_host }}
+        description: "RSS to Telegram"
+        icon: "mdi-rss"
+        container: "rsstt"
+        server: "local-docker"
+
+    - Commeilfaut:
+        href: https://commeilfaut.{{ ansible_host }}/admin
+        description: "Ceilings shop admin"
+        icon: "mdi-ceiling-light"
+        container: "ceilings-app"
         server: "local-docker"
 
     - Pihole:
