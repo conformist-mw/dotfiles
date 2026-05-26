@@ -24,4 +24,4 @@
       traefik.http.routers.rsstt.tls.certresolver: "letsencrypt"
       traefik.http.routers.rsstt.rule: "Host(`rsstt.{{ ansible_host }}`)"
       traefik.http.services.rsstt.loadbalancer.server.port: "8080"
-      traefik.http.routers.rsstt.middlewares: "no-auth-chain@file"
+      traefik.http.routers.rsstt.middlewares: "auth-chain@file"
