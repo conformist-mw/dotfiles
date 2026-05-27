@@ -1,0 +1,50 @@
+---
+- name: Ensure lessons data directory
+  ansible.builtin.file:
+    path: "{{ lessons_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Check if prod DB exists
+  ansible.builtin.stat:
+    path: "{{ lessons_dir }}/lessons.db"
+  register: lessons_db
+
+- name: Seed prod DB from bundled Excel (first deploy only)
+  when: not lessons_db.stat.exists
+  community.docker.docker_container:
+    name: lessons-import
+    image: "{{ lessons_image }}"
+    pull: true
+    detach: false
+    cleanup: true
+    user: "{{ puid }}:{{ pgid }}"
+    volumes:
+      - "{{ lessons_dir }}:/data"
+    entrypoint: /app/import
+    command:
+      - "-src"
+      - "/app/seed.xlsx"
+      - "-db"
+      - "/data/lessons.db"
+
+- name: Lessons container
+  community.docker.docker_container:
+    image: "{{ lessons_image }}"
+    pull: true
+    name: lessons
+    restart: true
+    restart_policy: "unless-stopped"
+    user: "{{ puid }}:{{ pgid }}"
+    networks:
+      - name: "{{ docker_network }}"
+    volumes:
+      - "{{ lessons_dir }}:/data"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.lessons.entrypoints: "websecure"
+      traefik.http.routers.lessons.tls: "true"
+      traefik.http.routers.lessons.tls.certresolver: "letsencrypt"
+      traefik.http.routers.lessons.rule: "Host(`lessons.{{ ansible_host }}`)"
+      traefik.http.services.lessons.loadbalancer.server.port: "8080"
+      traefik.http.routers.lessons.middlewares: "auth-chain@file"

@@ -31,3 +31,4 @@
     - { role: n8n, tags: [apps, n8n] }
     - { role: commeilfaut, tags: [apps, commeilfaut] }
     - { role: segments, tags: [apps, segments] }
+    - { role: lessons, tags: [apps, lessons] }
