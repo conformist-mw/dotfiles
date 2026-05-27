@@ -38,6 +38,8 @@
     user: "{{ puid }}:{{ pgid }}"
     networks:
       - name: "{{ docker_network }}"
+    env:
+      TZ: "{{ tz }}"
     volumes:
       - "{{ lessons_dir }}:/data"
     labels:
