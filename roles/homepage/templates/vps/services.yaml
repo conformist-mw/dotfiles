@@ -34,6 +34,13 @@
         container: "ceilings-app"
         server: "local-docker"
 
+    - Lessons:
+        href: https://lessons.{{ ansible_host }}
+        description: "Kids' lessons tracker"
+        icon: "mdi-school"
+        container: "lessons"
+        server: "local-docker"
+
     - Pihole:
         href: https://pihole.{{ ansible_host }}/admin
         description: "Network-wide ad blocking"
