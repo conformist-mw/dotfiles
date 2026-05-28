@@ -2,6 +2,10 @@
 home_meters_image: "olegsmedyuk/home-meters:latest"
 home_meters_dir: "{{ data_dir }}/home-meters"
 home_meters_subdomain: "meters"
+# Set to true to force overwriting prod DB with the local seed. Use when
+# the local DB is canonical (no prod-side writes yet) — e.g., right after
+# a data cleanup. Default keeps prod DB intact.
+home_meters_reseed: false
 # Local path on the Ansible control node from which to seed the prod DB
 # on first deploy. The file is gitignored from both the app repo and
 # dotfiles — it lives next to the app sources.
