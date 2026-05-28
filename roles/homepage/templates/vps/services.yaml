@@ -41,6 +41,13 @@
         container: "lessons"
         server: "local-docker"
 
+    - Home meters:
+        href: https://meters.{{ ansible_host }}
+        description: "Utility meter readings"
+        icon: "mdi-meter-electric"
+        container: "home-meters"
+        server: "local-docker"
+
     - Pihole:
         href: https://pihole.{{ ansible_host }}/admin
         description: "Network-wide ad blocking"

@@ -1,0 +1,8 @@
+---
+home_meters_image: "olegsmedyuk/home-meters:latest"
+home_meters_dir: "{{ data_dir }}/home-meters"
+home_meters_subdomain: "meters"
+# Local path on the Ansible control node from which to seed the prod DB
+# on first deploy. The file is gitignored from both the app repo and
+# dotfiles — it lives next to the app sources.
+home_meters_seed_db: "{{ playbook_dir }}/../home-meters/data/meters.db"

@@ -1,0 +1,63 @@
+---
+- name: Ensure home-meters data directory
+  ansible.builtin.file:
+    path: "{{ home_meters_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Check if prod DB exists
+  ansible.builtin.stat:
+    path: "{{ home_meters_dir }}/meters.db"
+  register: home_meters_db
+
+- name: Check local seed DB is available (first deploy only)
+  ansible.builtin.stat:
+    path: "{{ home_meters_seed_db }}"
+  delegate_to: localhost
+  become: false
+  register: home_meters_seed_stat
+  when: not home_meters_db.stat.exists
+
+- name: Fail fast if no prod DB and no local seed
+  ansible.builtin.fail:
+    msg: >-
+      Production DB not found at {{ home_meters_dir }}/meters.db and the local
+      seed file ({{ home_meters_seed_db }}) is also missing. Run cmd/import
+      locally to produce data/meters.db before deploying.
+  when:
+    - not home_meters_db.stat.exists
+    - not home_meters_seed_stat.stat.exists
+
+- name: Seed prod DB on first deploy
+  when:
+    - not home_meters_db.stat.exists
+    - home_meters_seed_stat.stat.exists
+  ansible.builtin.copy:
+    src: "{{ home_meters_seed_db }}"
+    dest: "{{ home_meters_dir }}/meters.db"
+    owner: "{{ puid }}"
+    group: "{{ pgid }}"
+    mode: "0644"
+
+- name: Home-meters container
+  community.docker.docker_container:
+    image: "{{ home_meters_image }}"
+    pull: true
+    name: home-meters
+    restart: true
+    restart_policy: "unless-stopped"
+    user: "{{ puid }}:{{ pgid }}"
+    networks:
+      - name: "{{ docker_network }}"
+    env:
+      TZ: "{{ tz }}"
+    volumes:
+      - "{{ home_meters_dir }}:/data"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.home-meters.entrypoints: "websecure"
+      traefik.http.routers.home-meters.tls: "true"
+      traefik.http.routers.home-meters.tls.certresolver: "letsencrypt"
+      traefik.http.routers.home-meters.rule: "Host(`{{ home_meters_subdomain }}.{{ ansible_host }}`)"
+      traefik.http.services.home-meters.loadbalancer.server.port: "8080"
+      traefik.http.routers.home-meters.middlewares: "auth-chain@file"

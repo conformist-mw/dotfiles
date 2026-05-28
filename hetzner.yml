@@ -32,3 +32,4 @@
     - { role: commeilfaut, tags: [apps, commeilfaut] }
     - { role: segments, tags: [apps, segments] }
     - { role: lessons, tags: [apps, lessons] }
+    - { role: home-meters, tags: [apps, home-meters, "home_meters"] }
