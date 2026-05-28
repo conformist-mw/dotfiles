@@ -48,6 +48,8 @@
       TELEGRAM_WEBHOOK_URL: "https://lessons.{{ ansible_host }}{{ lessons_webhook_path | default('/tgwebhook') }}"
       TELEGRAM_WEBHOOK_SECRET: "{{ lessons_webhook_secret | default('') }}"
       TELEGRAM_ALLOWED_CHATS: "{{ lessons_allowed_chats | default('') }}"
+      TELEGRAM_NOTIFY_CHAT: "{{ lessons_notify_chat | default('') }}"
+      TELEGRAM_REMINDER_HOUR: "{{ lessons_reminder_hour | default('20') }}"
     volumes:
       - "{{ lessons_dir }}:/data"
     labels:
