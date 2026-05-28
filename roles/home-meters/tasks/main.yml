@@ -18,6 +18,19 @@
   register: home_meters_seed_stat
   when: (not home_meters_db.stat.exists) or (home_meters_reseed | bool)
 
+# When the local DB has uncommitted WAL changes (e.g. recent manual edits via
+# sqlite3 CLI), copying only the .db file leaves those changes behind. Force
+# a checkpoint so the main file is canonical before copy.
+- name: Checkpoint local WAL before reseed
+  ansible.builtin.command:
+    cmd: sqlite3 "{{ home_meters_seed_db }}" "PRAGMA wal_checkpoint(TRUNCATE);"
+  delegate_to: localhost
+  become: false
+  changed_when: false
+  when:
+    - home_meters_seed_stat.stat is defined and home_meters_seed_stat.stat.exists
+    - (not home_meters_db.stat.exists) or (home_meters_reseed | bool)
+
 - name: Fail fast if no prod DB and no local seed
   ansible.builtin.fail:
     msg: >-
