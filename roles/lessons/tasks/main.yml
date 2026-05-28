@@ -45,6 +45,9 @@
     env:
       TZ: "{{ tz }}"
       TELEGRAM_BOT_TOKEN: "{{ lessons_bot_token | default('') }}"
+      TELEGRAM_WEBHOOK_URL: "https://lessons.{{ ansible_host }}{{ lessons_webhook_path | default('/tgwebhook') }}"
+      TELEGRAM_WEBHOOK_SECRET: "{{ lessons_webhook_secret | default('') }}"
+      TELEGRAM_ALLOWED_CHATS: "{{ lessons_allowed_chats | default('') }}"
     volumes:
       - "{{ lessons_dir }}:/data"
     labels:
@@ -55,3 +58,13 @@
       traefik.http.routers.lessons.rule: "Host(`lessons.{{ ansible_host }}`)"
       traefik.http.services.lessons.loadbalancer.server.port: "8080"
       traefik.http.routers.lessons.middlewares: "auth-chain@file"
+      # Telegram webhook endpoint must bypass oauth so Telegram can POST to it.
+      # The path itself is a secret (lives in SOPS), so the endpoint is not
+      # discoverable from the public repo.
+      traefik.http.routers.lessons-bot.entrypoints: "websecure"
+      traefik.http.routers.lessons-bot.tls: "true"
+      traefik.http.routers.lessons-bot.tls.certresolver: "letsencrypt"
+      traefik.http.routers.lessons-bot.rule: "Host(`lessons.{{ ansible_host }}`) && PathPrefix(`{{ lessons_webhook_path | default('/tgwebhook') }}`)"
+      traefik.http.routers.lessons-bot.middlewares: "no-auth-chain@file"
+      traefik.http.routers.lessons-bot.service: "lessons"
+      traefik.http.routers.lessons-bot.priority: "100"
