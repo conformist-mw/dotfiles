@@ -1,4 +1,8 @@
 ---
+- name: Load lessons secrets (sops)
+  community.sops.load_vars:
+    file: "{{ role_path }}/vars/secrets.sops.yaml"
+
 - name: Ensure lessons data directory
   ansible.builtin.file:
     path: "{{ lessons_dir }}"
@@ -40,6 +44,7 @@
       - name: "{{ docker_network }}"
     env:
       TZ: "{{ tz }}"
+      TELEGRAM_BOT_TOKEN: "{{ lessons_bot_token | default('') }}"
     volumes:
       - "{{ lessons_dir }}:/data"
     labels:
