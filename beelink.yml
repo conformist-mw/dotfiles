@@ -24,7 +24,6 @@
     - { role: glances, tags: [apps, glances] }
     - { role: portainer, tags: [apps, portainer] }
     - { role: homepage, tags: [apps, homepage] }
-    - { role: home-meters, tags: [apps, home-meters, "home_meters"] }
     - { role: gitea, tags: [apps, gitea] }
     - { role: pgadmin, tags: [apps, pgadmin] }
     - { role: weblist, tags: [apps, weblist, files] }
