@@ -35,8 +35,8 @@
   ansible.builtin.fail:
     msg: >-
       Production DB not found at {{ app_data_dir }}/meters.db and the local
-      seed file ({{ home_meters_seed_db }}) is also missing. Run cmd/import
-      locally to produce data/meters.db before deploying.
+      seed file ({{ home_meters_seed_db }}) is also missing. Either disable
+      the role or place a meters.db at the seed path for first-time bootstrap.
   when:
     - not home_meters_db.stat.exists
     - home_meters_seed_stat.stat is defined and not home_meters_seed_stat.stat.exists
