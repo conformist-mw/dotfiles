@@ -1,13 +1,13 @@
 ---
 - name: Ensure home-meters data directory
   ansible.builtin.file:
-    path: "{{ home_meters_dir }}"
+    path: "{{ app_data_dir }}"
     state: directory
     mode: "0755"
 
 - name: Check if prod DB exists
   ansible.builtin.stat:
-    path: "{{ home_meters_dir }}/meters.db"
+    path: "{{ app_data_dir }}/meters.db"
   register: home_meters_db
 
 - name: Check local seed DB is available
@@ -34,7 +34,7 @@
 - name: Fail fast if no prod DB and no local seed
   ansible.builtin.fail:
     msg: >-
-      Production DB not found at {{ home_meters_dir }}/meters.db and the local
+      Production DB not found at {{ app_data_dir }}/meters.db and the local
       seed file ({{ home_meters_seed_db }}) is also missing. Run cmd/import
       locally to produce data/meters.db before deploying.
   when:
@@ -44,7 +44,7 @@
 - name: Stop container before reseed
   when: home_meters_reseed | bool and home_meters_seed_stat.stat is defined and home_meters_seed_stat.stat.exists
   community.docker.docker_container:
-    name: home-meters
+    name: "{{ app_name }}"
     state: stopped
   failed_when: false
 
@@ -54,17 +54,23 @@
     - (not home_meters_db.stat.exists) or (home_meters_reseed | bool)
   ansible.builtin.copy:
     src: "{{ home_meters_seed_db }}"
-    dest: "{{ home_meters_dir }}/meters.db"
+    dest: "{{ app_data_dir }}/meters.db"
     owner: "{{ puid }}"
     group: "{{ pgid }}"
     mode: "0644"
     force: true
 
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+  vars:
+    additional_labels: "{{ home_meters_extra_labels }}"
+
 - name: Home-meters container
   community.docker.docker_container:
     image: "{{ home_meters_image }}"
     pull: true
-    name: home-meters
+    name: "{{ app_name }}"
     restart: true
     restart_policy: "unless-stopped"
     user: "{{ puid }}:{{ pgid }}"
@@ -73,12 +79,5 @@
     env:
       TZ: "{{ tz }}"
     volumes:
-      - "{{ home_meters_dir }}:/data"
-    labels:
-      traefik.enable: "true"
-      traefik.http.routers.home-meters.entrypoints: "websecure"
-      traefik.http.routers.home-meters.tls: "true"
-      traefik.http.routers.home-meters.tls.certresolver: "letsencrypt"
-      traefik.http.routers.home-meters.rule: "Host(`{{ home_meters_subdomain }}.{{ ansible_host }}`)"
-      traefik.http.services.home-meters.loadbalancer.server.port: "8080"
-      traefik.http.routers.home-meters.middlewares: "auth-chain@file"
+      - "{{ app_data_dir }}:/data"
+    labels: "{{ labels }}"

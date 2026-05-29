@@ -1,12 +1,26 @@
 ---
+app_name: "home-meters"
+app_subdomain: "meters"
+app_port: 8080
+app_data_dir: "{{ data_dir }}/home-meters"
+
 home_meters_image: "olegsmedyuk/home-meters:latest"
-home_meters_dir: "{{ data_dir }}/home-meters"
-home_meters_subdomain: "meters"
+
 # Set to true to force overwriting prod DB with the local seed. Use when
 # the local DB is canonical (no prod-side writes yet) — e.g., right after
 # a data cleanup. Default keeps prod DB intact.
 home_meters_reseed: false
-# Local path on the Ansible control node from which to seed the prod DB
-# on first deploy. The file is gitignored from both the app repo and
-# dotfiles — it lives next to the app sources.
+
+# Local path on the Ansible control node from which to seed the DB on
+# first deploy. The file is gitignored from both the app repo and dotfiles
+# — it lives next to the app sources.
 home_meters_seed_db: "{{ playbook_dir }}/../home-meters/data/meters.db"
+
+# Override the inventory's rule label so the hostname uses app_subdomain
+# instead of app_name. Hetzner inventory only references app_name in the
+# rule, but we want `meters.<host>` not `home-meters.<host>`. On bee the
+# inventory already does `app_subdomain | default(app_name)`, so this is
+# a no-op there (combine() with same value).
+home_meters_extra_labels:
+  - key: "traefik.http.routers.{{ app_name }}.rule"
+    value: "Host(`{{ app_subdomain | default(app_name) }}.{{ ansible_host }}`)"
