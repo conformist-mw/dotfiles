@@ -1,0 +1,40 @@
+---
+- name: Copy traefik static config file
+  ansible.builtin.copy:
+    src: traefik.yml
+    dest: "{{ server_dir }}/traefik.yml"
+
+- name: Copy traefik dynamic config file
+  ansible.builtin.template:
+    src: dynamic.yml
+    dest: "{{ server_dir }}/dynamic.yml"
+
+- name: Traefik container
+  community.docker.docker_container:
+    name: traefik
+    image: "traefik:latest"
+    restart: true
+    pull: true
+    restart_policy: "unless-stopped"
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - name: "{{ docker_network }}"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "{{ server_dir }}/traefik.yml:/traefik.yml:ro"
+      - "{{ server_dir }}/dynamic.yml:/dynamic.yml:ro"
+      - "{{ server_dir }}/letsencrypt:/letsencrypt"
+      - "{{ server_dir }}/logs/traefik:/var/log/traefik"
+    env:
+      HETZNER_API_TOKEN: "{{ lookup('community.general.bitwarden_secrets_manager', '2ac2aa22-b53c-47d0-b1c5-b26901483380').value }}"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.traefik.entrypoints: "websecure"
+      traefik.http.routers.traefik.tls: "true"
+      traefik.http.routers.traefik.tls.certresolver: "letsencrypt"
+      traefik.http.routers.traefik.rule: "Host(`traefik.{{ ansible_host }}`)"
+      traefik.http.services.traefik.loadbalancer.server.port: "8080"
+      traefik.http.routers.traefik.service: "api@internal"
+      traefik.http.routers.traefik.middlewares: "auth-chain@file"

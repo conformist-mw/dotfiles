@@ -1,0 +1,36 @@
+---
+- name: Copy dnsmasq configuration for automatic local domain resolution
+  ansible.builtin.copy:
+    src: pihole-dnsmask.conf
+    dest: "{{ data_dir }}/pihole/etc-dnsmasq.d/local.conf"
+    mode: "0644"
+  become: true
+
+- name: Pi-Hole container
+  community.docker.docker_container:
+    name: pihole
+    image: pihole/pihole:latest
+    restart: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    ports:
+      - "127.0.0.1:53:53/tcp"
+      - "127.0.0.1:53:53/udp"
+      - "127.0.0.1:67:67/udp"
+    volumes:
+      - "{{ data_dir }}/pihole/etc-pihole/:/etc/pihole/"
+      - "{{ data_dir }}/pihole/etc-dnsmasq.d/:/etc/dnsmasq.d/"
+    env:
+      TZ: "{{ tz }}"
+      VIRTUAL_HOST: "pihole.{{ ansible_host }}"
+      VIRTUAL_PORT: "80"
+      WEBPASSWORD: "{{ lookup('community.general.bitwarden_secrets_manager', '1aafcc89-8d5b-4e34-ba2e-b26b013bd90d').value }}"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.pihole.entrypoints: "websecure"
+      traefik.http.routers.pihole.tls: "true"
+      traefik.http.routers.pihole.tls.certresolver: "letsencrypt"
+      traefik.http.routers.pihole.rule: "Host(`pihole.{{ ansible_host }}`)"
+      traefik.http.routers.pihole.middlewares: "auth-chain@file"
+      traefik.http.services.pihole.loadbalancer.server.port: "80"

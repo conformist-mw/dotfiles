@@ -37,15 +37,6 @@ http:
       rule: Host(`movies.{{ ansible_host }}`)
       tls:
         certResolver: letsencrypt
-    files:
-      entryPoints:
-        - websecure
-      middlewares:
-        - no-auth-chain
-      service: files
-      rule: Host(`files.{{ ansible_host }}`)
-      tls:
-        certResolver: letsencrypt
     homeassistant:
       entryPoints:
         - websecure
@@ -55,17 +46,6 @@ http:
       rule: Host(`ha.{{ ansible_host }}`)
       tls:
         certResolver: letsencrypt
-    router:
-      entryPoints:
-        - websecure
-      middlewares:
-        - strip-headers
-        - oauth2-proxy@docker
-      service: router
-      rule: Host(`router.{{ ansible_host }}`)
-      tls:
-        certResolver: letsencrypt
-    
     commeilfaut-django:
       rule: "Host(`commeilfaut.{{ ansible_host }}`)"
       service: commeilfaut-django
@@ -111,23 +91,6 @@ http:
           X-Robots-Tag: "none,noarchive,nosnippet,notranslate,noimageindex"
           server: ""
 
-    strip-headers:
-      headers:
-        customRequestHeaders:
-          accept: ""
-          accept-language: ""
-          cache-control: ""
-          priority: ""
-          sec-ch-ua: ""
-          sec-ch-ua-mobile: ""
-          sec-ch-ua-platform: ""
-          sec-fetch-dest: ""
-          sec-fetch-mode: ""
-          sec-fetch-site: ""
-          sec-fetch-user: ""
-          upgrade-insecure-requests: ""
-          user-agent: ""
-
     root-redirect:
       redirectRegex:
         regex: "^https?://[^/]+/?(.*)"
@@ -159,15 +122,6 @@ http:
       loadBalancer:
         servers:
           - url: http://192.168.1.223:8123
-    files:
-      loadBalancer:
-        servers:
-          - url: http://192.168.1.222:10080
-
-    router:
-      loadBalancer:
-        servers:
-          - url: http://192.168.1.1:80
 
 # https://ssl-config.mozilla.org/#server=traefik&version=3.3.3&config=modern&guideline=5.7
 tls:

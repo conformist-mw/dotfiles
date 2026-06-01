@@ -1,0 +1,42 @@
+---
+# TRANSITIONAL role — replaced by `tinyauth` in a later phase, then removed.
+- name: Copy oauth2-proxy config file
+  ansible.builtin.template:
+    src: oauth2-proxy.cfg
+    dest: "{{ server_dir }}/oauth2-proxy.cfg"
+  vars:
+    oauth_cookie_secret: "{{ lookup('community.general.bitwarden_secrets_manager', 'a7868291-5b11-43cc-99de-b28d00bcd215').value }}"
+    oauth_secret: "{{ lookup('community.general.bitwarden_secrets_manager', 'acac7b02-8847-4ef6-b3ca-b28700cfb83b') }}"
+
+- name: Copy authenticated-emails file
+  ansible.builtin.copy:
+    src: authenticated-emails.txt
+    dest: "{{ server_dir }}/authenticated-emails.txt"
+
+- name: oauth2-proxy container
+  community.docker.docker_container:
+    name: oauth2-proxy
+    image: "quay.io/oauth2-proxy/oauth2-proxy:latest"
+    restart: true
+    pull: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    command: "--config=/oauth2-proxy.cfg"
+    volumes:
+      - "{{ server_dir }}/oauth2-proxy.cfg:/oauth2-proxy.cfg"
+      - "{{ server_dir }}/authenticated-emails.txt:/authenticated-emails.txt"
+    env:
+      OAUTH2_PROXY_CONFIG: "/oauth2-proxy.cfg"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.oauth2-proxy.entrypoints: "websecure"
+      traefik.http.routers.oauth2-proxy.tls: "true"
+      traefik.http.routers.oauth2-proxy.rule: "Host(`auth.{{ ansible_host }}`)"
+      traefik.http.services.oauth2-proxy.loadbalancer.server.port: "4180"
+      traefik.http.routers.oauth2-proxy.tls.certresolver: "letsencrypt"
+      traefik.http.middlewares.oauth2-proxy.forwardauth.address: "http://oauth2-proxy:4180"
+      traefik.http.middlewares.oauth2-proxy.forwardauth.trustForwardHeader: "true"
+      traefik.http.middlewares.oauth2-proxy.forwardauth.maxResponseBodySize: "1048576"
+      traefik.http.middlewares.oauth2-proxy.forwardauth.authResponseHeaders: "X-Auth-Request-Access-Token,Authorization,X-Auth-Request-Email,X-Auth-Request-User"
+      traefik.http.middlewares.oauth2-proxy: "auth-headers@file"
