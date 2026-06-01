@@ -1,0 +1,100 @@
+---
+# Codifies the previously-manual native CrowdSec install on the VPS:
+# detection agent + iptables firewall-bouncer (bans are enforced at the
+# network level — a banned IP is dropped before it reaches Traefik).
+#
+# The functional fix vs the old wizard setup: acquire Traefik's access log
+# (+ the crowdsecurity/traefik parser) so HTTP attacks are actually detected.
+# Before this, only SSH was watched; apache2/nginx acquisitions were dead.
+
+- name: Ensure apt keyrings dir
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+  become: true
+
+- name: Add CrowdSec apt signing key
+  ansible.builtin.apt_key:
+    url: https://packagecloud.io/crowdsec/crowdsec/gpgkey
+    keyring: /etc/apt/keyrings/crowdsec_crowdsec-archive-keyring.gpg
+    state: present
+  become: true
+
+- name: Remove stale .asc keyring from the earlier failed run
+  ansible.builtin.file:
+    path: /etc/apt/keyrings/crowdsec_crowdsec-archive-keyring.asc
+    state: absent
+  become: true
+
+- name: Add CrowdSec apt repository
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/crowdsec_crowdsec.list
+    content: "deb [signed-by=/etc/apt/keyrings/crowdsec_crowdsec-archive-keyring.gpg] https://packagecloud.io/crowdsec/crowdsec/any any main\n"
+    mode: "0644"
+  become: true
+
+- name: Install CrowdSec + iptables firewall bouncer
+  ansible.builtin.apt:
+    name:
+      - crowdsec
+      - crowdsec-firewall-bouncer-iptables
+    state: present
+    update_cache: true
+  become: true
+
+- name: Install crowdsecurity/traefik collection
+  ansible.builtin.command: cscli collections install crowdsecurity/traefik
+  args:
+    creates: /etc/crowdsec/collections/traefik.yaml
+  become: true
+  notify: restart crowdsec
+
+- name: Remove dead collections (no apache2/nginx on this host)
+  ansible.builtin.command: "cscli collections remove crowdsecurity/{{ item }}"
+  args:
+    removes: "/etc/crowdsec/collections/{{ item }}.yaml"
+  loop:
+    - apache2
+    - nginx
+  become: true
+  notify: restart crowdsec
+
+- name: Acquisition — Traefik access log
+  ansible.builtin.template:
+    src: acquis-traefik.yaml.j2
+    dest: /etc/crowdsec/acquis.d/traefik.yaml
+    mode: "0644"
+  become: true
+  notify: restart crowdsec
+
+- name: Acquisition — sshd (journald)
+  ansible.builtin.template:
+    src: acquis-sshd.yaml.j2
+    dest: /etc/crowdsec/acquis.d/sshd.yaml
+    mode: "0644"
+  become: true
+  notify: restart crowdsec
+
+- name: Neutralise the wizard acquis.yaml (sources now live in acquis.d/)
+  ansible.builtin.copy:
+    dest: /etc/crowdsec/acquis.yaml
+    content: "# Managed by Ansible — acquisition sources are in acquis.d/\n"
+    mode: "0644"
+  become: true
+  notify: restart crowdsec
+
+# Optional: keep the same identity in the CrowdSec Console (app.crowdsec.net)
+# across rebuilds by restoring the CAPI credentials. Skipped unless the secret
+# is set in host_vars/hetzner (crowdsec_capi_login / crowdsec_capi_password).
+- name: Restore online (CAPI / console) credentials
+  ansible.builtin.copy:
+    dest: /etc/crowdsec/online_api_credentials.yaml
+    content: |
+      url: {{ crowdsec_capi_url | default('https://api.crowdsec.net/') }}
+      login: {{ crowdsec_capi_login }}
+      password: {{ crowdsec_capi_password }}
+    mode: "0600"
+  become: true
+  when: crowdsec_capi_password is defined
+  notify: restart crowdsec

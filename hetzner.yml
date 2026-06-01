@@ -21,6 +21,7 @@
     - { role: traefik-vps, tags: [infra, traefik] }
     - { role: tinyauth, tags: [infra, tinyauth] }
     - { role: pihole, tags: [infra, pihole] }
+    - { role: crowdsec, tags: [infra, crowdsec] }
 
     # Applications
     - { role: dozzle, tags: [apps, dozzle] }
