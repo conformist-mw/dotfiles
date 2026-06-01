@@ -20,6 +20,7 @@
     # Infrastructure
     - { role: traefik-vps, tags: [infra, traefik] }
     - { role: oauth2-proxy, tags: [infra, oauth2-proxy] }
+    - { role: tinyauth, tags: [infra, tinyauth] }
     - { role: pihole, tags: [infra, pihole] }
 
     # Applications

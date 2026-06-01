@@ -13,13 +13,13 @@
     src: users.j2
     dest: "{{ server_dir }}/tinyauth/users"
     mode: "0600"
+  notify: restart tinyauth
 
 - name: tinyauth container
   community.docker.docker_container:
     name: tinyauth
     image: "ghcr.io/steveiliop56/tinyauth:{{ tinyauth_version }}"
     pull: true
-    restart: true
     restart_policy: "unless-stopped"
     networks:
       - name: "{{ docker_network }}"
@@ -39,6 +39,10 @@
       TINYAUTH_APPS_RSSTT_USERS_ALLOW: "{{ tinyauth_group_admin }}"
       TINYAUTH_APPS_DASH_USERS_ALLOW: "{{ tinyauth_group_admin }}"
       TINYAUTH_APPS_DOZZLE_USERS_ALLOW: "{{ tinyauth_group_admin }}"
+      TINYAUTH_APPS_TRAEFIK_USERS_ALLOW: "{{ tinyauth_group_admin }}"
+      TINYAUTH_APPS_GLANCES_USERS_ALLOW: "{{ tinyauth_group_admin }}"
+      TINYAUTH_APPS_PIHOLE_USERS_ALLOW: "{{ tinyauth_group_admin }}"
+      TINYAUTH_APPS_MOVIES_USERS_ALLOW: "{{ tinyauth_group_admin }}"
     labels:
       traefik.enable: "true"
       traefik.http.routers.tinyauth.entrypoints: "websecure"

@@ -56,7 +56,7 @@ http:
     auth-chain:
       chain:
         middlewares:
-          - oauth2-proxy@docker
+          - tinyauth@docker
           - auth-headers
           - rate-limit
           - compression
