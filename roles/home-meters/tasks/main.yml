@@ -1,4 +1,8 @@
 ---
+- name: Load home-meters secrets (sops)
+  community.sops.load_vars:
+    file: "{{ role_path }}/vars/secrets.sops.yaml"
+
 - name: Ensure home-meters data directory
   ansible.builtin.file:
     path: "{{ app_data_dir }}"
@@ -78,6 +82,9 @@
       - name: "{{ docker_network }}"
     env:
       TZ: "{{ tz }}"
+      BASE_URL: "https://{{ app_subdomain }}.{{ ansible_host }}"
+      TELEGRAM_BOT_TOKEN: "{{ home_meters_bot_token | default('') }}"
+      TELEGRAM_CHAT_ID: "{{ home_meters_notify_chat | default('') }}"
     volumes:
       - "{{ app_data_dir }}:/data"
     labels: "{{ labels }}"
