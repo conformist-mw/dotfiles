@@ -1,8 +1,4 @@
 ---
-- name: Get telegram bot credentials
-  set_fact:
-    tg_bot: "{{ lookup('community.general.bitwarden_secrets_manager', '26e16cc8-09d8-4636-b0ab-b2690130a690') }}"
-
 - name: Watchtower container
   community.docker.docker_container:
     name: watchtower
@@ -16,6 +12,6 @@
     networks:
       - name: "{{ docker_network }}"
     env:
-      WATCHTOWER_NOTIFICATION_URL: "telegram://{{ tg_bot.value }}@telegram?chats={{ tg_bot.note }}"
+      WATCHTOWER_NOTIFICATION_URL: "telegram://{{ telegram_alerts_bot_token }}@telegram?chats={{ telegram_alerts_chat_id }}"
       WATCHTOWER_NOTIFICATIONS_HOSTNAME: "{{ ansible_host }}"
       WATCHTOWER_SCHEDULE: "{{ watchtower_schedule | default('0 0 9 * * *') }}"

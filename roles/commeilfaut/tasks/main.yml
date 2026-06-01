@@ -23,8 +23,8 @@
         dest: "{{ app_data_dir }}/backend/.env"
         mode: "0644"
       vars:
-        secret_key: "{{ lookup('community.general.bitwarden_secrets_manager', 'df964675-f358-4caa-b54b-b30e01127dda').value }}"
-        sentry_dsn: "{{ lookup('community.general.bitwarden_secrets_manager', 'b65b5c10-de66-4574-bd5e-b30e01129535').value }}"
+        secret_key: "{{ commeilfaut_secret_key }}"
+        sentry_dsn: "{{ commeilfaut_sentry_dsn }}"
 
     - name: Run docker compose build
       ansible.builtin.command: docker compose build

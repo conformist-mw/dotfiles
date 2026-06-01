@@ -1,0 +1,61 @@
+---
+# Secrets (tinyauth_secret, tinyauth_users, tinyauth_group_*) come from
+# host_vars/hetzner/secrets.sops.yaml — auto-loaded by the community.sops vars plugin.
+
+- name: Ensure tinyauth dir
+  ansible.builtin.file:
+    path: "{{ server_dir }}/tinyauth"
+    state: directory
+    mode: "0755"
+
+- name: Render tinyauth users file
+  ansible.builtin.template:
+    src: users.j2
+    dest: "{{ server_dir }}/tinyauth/users"
+    mode: "0600"
+  notify: restart tinyauth
+
+- name: tinyauth container
+  community.docker.docker_container:
+    name: tinyauth
+    image: "ghcr.io/steveiliop56/tinyauth:{{ tinyauth_version }}"
+    pull: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    volumes:
+      - "{{ server_dir }}/tinyauth/users:/users:ro"
+    env:
+      TINYAUTH_APPURL: "https://{{ tinyauth_subdomain }}.{{ ansible_host }}"
+      TINYAUTH_SECRET: "{{ tinyauth_secret }}"
+      TINYAUTH_AUTH_USERSFILE: "/users"
+      TINYAUTH_AUTH_SECURECOOKIE: "true"
+      # stay logged in ~30 days (default is 86400 = 1 day)
+      TINYAUTH_AUTH_SESSIONEXPIRY: "2592000"
+      # --- per-app access control (app id = request subdomain) ---
+      # groups are defined in host_vars/hetzner/secrets.sops.yaml (usernames stay out of git)
+      TINYAUTH_APPS_LESSONS_USERS_ALLOW: "{{ tinyauth_group_parents }}"
+      TINYAUTH_APPS_METERS_USERS_ALLOW: "{{ tinyauth_group_parents }}"
+      TINYAUTH_APPS_RSSTT_USERS_ALLOW: "{{ tinyauth_group_admin }}"
+      TINYAUTH_APPS_DASH_USERS_ALLOW: "{{ tinyauth_group_admin }}"
+      TINYAUTH_APPS_DOZZLE_USERS_ALLOW: "{{ tinyauth_group_admin }}"
+      TINYAUTH_APPS_TRAEFIK_USERS_ALLOW: "{{ tinyauth_group_admin }}"
+      TINYAUTH_APPS_GLANCES_USERS_ALLOW: "{{ tinyauth_group_admin }}"
+      TINYAUTH_APPS_PIHOLE_USERS_ALLOW: "{{ tinyauth_group_admin }}"
+      TINYAUTH_APPS_MOVIES_USERS_ALLOW: "{{ tinyauth_group_admin }}"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.tinyauth.entrypoints: "websecure"
+      traefik.http.routers.tinyauth.tls: "true"
+      traefik.http.routers.tinyauth.tls.certresolver: "letsencrypt"
+      traefik.http.routers.tinyauth.rule: "Host(`{{ tinyauth_subdomain }}.{{ ansible_host }}`)"
+      traefik.http.services.tinyauth.loadbalancer.server.port: "3000"
+      # forward-auth middleware consumed by the `tinyauth-chain` / `auth-chain` file middlewares
+      traefik.http.middlewares.tinyauth.forwardauth.address: "http://tinyauth:3000/api/auth/traefik"
+      traefik.http.middlewares.tinyauth.forwardauth.authResponseHeaders: "Remote-User,Remote-Name,Remote-Email,Remote-Groups"
+      # don't trust client X-Forwarded-* — Traefik sets authoritative ones.
+      # critical: tinyauth picks the per-app ACL by X-Forwarded-Host, so a
+      # trusted (spoofable) header would let a user be checked against another
+      # app's ACL while Traefik routes them to the real backend.
+      traefik.http.middlewares.tinyauth.forwardauth.trustForwardHeader: "false"
+      traefik.http.middlewares.tinyauth.forwardauth.maxResponseBodySize: "1048576"

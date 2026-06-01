@@ -17,6 +17,12 @@
         vars: { watchtower_schedule: "0 0 10 * * *" },
       }
 
+    # Infrastructure
+    - { role: traefik-vps, tags: [infra, traefik] }
+    - { role: tinyauth, tags: [infra, tinyauth] }
+    - { role: pihole, tags: [infra, pihole] }
+    - { role: crowdsec, tags: [infra, crowdsec] }
+
     # Applications
     - { role: dozzle, tags: [apps, dozzle] }
     - { role: glances, tags: [apps, glances] }
@@ -26,9 +32,6 @@
         vars: { hostname_prefix: "dash.", path_prefix: "vps/" },
       }
     - { role: rsstt, tags: [apps, rsstt] }
-    - { role: memos, tags: [apps, memos] }
-    - { role: flatnotes, tags: [apps, flatnotes] }
-    - { role: n8n, tags: [apps, n8n] }
     - { role: commeilfaut, tags: [apps, commeilfaut] }
     - { role: segments, tags: [apps, segments] }
     - { role: lessons, tags: [apps, lessons] }

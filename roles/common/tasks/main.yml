@@ -46,10 +46,8 @@
           log_level=info
           log_path=/var/log/tg-sendmail.log
           [telegram]
-          chat_id={{ tg_bot.note }}
-          bot_token={{ tg_bot.value }}
-      vars:
-        tg_bot: "{{ lookup('community.general.bitwarden_secrets_manager', '26e16cc8-09d8-4636-b0ab-b2690130a690') }}"
+          chat_id={{ telegram_alerts_chat_id }}
+          bot_token={{ telegram_alerts_bot_token }}
   become: true
 
 - name: Create systemd-notify service

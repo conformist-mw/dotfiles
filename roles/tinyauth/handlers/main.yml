@@ -1,0 +1,3 @@
+---
+- name: restart tinyauth
+  ansible.builtin.command: docker restart tinyauth
