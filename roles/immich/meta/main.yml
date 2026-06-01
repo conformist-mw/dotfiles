@@ -1,0 +1,6 @@
+---
+# immich needs a Redis instance (REDIS_HOSTNAME=redis). Declaring it here makes
+# the dependency explicit and enforced: redis is always deployed before immich,
+# and the redis role can't be dropped without ansible failing on this reference.
+dependencies:
+  - role: redis
