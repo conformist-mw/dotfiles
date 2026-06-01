@@ -1,0 +1,4 @@
+---
+tinyauth_subdomain: "tinyauth"
+# pin to an exact release before going public (https://github.com/steveiliop56/tinyauth/releases)
+tinyauth_version: "v5"
