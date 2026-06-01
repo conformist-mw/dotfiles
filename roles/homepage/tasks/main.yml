@@ -9,7 +9,7 @@
     - "settings"
     - "widgets"
   vars:
-    open_weather_api_key: "{{ lookup('community.general.bitwarden_secrets_manager', '4344ffde-2d4a-46cd-9270-b29b01185379').value }}"
+    open_weather_api_key: "{{ openweather_api_key }}"
   become: true
 
 - name: Copy favicon

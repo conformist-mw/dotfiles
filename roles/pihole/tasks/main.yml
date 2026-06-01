@@ -25,7 +25,7 @@
       TZ: "{{ tz }}"
       VIRTUAL_HOST: "pihole.{{ ansible_host }}"
       VIRTUAL_PORT: "80"
-      WEBPASSWORD: "{{ lookup('community.general.bitwarden_secrets_manager', '1aafcc89-8d5b-4e34-ba2e-b26b013bd90d').value }}"
+      WEBPASSWORD: "{{ pihole_web_password }}"
     labels:
       traefik.enable: "true"
       traefik.http.routers.pihole.entrypoints: "websecure"

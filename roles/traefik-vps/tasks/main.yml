@@ -28,7 +28,7 @@
       - "{{ server_dir }}/letsencrypt:/letsencrypt"
       - "{{ server_dir }}/logs/traefik:/var/log/traefik"
     env:
-      HETZNER_API_TOKEN: "{{ lookup('community.general.bitwarden_secrets_manager', '2ac2aa22-b53c-47d0-b1c5-b26901483380').value }}"
+      HETZNER_API_TOKEN: "{{ hetzner_dns_api_token }}"
     labels:
       traefik.enable: "true"
       traefik.http.routers.traefik.entrypoints: "websecure"

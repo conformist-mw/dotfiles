@@ -66,15 +66,13 @@
       copy:
         dest: /etc/nd.env
         content: |
-          ND_USERNAME={{ admin_creds.note }}
-          ND_PASSWORD={{ admin_creds.value }}
+          ND_USERNAME={{ navidrome_admin_user }}
+          ND_PASSWORD={{ navidrome_admin_password }}
           ND_BASE_URL=http://{{ app_name }}.{{ ansible_host }}
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
         mode: "0600"
       become: true
-      vars:
-        admin_creds: "{{ lookup('community.general.bitwarden_secrets_manager', '1aafcc89-8d5b-4e34-ba2e-b26b013bd90d') }}"
 
     - name: Install httpx
       ansible.builtin.pip:

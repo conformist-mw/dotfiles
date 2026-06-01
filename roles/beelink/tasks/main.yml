@@ -117,19 +117,15 @@
       become: true
   when: not bw_cli.stat.exists
 
-- name: Get bw client, secret
-  set_fact:
-    bw_secrets: "{{ lookup('community.general.bitwarden_secrets_manager', '3407121d-6e9f-4f71-ba40-b29400a29a13') }}"
-
 - name: setup bitwarden backup job
   block:
     - name: Create Bitwarden environment file
       copy:
         dest: /etc/bw.env
         content: |
-          BW_CLIENTID={{ bw_secrets.note }}
-          BW_CLIENTSECRET={{ bw_secrets.value }}
-          BW_PASSWORD={{ lookup('community.general.bitwarden_secrets_manager', '45db43c7-e937-45c3-9fe5-b2940131f23a').value }}
+          BW_CLIENTID={{ bw_client_id }}
+          BW_CLIENTSECRET={{ bw_client_secret }}
+          BW_PASSWORD={{ bw_password }}
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
         mode: "0600"
