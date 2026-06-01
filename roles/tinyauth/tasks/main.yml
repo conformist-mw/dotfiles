@@ -53,3 +53,9 @@
       # forward-auth middleware consumed by the `tinyauth-chain` / `auth-chain` file middlewares
       traefik.http.middlewares.tinyauth.forwardauth.address: "http://tinyauth:3000/api/auth/traefik"
       traefik.http.middlewares.tinyauth.forwardauth.authResponseHeaders: "Remote-User,Remote-Name,Remote-Email,Remote-Groups"
+      # don't trust client X-Forwarded-* — Traefik sets authoritative ones.
+      # critical: tinyauth picks the per-app ACL by X-Forwarded-Host, so a
+      # trusted (spoofable) header would let a user be checked against another
+      # app's ACL while Traefik routes them to the real backend.
+      traefik.http.middlewares.tinyauth.forwardauth.trustForwardHeader: "false"
+      traefik.http.middlewares.tinyauth.forwardauth.maxResponseBodySize: "1048576"
