@@ -47,16 +47,17 @@ Then reference it in a role/template as `{{ my_secret }}`.
 Bitwarden item that packed e.g. a chat-id in `note` and a token in `value` is split into two
 named vars.
 
-## Migration from Bitwarden (in progress)
+## Migration from Bitwarden (done)
 
-We are moving off Bitwarden Secrets Manager. In the secret files, any value that is a **UUID**
-is a Bitwarden reference that still needs to be replaced with the real secret:
+All active roles read their secrets from SOPS — there are no more
+`bitwarden_secrets_manager` lookups outside `roles/outdated/` (dead code, not wired
+into any playbook). `wireguard` server private keys live in
+`host_vars/hetzner/secrets.sops.yaml`; its topology and public keys are plaintext in
+`host_vars/hetzner/wireguard.yml`, and client private keys are no longer stored anywhere.
 
-1. `just secrets-<host>` and replace the UUID with the real value (pull it from Bitwarden once).
-2. In the consuming role, swap `lookup('community.general.bitwarden_secrets_manager', '<uuid>')`
-   for `{{ var_name }}`.
-3. Done role-by-role.
+The Bitwarden **CLI** is still used by the `beelink` role's `bw_backup` job — that
+backs up the personal vault itself and is an intentional dependency, unrelated to
+Secrets Manager.
 
-`wireguard` is migrated: server private keys live in `host_vars/hetzner/secrets.sops.yaml`
-(`wg0_private_key`, `wg1_private_key`); topology and public keys are plaintext in
-`host_vars/hetzner/wireguard.yml`; client private keys are no longer stored anywhere.
+For new secrets: `just secrets-<host>`, add a flat `{{ var_name }}`, reference it in
+the role.
