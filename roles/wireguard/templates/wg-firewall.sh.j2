@@ -1,0 +1,44 @@
+#!/bin/bash
+# Managed by Ansible (wireguard role) — interface {{ iface_name }}.
+# Invoked by wg-quick as: wg-firewall-{{ iface_name }}.sh up|down
+#
+# No `set -e`: on `down` some rules may already be gone after a partial bring-up,
+# and we still want to remove whatever remains.
+
+ACTION="${1:?usage: $0 up|down}"
+case "$ACTION" in
+  up)   R=-A ;;   # append
+  down) R=-D ;;   # delete
+  *) echo "unknown action: $ACTION (expected up|down)" >&2; exit 1 ;;
+esac
+
+WG="{{ iface_name }}"
+EXT="{{ ext_if }}"
+GW="{{ iface.address.split('/')[0] }}"
+SUBNET="{{ iface.address }}"
+
+{% if iface.isolated | default(false) %}
+# --- guests: hard-block any access to private networks (before egress accept) ---
+iptables $R FORWARD -i "$WG" -d 10.0.0.0/8     -j DROP
+iptables $R FORWARD -i "$WG" -d 172.16.0.0/12  -j DROP
+iptables $R FORWARD -i "$WG" -d 192.168.0.0/16 -j DROP
+
+{% endif %}
+# --- internet egress (NAT) ---
+iptables $R FORWARD -i "$WG" -o "$EXT" -j ACCEPT
+iptables $R FORWARD -i "$EXT" -o "$WG" -m state --state RELATED,ESTABLISHED -j ACCEPT
+iptables -t nat $R POSTROUTING -s "$SUBNET" -o "$EXT" -j MASQUERADE
+{% if iface.allow_lan | default(false) %}
+
+# --- family: peers reach each other + LAN advertised by a peer (e.g. keenetic) ---
+iptables $R FORWARD -i "$WG" -o "$WG" -j ACCEPT
+{% endif %}
+{% if iface.dns_local | default(false) %}
+
+# --- DNS: redirect queries aimed at the gateway to the local resolver (pihole) ---
+[ "$ACTION" = up ] && sysctl -qw "net.ipv4.conf.${WG}.route_localnet=1"
+iptables -t nat $R PREROUTING -i "$WG" -p udp -d "$GW" --dport 53 -j DNAT --to-destination 127.0.0.1:53
+iptables -t nat $R PREROUTING -i "$WG" -p tcp -d "$GW" --dport 53 -j DNAT --to-destination 127.0.0.1:53
+iptables $R INPUT -i "$WG" -p udp --dport 53 -j ACCEPT
+iptables $R INPUT -i "$WG" -p tcp --dport 53 -j ACCEPT
+{% endif %}

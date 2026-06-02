@@ -1,0 +1,50 @@
+---
+# WireGuard topology for hetzner. The wireguard role is generic and reads
+# `wg_interfaces` from here.
+#
+# Public keys are NOT secret -> they live in this plaintext file.
+# Server PRIVATE keys are referenced from host_vars/hetzner/secrets.sops.yaml.
+#
+# Do NOT regenerate any key — existing clients pin the current server public key
+# and endpoint; preserving them is what makes a VPS move transparent.
+
+wg_interfaces:
+  wg0: # family — LAN access + internal DNS (*.bee.home via pihole)
+    address: "10.0.0.1/24"
+    port: 51820
+    public_key: "uQhv4okVC1BmfNdRwscSWlGIiwPzksQgYgxFbJX1J3Y="
+    private_key: "{{ wg0_private_key }}" # sops
+    allow_lan: true # peers reach each other + LAN advertised by the keenetic peer
+    dns_local: true # DNS -> local pihole (resolves *.bee.home + adblock)
+    peers:
+      - name: conformist
+        address: "10.0.0.10/32"
+        public_key: "CU5OUdpZE+s3O2NVqlN245c5NkWcKWY1f0y/oONfUno="
+      - name: keenetic
+        address: "10.0.0.100/32"
+        public_key: "F8b7F0yeZS11HQQ75AXS+Uy/jGp6fYi6wpTJftbgwns="
+        allowed_ips: ["10.0.0.100/32", "192.168.1.0/24"]
+      - name: longero4ek
+        address: "10.0.0.13/32"
+        public_key: "hbDVXUFnX4ZNFgn26bECkF6a4leh4pohwzvrI7FofEw="
+      - name: macos
+        address: "10.0.0.11/32"
+        public_key: "ILanp7ClZqrSj8qMJgMjr54WfFCvgf4xhLBbJ6b7BCU="
+
+  wg1: # guests — internet egress only, NO LAN access, pihole as adblocker
+    address: "10.0.40.1/24"
+    port: 51830
+    public_key: "W0o0N0IdnOZg3ZnHq1ZvyLfqI4joRMo91ava26gXsFc="
+    private_key: "{{ wg1_private_key }}" # sops
+    isolated: true # hard-block any traffic into RFC1918 (LAN)
+    dns_local: true # DNS -> local pihole (adblock; internal names resolve but are unreachable)
+    peers:
+      - name: sservik
+        address: "10.0.40.10/32"
+        public_key: "vDe7rgubsHfNKmFIEBbnefqkMqq6VYklmC9AG09HYEE="
+      - name: masha
+        address: "10.0.40.20/32"
+        public_key: "aFQOHrsnTBMX6UROwUNTem4Drl1KS5SkIDEYsRMcCDQ="
+      - name: macos
+        address: "10.0.40.40/32"
+        public_key: "Da779VGoPIRW8qClsSTmIDVLbjDtSZGy8Ar7ycXPUjA="

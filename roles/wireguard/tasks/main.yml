@@ -1,67 +1,74 @@
-- name: install wireguard
+---
+- name: Install wireguard tools
   ansible.builtin.apt:
-    name: wireguard
+    name:
+      - wireguard
+      - qrencode # used by the local onboard-client.sh helper
     state: present
+    update_cache: true
   become: true
 
-- name: ensure peers dir exists
-  ansible.builtin.file:
-    path: "/etc/wireguard/peers"
-    state: directory
+- name: Enable IPv4 forwarding
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: "1"
+    sysctl_set: true
+    state: present
+    reload: true
+  become: true
+
+# route_localnet (needed for the DNS -> 127.0.0.1 DNAT) is set per-interface
+# inside the firewall script at PostUp time — the interface does not exist yet
+# at this point on a fresh host, so it cannot be set here.
+
+- name: Render per-interface firewall scripts
+  ansible.builtin.template:
+    src: wg-firewall.sh.j2
+    dest: "/etc/wireguard/wg-firewall-{{ item.key }}.sh"
+    owner: root
+    group: root
     mode: "0700"
-    owner: root
-    group: root
-  become: true
-
-- name: copy post shell scripts
-  ansible.builtin.copy:
-    src: "{{ item }}"
-    dest: "/etc/wireguard/{{ item }}"
-    owner: root
-    group: root
-    mode: 0700
-  loop:
-    - "post-down.sh"
-    - "post-up.sh"
-  become: true
-
-- name: copy peers configs
-  template:
-    src: peer.conf.j2
-    dest: "/etc/wireguard/peers/{{ item.0.key }}_{{ item.1.name }}.conf"
-    owner: root
-    group: root
-    mode: 0600
-  with_subelements:
-    - "{{ wg_configs | dict2items }}"
-    - value.peers
+  loop: "{{ wg_interfaces | dict2items }}"
   loop_control:
-    label: "{{ item.0.key }} -> {{ item.1.name }}"
+    label: "{{ item.key }}"
   vars:
-    interface: "{{ item.0.value }}"
-    peer: "{{ item.1 }}"
+    iface_name: "{{ item.key }}"
+    iface: "{{ item.value }}"
+    ext_if: "{{ ansible_default_ipv4.interface }}"
+  notify: restart wireguard
   become: true
 
-- name: generate wg interface configurations
-  template:
+- name: Remove legacy (pre-refactor) firewall scripts
+  ansible.builtin.file:
+    path: "/etc/wireguard/{{ item }}"
+    state: absent
+  loop:
+    - post-up.sh
+    - post-down.sh
+  become: true
+
+- name: Render interface configs
+  ansible.builtin.template:
     src: wg.conf.j2
     dest: "/etc/wireguard/{{ item.key }}.conf"
     owner: root
     group: root
-    mode: 0600
-  with_dict: "{{ wg_configs }}"
+    mode: "0600"
+  loop: "{{ wg_interfaces | dict2items }}"
   loop_control:
     label: "{{ item.key }}"
   vars:
-    interface: "{{ item.value }}"
+    iface_name: "{{ item.key }}"
+    iface: "{{ item.value }}"
+  notify: restart wireguard
   become: true
 
-- name: enable and start wireguard
+- name: Enable and start interfaces
   ansible.builtin.systemd:
     name: "wg-quick@{{ item.key }}"
-    enabled: yes
+    enabled: true
     state: started
-  with_dict: "{{ wg_configs }}"
+  loop: "{{ wg_interfaces | dict2items }}"
   loop_control:
     label: "{{ item.key }}"
   become: true
