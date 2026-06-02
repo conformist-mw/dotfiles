@@ -13,14 +13,7 @@
     path: "{{ server_dir }}"
     state: directory
 
-- name: Configure sysctl for wg0 interface
-  ansible.posix.sysctl:
-    name: "net.ipv4.conf.wg0.route_localnet"
-    value: "1"
-    sysctl_set: true
-    state: present
-    reload: yes
-  become: true
+# wg interface sysctls (route_localnet) are owned by the wireguard role now.
 
 - name: Install crowdsec
   block:

@@ -1,0 +1,11 @@
+---
+# A config or firewall-script change requires re-running PostUp/PostDown, which
+# `wg syncconf` does not do — so we restart. Brief (~1s) reconnect per interface.
+- name: restart wireguard
+  ansible.builtin.systemd:
+    name: "wg-quick@{{ item.key }}"
+    state: restarted
+  loop: "{{ wg_interfaces | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  become: true

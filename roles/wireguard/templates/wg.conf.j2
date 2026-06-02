@@ -1,12 +1,13 @@
 [Interface]
-PrivateKey = {{ interface.private_key }}
-Address = {{ interface.address }}
-ListenPort = {{ interface.port }}
+PrivateKey = {{ iface.private_key }}
+Address = {{ iface.address }}
+ListenPort = {{ iface.port }}
 
-PostUp = /etc/wireguard/post-up.sh %i
-PostDown = /etc/wireguard/post-down.sh %i
+PostUp = /etc/wireguard/wg-firewall-{{ iface_name }}.sh up
+PostDown = /etc/wireguard/wg-firewall-{{ iface_name }}.sh down
 
-{% for peer in interface.peers %}
+{% for peer in iface.peers %}
+# {{ peer.name }}
 [Peer]
 PublicKey = {{ peer.public_key }}
 AllowedIPs = {{ peer.allowed_ips | default([peer.address]) | join(', ') }}

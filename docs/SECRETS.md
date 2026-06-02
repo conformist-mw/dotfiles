@@ -55,4 +55,8 @@ is a Bitwarden reference that still needs to be replaced with the real secret:
 1. `just secrets-<host>` and replace the UUID with the real value (pull it from Bitwarden once).
 2. In the consuming role, swap `lookup('community.general.bitwarden_secrets_manager', '<uuid>')`
    for `{{ var_name }}`.
-3. Done role-by-role; `wireguard` is intentionally deferred.
+3. Done role-by-role.
+
+`wireguard` is migrated: server private keys live in `host_vars/hetzner/secrets.sops.yaml`
+(`wg0_private_key`, `wg1_private_key`); topology and public keys are plaintext in
+`host_vars/hetzner/wireguard.yml`; client private keys are no longer stored anywhere.
