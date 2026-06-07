@@ -22,6 +22,7 @@
     - { role: torrent, tags: [apps, torrent] }
     - { role: sponsorblock, tags: [apps, sponsorblock] }
     - { role: glances, tags: [apps, glances] }
+    - { role: homeassistant, tags: [apps, homeassistant] }
     - { role: homepage, tags: [apps, homepage] }
     # immich pulls in redis via its meta dependency (roles/immich/meta/main.yml)
     - { role: immich, tags: [apps, immich] }

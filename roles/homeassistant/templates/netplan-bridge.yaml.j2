@@ -1,0 +1,13 @@
+network:
+  version: 2
+  ethernets:
+    {{ ha_bridge_iface }}:
+      dhcp4: false
+  bridges:
+    {{ ha_bridge }}:
+      dhcp4: true
+      interfaces:
+        - {{ ha_bridge_iface }}
+      parameters:
+        stp: false
+  wifis: {}

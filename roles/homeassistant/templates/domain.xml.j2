@@ -1,0 +1,55 @@
+<domain type='kvm'>
+  <name>{{ ha_vm_name }}</name>
+  <uuid>{{ ha_vm_uuid }}</uuid>
+  <memory unit='MiB'>{{ ha_vm_memory_mib }}</memory>
+  <currentMemory unit='MiB'>{{ ha_vm_memory_mib }}</currentMemory>
+  <vcpu placement='static'>{{ ha_vm_vcpus }}</vcpu>
+  <os firmware='efi'>
+    <type arch='x86_64' machine='pc'>hvm</type>
+    <firmware>
+      <feature enabled='no' name='enrolled-keys'/>
+      <feature enabled='no' name='secure-boot'/>
+    </firmware>
+    <loader readonly='yes' type='pflash'>{{ ha_ovmf_code }}</loader>
+    <nvram template='{{ ha_ovmf_vars_template }}'>/var/lib/libvirt/qemu/nvram/{{ ha_vm_name }}_VARS.fd</nvram>
+    <boot dev='hd'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+  </features>
+  <cpu mode='host-passthrough' check='none' migratable='on'/>
+  <clock offset='utc'>
+    <timer name='rtc' tickpolicy='catchup'/>
+    <timer name='pit' tickpolicy='delay'/>
+    <timer name='hpet' present='no'/>
+  </clock>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>destroy</on_crash>
+  <devices>
+    <emulator>/usr/bin/qemu-system-x86_64</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='{{ ha_disk_path }}'/>
+      <target dev='vda' bus='virtio'/>
+    </disk>
+    <interface type='bridge'>
+      <mac address='{{ ha_vm_mac }}'/>
+      <source bridge='{{ ha_bridge }}'/>
+      <model type='virtio'/>
+    </interface>
+    <serial type='pty'>
+      <target type='isa-serial' port='0'>
+        <model name='isa-serial'/>
+      </target>
+    </serial>
+    <console type='pty'>
+      <target type='serial' port='0'/>
+    </console>
+    <tpm model='tpm-crb'>
+      <backend type='emulator' version='2.0'/>
+    </tpm>
+    <memballoon model='virtio'/>
+  </devices>
+</domain>

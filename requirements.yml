@@ -3,6 +3,7 @@ collections:
   - ansible.posix
   - community.general
   - community.docker
+  - community.libvirt
   - community.postgresql
   - community.sops
 

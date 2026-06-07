@@ -1,0 +1,99 @@
+---
+- name: Install KVM / libvirt packages
+  ansible.builtin.apt:
+    name:
+      - qemu-system-x86
+      - qemu-utils
+      - libvirt-daemon-system
+      - libvirt-clients
+      - virtinst
+      - ovmf
+      - swtpm
+      - swtpm-tools
+      - bridge-utils
+      - xz-utils
+      - python3-libvirt
+      - python3-lxml
+    state: present
+    update_cache: true
+  become: true
+
+- name: Ensure libvirtd is enabled and running
+  ansible.builtin.systemd:
+    name: libvirtd
+    enabled: true
+    state: started
+  become: true
+
+- name: Add user to libvirt and kvm groups
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    groups:
+      - libvirt
+      - kvm
+    append: true
+  become: true
+
+# Editing netplan over SSH can cut connectivity, so the bridge is opt-in.
+# The existing host is already bridged; enable only on a fresh host.
+- name: Configure the VM network bridge
+  when: ha_manage_network | bool
+  become: true
+  block:
+    - name: Remove cloud-init network config
+      ansible.builtin.file:
+        path: /etc/netplan/50-cloud-init.yaml
+        state: absent
+      notify: apply netplan
+
+    - name: Template the bridge netplan
+      ansible.builtin.template:
+        src: netplan-bridge.yaml.j2
+        dest: /etc/netplan/01-netcfg.yaml
+        mode: "0600"
+      notify: apply netplan
+
+- name: List defined libvirt domains
+  community.libvirt.virt:
+    command: list_vms
+  register: ha_defined_vms
+  become: true
+
+# Only runs when the domain is absent — never clobbers an existing data disk.
+- name: Provision the HAOS VM
+  when: ha_vm_name not in ha_defined_vms.list_vms
+  become: true
+  block:
+    - name: Ensure the image directory exists
+      ansible.builtin.file:
+        path: "{{ ha_images_dir }}"
+        state: directory
+        mode: "0711"
+
+    - name: Download the HAOS image
+      ansible.builtin.get_url:
+        url: "{{ ha_image_url }}"
+        dest: "{{ ha_disk_path }}.xz"
+        mode: "0644"
+
+    - name: Decompress the HAOS image
+      ansible.builtin.command:
+        cmd: "xz --decompress {{ ha_disk_path }}.xz"
+        creates: "{{ ha_disk_path }}"
+
+    - name: Define the HAOS domain
+      community.libvirt.virt:
+        command: define
+        xml: "{{ lookup('template', 'domain.xml.j2') }}"
+
+- name: Ensure the VM autostarts on boot
+  community.libvirt.virt:
+    name: "{{ ha_vm_name }}"
+    autostart: true
+  become: true
+
+- name: Ensure the VM is running
+  community.libvirt.virt:
+    name: "{{ ha_vm_name }}"
+    state: running
+  become: true

@@ -1,0 +1,36 @@
+---
+# Home Assistant OS as a KVM/QEMU guest managed by libvirt.
+#
+# This role is adopt-safe: if the domain already exists it only ensures the
+# host prerequisites, autostart and running state — it never redefines the
+# domain or touches the data disk. The VM is only provisioned from scratch
+# when it is absent (fresh host / disaster recovery, then restore from an HA
+# backup — the qcow2 disk, swtpm state and nvram are NOT reproducible here).
+
+ha_vm_name: "hass"
+# Pinned so the existing swtpm/nvram state (keyed by UUID) keeps matching and
+# the router's DHCP reservation (MAC -> 192.168.1.223) stays stable.
+ha_vm_uuid: "fb1839c4-8554-4d7d-adc9-41fef32c85ca"
+ha_vm_mac: "52:54:00:16:c4:6e"
+ha_vm_memory_mib: 4096
+ha_vm_vcpus: 2
+
+# HAOS disk image.
+ha_image_version: "13.2"
+ha_image_name: "haos_ova-{{ ha_image_version }}.qcow2"
+ha_image_url: "https://github.com/home-assistant/operating-system/releases/download/{{ ha_image_version }}/{{ ha_image_name }}.xz"
+ha_images_dir: "/var/lib/libvirt/images/hassos-vm"
+ha_disk_path: "{{ ha_images_dir }}/{{ ha_image_name }}"
+
+# LAN bridge the VM attaches to. The Zigbee coordinator is reached over IP
+# (SLZB stick), so no USB/PCI host passthrough is needed.
+ha_bridge: "br0"
+ha_bridge_iface: "enp1s0"
+
+# UEFI firmware (OVMF 4M) — Ubuntu paths. HAOS requires UEFI + TPM 2.0.
+ha_ovmf_code: "/usr/share/OVMF/OVMF_CODE_4M.fd"
+ha_ovmf_vars_template: "/usr/share/OVMF/OVMF_VARS_4M.fd"
+
+# Editing netplan over SSH can drop connectivity, so the bridge is only
+# touched when explicitly opted in (the existing host is already bridged).
+ha_manage_network: false
