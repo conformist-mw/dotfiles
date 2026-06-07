@@ -6,6 +6,14 @@
         server: "local-docker"
         container: "jellyfin"
         showStats: true
+        widget:
+          type: jellyfin
+          url: http://jellyfin:8096
+          key: "{{ homepage_jellyfin_api_key }}"
+          enableBlocks: true
+          enableNowPlaying: true
+          enableUser: true
+          hideErrors: true
     - Navidrome:
         href: http://navidrome.{{ ansible_host }}
         description: "Music server"
@@ -20,30 +28,29 @@
         server: "local-docker"
         container: "immich"
         showStats: true
-    - Filebrowser:
-        href: http://files.{{ ansible_host }}
-        description: "File manager"
-        icon: "filebrowser"
-        server: "local-docker"
-        container: "filebrowser"
-        showStats: true
-
-- applications:
+        widget:
+          type: immich
+          url: http://immich:2283
+          key: "{{ homepage_immich_api_key }}"
+          version: 2
+          hideErrors: true
     - QBittorrent:
         href: http://torrent.{{ ansible_host }}
         description: "Torrent client"
         icon: "qbittorrent"
         server: "local-docker"
         container: "torrent"
-    - Gitea:
-        href: http://gitea.{{ ansible_host }}
-        description: "Git server"
-        icon: "gitea"
-        server: "local-docker"
-        container: "gitea"
+        widget:
+          type: qbittorrent
+          url: http://torrent:8080
+          username: "{{ homepage_qbittorrent_username }}"
+          password: "{{ homepage_qbittorrent_password }}"
+          hideErrors: true
+
+- applications:
     - Home Assistant:
-        href: http://ha.{{ ansible_host }}
-        description: "Home automation"
+        href: http://192.168.1.223:8123
+        description: "Home automation (QEMU VM)"
         icon: "home-assistant"
 
 - tools:
@@ -59,53 +66,67 @@
         icon: "traefik"
         server: "local-docker"
         container: "traefik"
-    - Portainer:
-        href: http://portainer.{{ ansible_host }}
-        description: "Docker management"
-        icon: "portainer"
-        server: "local-docker"
-        container: "portainer"
     - Glances:
         href: http://glances.{{ ansible_host }}
         description: "System monitoring"
         icon: "glances"
-    - PGAdmin:
-        href: http://pgadmin.{{ ansible_host }}
-        description: "PostgreSQL management"
-        icon: "pgadmin"
-        server: "local-docker"
-        container: "pgadmin"
     - Cockpit:
         href: http://cockpit.{{ ansible_host }}
         description: "System management"
         icon: "cockpit"
 
 - vps:
-    - Router:
-        href: https://router.{{ ansible_host }}
-        description: "Router"
-        icon: "keenetic"
     - Dashboard:
         href: https://dash.conformist.name
-        description: "Dashboard"
+        description: "Hetzner homepage"
         icon: "homepage"
+        siteMonitor: https://dash.conformist.name
     - Home Assistant:
         href: https://ha.conformist.name
-        description: "Home automation"
+        description: "Home automation (proxied to bee)"
         icon: "home-assistant"
+        siteMonitor: https://ha.conformist.name
+    - Pihole:
+        href: https://pihole.conformist.name/admin
+        description: "Network-wide ad blocking"
+        icon: "pi-hole"
+        siteMonitor: https://pihole.conformist.name
+    - RSS to Telegram:
+        href: https://rsstt.conformist.name
+        description: "RSS to Telegram"
+        icon: "mdi-rss"
+        siteMonitor: https://rsstt.conformist.name
+    - Lessons:
+        href: https://lessons.conformist.name
+        description: "Kids' lessons tracker"
+        icon: "mdi-school"
+        siteMonitor: https://lessons.conformist.name
+    - Home meters:
+        href: https://meters.conformist.name
+        description: "Utility meter readings"
+        icon: "mdi-meter-electric"
+        siteMonitor: https://meters.conformist.name
+    - Commeilfaut:
+        href: https://commeilfaut.conformist.name/admin/
+        description: "Ceilings shop admin"
+        icon: "mdi-ceiling-light"
+        siteMonitor: https://commeilfaut.conformist.name
+    - Segments:
+        href: https://segments.conformist.name
+        description: "Segments app"
+        icon: "mdi-segment"
+        siteMonitor: https://segments.conformist.name
     - Traefik:
-        href: http://traefik.conformist.name
+        href: https://traefik.conformist.name
         description: "Reverse proxy"
         icon: "traefik"
+        siteMonitor: https://traefik.conformist.name
+    - Router:
+        href: https://router.conformist.name
+        description: "Keenetic router"
+        icon: "keenetic"
     - About:
         href: https://conformist.name
         description: "About me"
         icon: "mdi-account"
-    - Segments:
-        href: https://segments.conformist.name
-        description: "Segments"
-        icon: "mdi-segment"
-    - Commeilfaut:
-        href: https://commeilfaut.conformist.name/admin/
-        description: "Commeilfaut"
-        icon: "mdi-alien"
+        siteMonitor: https://conformist.name

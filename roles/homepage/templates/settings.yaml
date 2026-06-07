@@ -2,10 +2,13 @@ showStats: false
 favicon: "/images/favicon.ico"
 theme: "light"
 color: "amber"
+headerStyle: clean
+statusStyle: "dot"
 layout:
   media:
     style: row
     columns: 4
+    useEqualHeights: true
   applications:
   tools:
     iconsOnly: true
