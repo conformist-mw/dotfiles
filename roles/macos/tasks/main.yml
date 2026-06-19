@@ -1,16 +1,14 @@
-- name: Install you-should-use zsh plugin
-  git:
-    repo: https://github.com/MichaelAquilina/zsh-you-should-use.git
-    dest: ~/.oh-my-zsh/custom/plugins/you-should-use
-
 - name: config dirs
   file:
     path: "~/.{{ item }}"
     state: directory
   loop:
     - config/git
+    - config/kitty
+    - config/zed
+    - config/atuin
 
-- name: Copy Git config and ignore files
+- name: Copy dotfiles
   copy:
     src: "dotfiles/{{ item }}"
     dest: "~/.{{ item }}"
@@ -22,81 +20,34 @@
     - config/git/ignore
     - config/git/wt-config
     - config/starship.toml
+    - config/kitty/kitty.conf
+    - config/kitty/quick-access-terminal.conf
+    - config/kitty/theme.conf
+    - config/kitty/HOTKEYS.md
+    - config/zed/keymap.json
+    - config/zed/settings.json
+    - config/zed/tasks.json
+    - config/atuin/config.toml
 
-- name: configure mise
-  block:
-    - name: mise ignore python
-      command: mise settings set disable_tools python
+- name: Deploy Brewfile
+  copy:
+    src: Brewfile
+    dest: ~/.Brewfile
+    mode: '0644'
 
-    - name: mise install tools
-      command: >
-        mise use -g go@latest node@22
-
-    - name: mise reshim
-      command: mise reshim
+- name: Install Homebrew packages from Brewfile
+  command: brew bundle install --global
+  register: brew_bundle
+  changed_when: "'Installing' in brew_bundle.stdout"
   tags: install
 
-- name: install homebrew packages
-  community.general.homebrew:
-    name:
-      - autojump
-      - awscli
-      - csvlens
-      - fd
-      - ffmpeg
-      - fzf
-      - gdu
-      - git
-      - git-delta
-      - httpie
-      - hyperfine
-      - imagemagick
-      - ipython
-      - jq
-      - just
-      - libpq
-      - mise
-      - poppler
-      - ripgrep
-      - rmlint
-      - ruff
-      - sevenzip
-      - starship
-      - telnet
-      - tmux
-      - tree
-      - uv
-      - watch
-      - xclip
-      - yazi
-      - zoxide
-      - zsh-autosuggestions
-      - zsh-completions
-      - zsh-history-substring-search
-      - zsh-syntax-highlighting
-      - zsh-you-should-use
-    update_homebrew: yes
-    state: present
-  tags: install
-
-- name: install homebrew casks
-  community.general.homebrew_cask:
-    name:
-      - anki
-      - db-browser-for-sqlite
-      - font-fira-code-nerd-font
-      - iterm2
-      - jetbrains-toolbox
-      - maccy
-      - orbstack
-      - stats
-      - sublime-merge
-      - telegram-desktop
-      - visual-studio-code
-      - vivaldi
-      - zed
-    state: present
-  tags: install
+- name: Remove Homebrew packages not in Brewfile
+  command: brew bundle cleanup --global --force
+  register: brew_cleanup
+  changed_when: "'Uninstalling' in brew_cleanup.stdout"
+  tags:
+    - install
+    - cleanup
 
 - name: Manage uv
   block:

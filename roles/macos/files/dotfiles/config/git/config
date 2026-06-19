@@ -1,8 +1,9 @@
 [core]
     excludesFile = ~/.config/git/ignore
+	autocrlf = input
 [user]
-    email = oleg.smedyuk@gmail.com
-    name = Oleg Smedyuk
+	email = oleg.smedyuk@gmail.com
+	name = Oleg Smedyuk
     signingkey = FF9C6EB4F3603E3E
 [color]
     ui = true
@@ -33,3 +34,7 @@
 
 [includeIf "gitdir:~/wt/"]
     path = ~/.config/git/wt-config
+[push]
+	autoSetupRemote = true
+[url "git@gitlab.asqq.io:"]
+	insteadOf = https://gitlab.asqq.io/

@@ -38,6 +38,11 @@ wheels/
 .mise.toml
 mise.toml
 *.env*
+!.env.example
 .envrc
 secrets/*
-samconfig.toml
+.DS_Store
+**/.claude/settings.local.json
+CLAUDE.md
+AGENTS.md
+.claude/

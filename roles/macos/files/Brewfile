@@ -1,0 +1,153 @@
+# Managed by Ansible (roles/macos).
+# `brew bundle --global` installs everything below; `brew bundle cleanup --global --force`
+# removes any tap/formula/cask not listed here. Treat this file as the source of truth.
+#
+# NOTE: uv-managed Python tools (Manage uv block) are managed elsewhere — not here.
+
+tap "akiomik/mado", "https://github.com/akiomik/mado.git"
+tap "hashicorp/tap"
+tap "huseyinbabal/tap"
+tap "umputun/apps"
+
+# Simple, modern, secure file encryption
+brew "age"
+# Improved shell history for zsh, bash, fish and nushell
+brew "atuin"
+# Automatic configure script builder
+brew "autoconf"
+# Shell extension to jump to frequently used directories
+brew "autojump"
+# Official Amazon AWS command-line interface
+brew "awscli"
+# Clone of cat(1) with syntax highlighting and Git integration
+brew "bat"
+# Cloudflare Tunnel client (formerly Argo Tunnel)
+brew "cloudflared"
+# Cross-platform make
+brew "cmake"
+# Command-line csv viewer
+brew "csvlens"
+# ios development requrement
+brew "cocoapods"
+# Load/unload environment variables based on $PWD
+brew "direnv"
+# Tool for exploring each layer in a docker image
+brew "dive"
+# Simple, fast and user-friendly alternative to find
+brew "fd"
+# Play, record, convert, and stream select audio and video codecs
+brew "ffmpeg"
+# Command-line fuzzy finder written in Go
+brew "fzf"
+# Disk usage analyzer with console interface written in Go
+brew "gdu"
+# GitHub command-line tool
+brew "gh"
+# Distributed revision control system
+brew "git"
+# Open-source GitLab command-line tool
+brew "glab"
+# Open source programming language to build simple/reliable/efficient software
+brew "go"
+# Configurable static site generator
+brew "hugo"
+# Tools and libraries to manipulate images in select formats
+brew "imagemagick"
+# Update of iperf: measures TCP, UDP, and SCTP bandwidth
+brew "iperf3"
+# Interactive computing in Python
+brew "ipython"
+# Lightweight and flexible command-line JSON processor
+brew "jq"
+# Handy way to save and run project-specific commands
+brew "just"
+# Postgres C API library
+brew "libpq"
+# Utility for directing compilation
+brew "make"
+# Unified display of technical and tag data for audio/video
+brew "media-info"
+# Open source relational database management system
+brew "mysql-client"
+# Platform built on V8 to build network applications
+brew "node"
+# Package compiler and linker metadata toolkit
+brew "pkgconf"
+# PDF rendering library (based on the xpdf-3.0 code base)
+brew "poppler"
+# Search tool like grep and The Silver Searcher
+brew "ripgrep"
+# Extremely fast tool to remove dupes and other lint from your filesystem
+brew "rmlint"
+# Extremely fast Python linter, written in Rust
+brew "ruff"
+# 7-Zip is a file archiver with a high compression ratio
+brew "sevenzip"
+# Fuzzy Finder in rust!
+brew "sk"
+# Editor of encrypted files
+brew "sops"
+# Cross-shell prompt for astronauts
+brew "starship"
+# User interface to the TELNET protocol
+brew "telnet"
+# Display directories as trees (with optional color/HTML output)
+brew "tree"
+# Extremely fast Python package installer and resolver, written in Rust
+brew "uv"
+# Executes a program periodically, showing output fullscreen
+brew "watch"
+# ios development requirement
+brew "watchman"
+# Access X11 clipboards from the command-line
+brew "xclip"
+# Friendly and fast tool for sending HTTP requests (httpie-compatible)
+brew "xh"
+# Shell extension to navigate your filesystem faster
+brew "zoxide"
+# Fish-like fast/unobtrusive autosuggestions for zsh
+brew "zsh-autosuggestions"
+# Additional completion definitions for zsh
+brew "zsh-completions"
+# Zsh port of Fish shell's history search
+brew "zsh-history-substring-search"
+# Fish shell like syntax highlighting for zsh
+brew "zsh-syntax-highlighting"
+# ZSH plugin that reminds you to use existing aliases for commands you just typed
+brew "zsh-you-should-use"
+
+# OpenAI's coding agent that runs in your terminal
+cask "codex"
+# Brings the power of Copilot coding agent directly to your terminal
+cask "copilot-cli"
+# Browser for SQLite databases
+cask "db-browser-for-sqlite"
+cask "font-fira-code-nerd-font"
+# Disk partitioning tool
+cask "gdisk"
+# Speech to text application
+cask "handy"
+# Tool for multi-language users
+cask "input-source-pro"
+# GPU-based terminal emulator
+cask "kitty"
+# Replacement for Docker Desktop
+cask "orbstack"
+# Archive manager for data compression and backups
+cask "rar"
+# Control your tools with a few keystrokes
+cask "raycast"
+# Music streaming service
+cask "spotify"
+# System monitor for the menu bar
+cask "stats"
+# Git client
+cask "sublime-merge"
+# Desktop client for Telegram messenger
+cask "telegram-desktop"
+# Web browser with built-in email client focusing on customization and control
+cask "vivaldi"
+# Multimedia player
+cask "wakatime"
+# Simple menu bar app to download YouTube movies
+cask "zed"

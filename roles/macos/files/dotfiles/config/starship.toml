@@ -1,97 +1,90 @@
-command_timeout = 3_000
+"$schema" = 'https://starship.rs/config-schema.json'
 
-[aws]
-disabled = true
-symbol = "  "
+command_timeout = 2000
 
-[[battery.display]]
-threshold = 35
+# ── Prompt layout ─────────────────────────────────────────────
+[line_break]
+disabled = false
 
 [character]
-format = "$symbol "
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
 
-[git_status]
-ahead = "⇡${count}(bold green)"
-diverged = "⇕⇡${ahead_count}⇣${behind_count}"
-behind = "⇣${count}(bold yellow)"
-modified = "!${count}"
-untracked = "?${count}"
-stashed = "s${count}"
-staged = "+${count}(bold green)"
-deleted = "x${count}"
+# ── Command duration (replaces oh-my-zsh timer) ──────────────
+[cmd_duration]
+min_time = 500
+format = "took [$duration]($style) "
 
-[line_break]
-disabled = true
-
+# ── Exit code ─────────────────────────────────────────────────
 [status]
 disabled = false
-symbol = 'E'
+symbol = " "
 
+# ── Time ──────────────────────────────────────────────────────
 [time]
 disabled = false
 
-[conda]
-symbol = " "
+# ── Battery ───────────────────────────────────────────────────
+[[battery.display]]
+threshold = 35
 
-[dart]
-symbol = " "
+# ── Git ───────────────────────────────────────────────────────
+[git_branch]
+symbol = " "
 
+[git_commit]
+tag_symbol = '  '
+
+[git_status]
+ahead = "⇡${count}"
+diverged = "⇕⇡${ahead_count}⇣${behind_count}"
+behind = "⇣${count}"
+modified = "!${count}"
+untracked = "?${count}"
+stashed = "s${count}"
+staged = "+${count}"
+deleted = "x${count}"
+
+# ── Directory ─────────────────────────────────────────────────
 [directory]
-read_only = " "
+read_only = " 󰌾"
+truncation_length = 5
+truncation_symbol = "…/"
+
+# ── Cloud & Infrastructure ────────────────────────────────────
+[aws]
+symbol = " "
+
+[kubernetes]
+disabled = false
+symbol = "☸ "
+
+[terraform]
+symbol = "💠 "
 
 [docker_context]
 symbol = " "
 
-[elixir]
-symbol = " "
+# ── SSH ───────────────────────────────────────────────────────
+[hostname]
+ssh_symbol = " "
 
-[elm]
-symbol = " "
+# ── Languages & Runtimes (Nerd Fonts v3 preset icons) ────────
+[python]
+symbol = " "
 
-[git_branch]
-symbol = " "
+[nodejs]
+symbol = " "
 
 [golang]
 symbol = " "
 
-[hg_branch]
-symbol = " "
-
-[java]
-symbol = " "
-
-[julia]
-symbol = " "
-
-[memory_usage]
-symbol = " "
-
-[nim]
-symbol = " "
-
-[nix_shell]
-symbol = " "
+[rust]
+symbol = "󱘗 "
 
 [package]
-symbol = " "
+symbol = "󰏗 "
 
-[perl]
-symbol = " "
-
-[php]
-symbol = " "
-
-[python]
-symbol = " "
-
-[ruby]
-symbol = " "
-
-[rust]
-symbol = " "
-
-[scala]
-symbol = " "
-
-[swift]
-symbol = "ﯣ "
+# ── OS symbols ────────────────────────────────────────────────
+[os.symbols]
+Macos = " "

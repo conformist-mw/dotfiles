@@ -1,1 +1,8 @@
 !roles/commeilfaut/templates/production.env
+
+# macOS role: never commit secret-bearing or machine-state configs even if
+# they get copied into files/dotfiles/config (tokens, auth dbs, rotating creds).
+roles/macos/files/dotfiles/config/uv/
+roles/macos/files/dotfiles/config/gh/
+roles/macos/files/dotfiles/config/github-copilot/
+roles/macos/files/dotfiles/config/bws/

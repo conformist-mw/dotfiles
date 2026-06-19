@@ -1,21 +1,6 @@
-export ZSH="$HOME/.oh-my-zsh"
-ZSH_THEME=""  # set to empty to use starship
 export LANG="en_US.UTF-8"
-plugins=(
-    brew
-    git
-    iterm2
-    macos
-    mise
-    pre-commit
-    python
-    uv
-    you-should-use
-)
-zstyle :omz:plugins:iterm2 shell-integration yes
 
-source $ZSH/oh-my-zsh.sh
-
+# history
 export HISTIGNORE="&:ls:[bf]g:exit"
 export HISTSIZE=40000
 export HISTFILESIZE=1000000
@@ -24,40 +9,52 @@ unsetopt share_history # don't share history between sessions
 setopt inc_append_history_time # save the time stamp when the command was entered
 setopt interactivecomments # allow comments in interactive shell
 
-# autojump
-if (( $+commands[brew] )); then
-  file=$HOMEBREW_PREFIX/etc/profile.d/autojump.sh
-  if [[ -f "$file" ]]; then
-    source "$file"
-    found=1
-  fi
+# completions (brew site-functions + zsh-completions)
+fpath=(/opt/homebrew/share/zsh/site-functions /opt/homebrew/share/zsh-completions $fpath)
+# Перестраиваем дамп раз в сутки, иначе грузим готовый кэш (-C) без медленной
+# проверки безопасности fpath. glob раскрываем через массив — в [[ -n ]] генерации имён нет.
+autoload -Uz compinit
+_zcd=${ZDOTDIR:-$HOME}/.zcompdump
+_zcd_stale=( $_zcd(N.mh+24) )
+if (( $#_zcd_stale )); then
+  compinit -u -d "$_zcd"
+else
+  compinit -C -u -d "$_zcd"
 fi
-
-# zsh-completions
-[[ -s /opt/homebrew/share/zsh-completions ]] && fpath=(/opt/homebrew/share/zsh-completions $fpath)
-compinit -u
+unset _zcd _zcd_stale
 
 # Run 'ls' after 'cd'
+autoload -Uz add-zsh-hook
 function chpwd_ls {
     ls
 }
 add-zsh-hook chpwd chpwd_ls
 
-export PATH="/Users/oleh/.local/bin:$PATH"
+# autojump
+if (( $+commands[brew] )); then
+  file=$HOMEBREW_PREFIX/etc/profile.d/autojump.sh
+  [[ -f "$file" ]] && source "$file"
+fi
+
+export PATH="$HOME/.local/bin:$PATH"
 export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
+export PATH="/opt/homebrew/opt/mysql-client/bin:$PATH"
 export CPPFLAGS="-I/opt/homebrew/include"
 export LDFLAGS="-L/opt/homebrew/lib"
-
-eval "$(starship init zsh)"
 
 export HOMEBREW_NO_ENV_HINTS=1
 export GPG_TTY=$(tty)
 
-eval "$(/opt/homebrew/bin/mise activate zsh)"
+# nx: no cloud prompts, non-interactive
+export NX_NO_CLOUD=true
+export NX_INTERACTIVE=false
 
-# extra plugins from homebrew
-source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh  # must be first
+eval "$(starship init zsh)"
+eval "$(zoxide init zsh)"
+eval "$(atuin init zsh)"
+
+# shell plugins from homebrew — zsh-syntax-highlighting MUST be sourced last
 source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 source /opt/homebrew/share/zsh-history-substring-search/zsh-history-substring-search.zsh
-
-eval "$(zoxide init zsh)"
+source /opt/homebrew/share/zsh-you-should-use/you-should-use.plugin.zsh
+source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
