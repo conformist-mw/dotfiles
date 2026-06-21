@@ -54,11 +54,11 @@
     - name: uv install python
       command: >
         uv python install
-        3.9
         3.10
         3.11
         3.12
         3.13
+        3.14
 
     - name: uv install tools
       command: uv tool install --python 3.12 {{ item }}
