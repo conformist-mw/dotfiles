@@ -7,7 +7,7 @@
 tap "akiomik/mado", "https://github.com/akiomik/mado.git"
 tap "hashicorp/tap"
 tap "huseyinbabal/tap"
-tap "umputun/apps"
+tap "umputun/apps", trusted: true  # Homebrew 6.0 tap-trust; covers all casks from this tap (e.g. agterm)
 
 # Simple, modern, secure file encryption
 brew "age"
@@ -116,6 +116,8 @@ brew "zsh-syntax-highlighting"
 # ZSH plugin that reminds you to use existing aliases for commands you just typed
 brew "zsh-you-should-use"
 
+# Terminal UI for AI coding agents
+cask "agterm"
 # OpenAI's coding agent that runs in your terminal
 cask "codex"
 # Brings the power of Copilot coding agent directly to your terminal
@@ -127,10 +129,14 @@ cask "font-fira-code-nerd-font"
 cask "gdisk"
 # Speech to text application
 cask "handy"
+# Free and open-source media player (mpv-based, native macOS UI)
+cask "iina"
 # Tool for multi-language users
 cask "input-source-pro"
 # GPU-based terminal emulator
 cask "kitty"
+# Free, cross-platform media player (lightweight, plays everything)
+cask "mpv"
 # Replacement for Docker Desktop
 cask "orbstack"
 # Archive manager for data compression and backups

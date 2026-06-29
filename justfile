@@ -21,6 +21,9 @@ deploy-hetzner-tag tag:
 deploy-mac:
   uv run ansible-playbook macos.yml
 
+deploy-mac-tag tag:
+  uv run ansible-playbook macos.yml --tags {{ tag }}
+
 update-mac-configs:
   uv run ansible-playbook macos.yml --skip-tags "install,uv"
 

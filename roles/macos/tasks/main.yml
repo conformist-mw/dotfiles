@@ -29,11 +29,13 @@
     - config/zed/tasks.json
     - config/atuin/config.toml
 
-- name: Deploy Brewfile
-  copy:
-    src: Brewfile
+- name: Link Brewfile
+  file:
+    src: "{{ playbook_dir }}/roles/macos/files/Brewfile"
     dest: ~/.Brewfile
-    mode: '0644'
+    state: link
+    force: true
+  tags: install
 
 - name: Install Homebrew packages from Brewfile
   command: brew bundle install --global
