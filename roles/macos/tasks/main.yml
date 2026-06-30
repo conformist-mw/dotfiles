@@ -61,6 +61,12 @@
         3.12
         3.13
         3.14
+      register: uv_python
+      changed_when: "'Installed' in uv_python.stderr"
+
+    - name: Show uv python output
+      debug:
+        var: uv_python.stderr_lines
 
     - name: uv install tools
       command: uv tool install --python 3.12 {{ item }}
@@ -71,4 +77,13 @@
         - smbclientng
         - spotdl
         - yt-dlp
+      register: uv_tools
+      changed_when: "'Installed' in uv_tools.stderr"
+
+    - name: Show uv tool output
+      debug:
+        msg: "{{ item.item }}: {{ item.stderr_lines }}"
+      loop: "{{ uv_tools.results }}"
+      loop_control:
+        label: "{{ item.item }}"
   tags: uv

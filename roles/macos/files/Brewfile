@@ -116,6 +116,8 @@ brew "zsh-syntax-highlighting"
 # ZSH plugin that reminds you to use existing aliases for commands you just typed
 brew "zsh-you-should-use"
 
+# Command-line interface for 1Password
+cask "1password-cli"
 # Terminal UI for AI coding agents
 cask "agterm"
 # OpenAI's coding agent that runs in your terminal
