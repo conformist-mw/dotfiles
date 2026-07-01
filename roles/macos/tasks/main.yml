@@ -40,7 +40,12 @@
 - name: Install Homebrew packages from Brewfile
   command: brew bundle install --global
   register: brew_bundle
-  changed_when: "'Installing' in brew_bundle.stdout"
+  changed_when: brew_bundle.stdout is regex('(Installing|Upgrading|Downloading)')
+  tags: install
+
+- name: Show Brewfile install/upgrade output
+  debug:
+    var: brew_bundle.stdout_lines
   tags: install
 
 - name: Remove Homebrew packages not in Brewfile
