@@ -56,3 +56,16 @@ codeartifact-login:
 [group('uv')]
 uv-init VERSION='3.13':
     uv venv --python {{ VERSION }} --seed
+
+############ DOTFILES ############
+
+# deploy this mac from the dotfiles repo (optional tag, e.g. `just deploy-mac install`)
+[group('dotfiles')]
+deploy-mac tag='':
+    #!/bin/sh
+    cd ~/dev/dotfiles
+    if [ -n "{{ tag }}" ]; then
+      just deploy-mac-tag "{{ tag }}"
+    else
+      just deploy-mac
+    fi
