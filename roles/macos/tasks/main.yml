@@ -7,6 +7,7 @@
     - config/kitty
     - config/zed
     - config/atuin
+    - config/agterm
 
 - name: Copy dotfiles
   copy:
@@ -28,6 +29,9 @@
     - config/zed/settings.json
     - config/zed/tasks.json
     - config/atuin/config.toml
+    - config/agterm/ghostty.conf
+    - config/agterm/keymap.conf
+    - config/agterm/restore-denylist.conf
 
 - name: Link Brewfile
   file:
