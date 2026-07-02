@@ -6,3 +6,10 @@ roles/macos/files/dotfiles/config/uv/
 roles/macos/files/dotfiles/config/gh/
 roles/macos/files/dotfiles/config/github-copilot/
 roles/macos/files/dotfiles/config/bws/
+
+# keenetic role: raw config dumps contain MACs, device names and secrets — never commit
+roles/keenetic/backups/
+
+# WireGuard client configs contain client PRIVATE keys — hand off out-of-band, never commit
+*_wg.conf
+*.wgconf

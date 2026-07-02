@@ -48,3 +48,6 @@ wg_interfaces:
       - name: macos
         address: "10.0.40.40/32"
         public_key: "Da779VGoPIRW8qClsSTmIDVLbjDtSZGy8Ar7ycXPUjA="
+      - name: egor
+        address: "10.0.40.30/32"
+        public_key: "LYUZxviK542UTpzSkf7s2b+cRXnzdbeJze+akuPgsQw="
