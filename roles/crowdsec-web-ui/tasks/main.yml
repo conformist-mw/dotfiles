@@ -52,6 +52,8 @@
 - name: Include labels generator
   ansible.builtin.include_role:
     name: labels_generator
+  vars:
+    additional_labels: "{{ crowdsec_webui_extra_labels }}"
 
 - name: CrowdSec Web UI container
   community.docker.docker_container:

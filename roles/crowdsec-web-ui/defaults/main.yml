@@ -1,7 +1,15 @@
 ---
 app_name: "crowdsec-web-ui"
+app_subdomain: "crowdsec"
 app_port: 3000
 app_data_dir: "{{ data_dir }}/crowdsec-web-ui"
+
+# Override the inventory's rule label so the hostname uses app_subdomain
+# (crowdsec.<host>) instead of app_name — the hetzner inventory only references
+# app_name in the rule. Same trick as home-meters.
+crowdsec_webui_extra_labels:
+  - key: "traefik.http.routers.{{ app_name }}.rule"
+    value: "Host(`{{ app_subdomain | default(app_name) }}.{{ ansible_host }}`)"
 
 # LAPI watcher machine the UI authenticates as. Password is generated on the
 # host on first run and stored in {{ app_data_dir }}/lapi.env (never in the repo).

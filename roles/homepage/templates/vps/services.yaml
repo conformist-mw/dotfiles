@@ -66,6 +66,12 @@
         href: https://glances.{{ ansible_host }}
         description: "System monitoring"
         icon: "glances"
+    - CrowdSec:
+        href: https://crowdsec.{{ ansible_host }}
+        description: "Security engine dashboard"
+        icon: "crowdsec"
+        container: "crowdsec-web-ui"
+        server: "local-docker"
 
 - proxy:
     - Home Assistant:
