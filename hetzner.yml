@@ -22,6 +22,7 @@
     - { role: tinyauth, tags: [infra, tinyauth] }
     - { role: pihole, tags: [infra, pihole] }
     - { role: crowdsec, tags: [infra, crowdsec] }
+    - { role: crowdsec-web-ui, tags: [infra, crowdsec-web-ui] }
 
     # Applications
     - { role: dozzle, tags: [apps, dozzle] }

@@ -1,0 +1,73 @@
+---
+# Self-hosted CrowdSec dashboard (TheDuffman85/crowdsec-web-ui): reads the
+# native LAPI (alerts, decisions, geo map) + the Prometheus endpoint (runtime
+# metrics). Runs read-only; access is gated at the edge by tinyauth (the default
+# auth-chain@file middleware from the shared traefik_labels).
+
+# Everything lives under the vps_user home; the container runs as node (uid 1000
+# == vps_user), so keep these owned by the deploy user (no become) — the docker
+# module also reads lapi.env client-side as this user.
+- name: Ensure data directory exists
+  ansible.builtin.file:
+    path: "{{ app_data_dir }}/data"
+    state: directory
+    mode: "0755"
+
+# --- LAPI watcher credentials (generated once, kept out of the repo) ---------
+- name: Check for existing LAPI watcher credentials
+  ansible.builtin.stat:
+    path: "{{ app_data_dir }}/lapi.env"
+  register: webui_lapi_env
+
+- name: Provision the LAPI watcher for the web UI
+  when: not webui_lapi_env.stat.exists
+  block:
+    - name: Generate a watcher password
+      ansible.builtin.command: openssl rand -hex 24
+      register: webui_pw
+      changed_when: true
+
+    - name: Register the watcher machine in CrowdSec LAPI
+      ansible.builtin.command: >-
+        cscli machines add {{ crowdsec_webui_machine }}
+        --password {{ webui_pw.stdout }} --force
+      become: true
+
+    - name: Persist watcher credentials as the container env_file
+      ansible.builtin.copy:
+        dest: "{{ app_data_dir }}/lapi.env"
+        content: |
+          CROWDSEC_USER={{ crowdsec_webui_machine }}
+          CROWDSEC_PASSWORD={{ webui_pw.stdout }}
+        mode: "0600"
+
+# --- Reach 127.0.0.1 LAPI (8080) + Prometheus (6060) from the docker network -
+- name: Expose CrowdSec LAPI + metrics to the container network
+  ansible.builtin.include_role:
+    name: expose_local_port
+  vars:
+    expose_ports: [8080, 6060]
+
+# --- Container ----------------------------------------------------------------
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+
+- name: CrowdSec Web UI container
+  community.docker.docker_container:
+    name: "{{ app_name }}"
+    image: ghcr.io/theduffman85/crowdsec-web-ui:latest
+    pull: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    env_file: "{{ app_data_dir }}/lapi.env"
+    env:
+      CROWDSEC_URL: "{{ crowdsec_webui_lapi_url }}"
+      CROWDSEC_PROMETHEUS_URL: "{{ crowdsec_webui_prometheus_url }}"
+      PERMISSION_READ_ONLY: "true"
+      AUTH_ENABLED: "false"
+      TZ: "{{ tz }}"
+    volumes:
+      - "{{ app_data_dir }}/data:/app/data"
+    labels: "{{ labels }}"

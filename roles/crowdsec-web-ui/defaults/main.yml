@@ -1,0 +1,13 @@
+---
+app_name: "crowdsec-web-ui"
+app_port: 3000
+app_data_dir: "{{ data_dir }}/crowdsec-web-ui"
+
+# LAPI watcher machine the UI authenticates as. Password is generated on the
+# host on first run and stored in {{ app_data_dir }}/lapi.env (never in the repo).
+crowdsec_webui_machine: "crowdsec-web-ui"
+
+# The native CrowdSec LAPI + Prometheus listen on 127.0.0.1; the UI container
+# reaches them via the docker bridge gateway (expose_local_port DNATs them).
+crowdsec_webui_lapi_url: "http://{{ docker_gateway }}:8080"
+crowdsec_webui_prometheus_url: "http://{{ docker_gateway }}:6060"
