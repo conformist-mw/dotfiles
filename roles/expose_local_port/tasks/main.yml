@@ -1,0 +1,52 @@
+---
+# Expose one or more host-local (127.0.0.1) services to the Docker bridge
+# network so containers can reach them via the network gateway — WITHOUT
+# binding the service to a public interface.
+#
+# A container connects to {{ docker_gateway }}:<port>; the packet enters the
+# host on the {{ docker_network }} bridge, PREROUTING DNATs it to 127.0.0.1:<port>
+# where the native service listens. Requires net.ipv4.conf.{{ docker_network }}.
+# route_localnet=1 (set persistently in /etc/sysctl.conf on the VPS).
+#
+# Caller sets:
+#   expose_ports: [<tcp port>, ...]   # host-local ports to expose
+#
+# NOTE: the save handlers write /etc/iptables/rules.v4|v6, but loading them at
+# boot (netfilter-persistent) is intentionally NOT set up here — it needs care
+# around the crowdsec-firewall-bouncer ipset/chain ordering. Rules are (re)applied
+# on every Ansible run regardless.
+
+- name: Ensure iptables persistence directory exists
+  ansible.builtin.file:
+    path: /etc/iptables
+    state: directory
+    mode: "0755"
+  become: true
+
+- name: Allow docker network → localhost for the given ports
+  ansible.builtin.iptables:
+    chain: INPUT
+    in_interface: "{{ docker_network }}"
+    protocol: tcp
+    destination_port: "{{ item }}"
+    jump: ACCEPT
+  become: true
+  loop: "{{ expose_ports }}"
+  notify:
+    - save iptables ipv4
+    - save iptables ipv6
+
+- name: DNAT docker network → 127.0.0.1 for the given ports
+  ansible.builtin.iptables:
+    table: nat
+    chain: PREROUTING
+    in_interface: "{{ docker_network }}"
+    protocol: tcp
+    destination_port: "{{ item }}"
+    jump: DNAT
+    to_destination: "127.0.0.1:{{ item }}"
+  become: true
+  loop: "{{ expose_ports }}"
+  notify:
+    - save iptables ipv4
+    - save iptables ipv6

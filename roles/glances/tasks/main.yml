@@ -23,28 +23,8 @@
     daemon_reload: yes
   become: true
 
-- name: Add iptables rule for allowing traffic to port 61208 from container network
-  ansible.builtin.iptables:
-    chain: INPUT
-    in_interface: "{{ docker_network }}"
-    protocol: tcp
-    destination_port: 61208
-    jump: ACCEPT
-  become: true
-  notify:
-    - save iptables ipv4
-    - save iptables ipv6
-
-- name: Add iptables rule for DNAT from container network to localhost
-  ansible.builtin.iptables:
-    table: nat
-    chain: PREROUTING
-    in_interface: "{{ docker_network }}"
-    protocol: tcp
-    destination_port: 61208
-    jump: DNAT
-    to_destination: 127.0.0.1:61208
-  become: true
-  notify:
-    - save iptables ipv4
-    - save iptables ipv6
+- name: Expose glances to the container network (127.0.0.1 → docker net)
+  ansible.builtin.include_role:
+    name: expose_local_port
+  vars:
+    expose_ports: ["{{ app_port }}"]
