@@ -84,6 +84,17 @@
   become: true
   notify: restart crowdsec
 
+# Progressive ban durations (8h → 16h → 24h …) instead of the stock flat 4h.
+# Cuts repeat alerts from persistent scanners so we stay under the CrowdSec
+# Console Community alert quota (500/mo); network-level protection is unchanged.
+- name: Remediation profiles — progressive ban duration
+  ansible.builtin.template:
+    src: profiles.yaml.j2
+    dest: /etc/crowdsec/profiles.yaml
+    mode: "0644"
+  become: true
+  notify: restart crowdsec
+
 # Optional: keep the same identity in the CrowdSec Console (app.crowdsec.net)
 # across rebuilds by restoring the CAPI credentials. Skipped unless the secret
 # is set in host_vars/hetzner (crowdsec_capi_login / crowdsec_capi_password).

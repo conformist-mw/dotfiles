@@ -1,0 +1,28 @@
+{# Progressive (exponential-backoff) ban duration.
+   Replaces the stock flat 4h ban. Each repeat offence from the same value
+   extends the ban: 1st = 8h, 2nd = 16h, 3rd = 24h, ... — persistent scanners
+   get parked for days and stop generating fresh alerts (keeps us under the
+   CrowdSec Console Community alert quota). Protection is unaffected: bans are
+   still enforced at the network level by the iptables firewall-bouncer.
+
+   duration_expr is a profile-level key (overrides the decision's duration,
+   which stays as a fallback); it must NOT be nested under decisions:. #}
+name: default_ip_remediation
+#debug: true
+filters:
+ - Alert.Remediation == true && Alert.GetScope() == "Ip"
+decisions:
+ - type: ban
+   duration: 8h
+duration_expr: Sprintf('%dh', (GetDecisionsCount(Alert.GetValue()) + 1) * 8)
+on_success: break
+---
+name: default_range_remediation
+#debug: true
+filters:
+ - Alert.Remediation == true && Alert.GetScope() == "Range"
+decisions:
+ - type: ban
+   duration: 8h
+duration_expr: Sprintf('%dh', (GetDecisionsCount(Alert.GetValue()) + 1) * 8)
+on_success: break
