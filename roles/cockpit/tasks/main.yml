@@ -35,4 +35,5 @@
   ansible.builtin.include_role:
     name: expose_local_port
   vars:
+    expose_name: "cockpit"
     expose_ports: [9090]

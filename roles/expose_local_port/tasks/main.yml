@@ -8,45 +8,30 @@
 # where the native service listens. Requires net.ipv4.conf.{{ docker_network }}.
 # route_localnet=1 (set persistently in /etc/sysctl.conf on the VPS).
 #
-# Caller sets:
-#   expose_ports: [<tcp port>, ...]   # host-local ports to expose
+# Persistence is declarative: a per-owner systemd oneshot (expose-<name>.service,
+# After=docker.service) re-asserts exactly these rules at boot with `-C || -A`.
+# We deliberately do NOT use iptables-save/netfilter-persistent — a blind table
+# snapshot would also try to restore the crowdsec-firewall-bouncer's ipset rules
+# before its ipsets exist (restore race) and resurrect stray rules.
 #
-# NOTE: the save handlers write /etc/iptables/rules.v4|v6, but loading them at
-# boot (netfilter-persistent) is intentionally NOT set up here — it needs care
-# around the crowdsec-firewall-bouncer ipset/chain ordering. Rules are (re)applied
-# on every Ansible run regardless.
+# Caller sets:
+#   expose_name:  <str>            # unique owner name (→ unit + Description)
+#   expose_ports: [<tcp port>, ...] # host-local ports to expose
 
-- name: Ensure iptables persistence directory exists
-  ansible.builtin.file:
-    path: /etc/iptables
-    state: directory
-    mode: "0755"
+- name: "Install boot re-apply unit for {{ expose_name }}"
+  ansible.builtin.template:
+    src: expose-ports.service.j2
+    dest: "/etc/systemd/system/expose-{{ expose_name }}.service"
+    mode: "0644"
   become: true
+  register: expose_unit
 
-- name: Allow docker network → localhost for the given ports
-  ansible.builtin.iptables:
-    chain: INPUT
-    in_interface: "{{ docker_network }}"
-    protocol: tcp
-    destination_port: "{{ item }}"
-    jump: ACCEPT
+# Starting (or restarting on change) the oneshot applies the rules immediately,
+# so the unit is the single source of truth for both boot and this Ansible run.
+- name: "Enable + apply the expose unit for {{ expose_name }}"
+  ansible.builtin.systemd:
+    name: "expose-{{ expose_name }}.service"
+    enabled: true
+    state: "{{ 'restarted' if expose_unit.changed else 'started' }}"
+    daemon_reload: true
   become: true
-  loop: "{{ expose_ports }}"
-  notify:
-    - save iptables ipv4
-    - save iptables ipv6
-
-- name: DNAT docker network → 127.0.0.1 for the given ports
-  ansible.builtin.iptables:
-    table: nat
-    chain: PREROUTING
-    in_interface: "{{ docker_network }}"
-    protocol: tcp
-    destination_port: "{{ item }}"
-    jump: DNAT
-    to_destination: "127.0.0.1:{{ item }}"
-  become: true
-  loop: "{{ expose_ports }}"
-  notify:
-    - save iptables ipv4
-    - save iptables ipv6

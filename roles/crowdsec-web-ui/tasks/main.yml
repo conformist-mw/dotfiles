@@ -46,6 +46,7 @@
   ansible.builtin.include_role:
     name: expose_local_port
   vars:
+    expose_name: "{{ app_name }}"
     expose_ports: [8080, 6060]
 
 # --- Container ----------------------------------------------------------------

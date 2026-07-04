@@ -1,0 +1,23 @@
+{# Declarative desired-state: re-assert exactly these INPUT+DNAT rules at boot,
+   after docker has created the {{ docker_network }} bridge. Idempotent (-C || -A),
+   so it never duplicates and never resurrects stray rules the way iptables-save
+   would. The crowdsec-firewall-bouncer keeps managing its own ipset chain. #}
+[Unit]
+Description=Expose 127.0.0.1 ports to the {{ docker_network }} bridge ({{ expose_name }})
+After=docker.service
+Wants=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+{% for port in expose_ports %}
+ExecStart=/bin/sh -c 'iptables -C INPUT -i {{ docker_network }} -p tcp --dport {{ port }} -j ACCEPT 2>/dev/null || iptables -A INPUT -i {{ docker_network }} -p tcp --dport {{ port }} -j ACCEPT'
+ExecStart=/bin/sh -c 'iptables -t nat -C PREROUTING -i {{ docker_network }} -p tcp --dport {{ port }} -j DNAT --to-destination 127.0.0.1:{{ port }} 2>/dev/null || iptables -t nat -A PREROUTING -i {{ docker_network }} -p tcp --dport {{ port }} -j DNAT --to-destination 127.0.0.1:{{ port }}'
+{% endfor %}
+{% for port in expose_ports %}
+ExecStop=/bin/sh -c 'iptables -D INPUT -i {{ docker_network }} -p tcp --dport {{ port }} -j ACCEPT 2>/dev/null || true'
+ExecStop=/bin/sh -c 'iptables -t nat -D PREROUTING -i {{ docker_network }} -p tcp --dport {{ port }} -j DNAT --to-destination 127.0.0.1:{{ port }} 2>/dev/null || true'
+{% endfor %}
+
+[Install]
+WantedBy=multi-user.target
