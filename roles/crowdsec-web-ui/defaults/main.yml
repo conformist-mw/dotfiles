@@ -18,4 +18,5 @@ crowdsec_webui_machine: "crowdsec-web-ui"
 # The native CrowdSec LAPI + Prometheus listen on 127.0.0.1; the UI container
 # reaches them via the docker bridge gateway (expose_local_port DNATs them).
 crowdsec_webui_lapi_url: "http://{{ docker_gateway }}:8080"
-crowdsec_webui_prometheus_url: "http://{{ docker_gateway }}:6060"
+# Full metrics path — the app fetches this URL as-is (does not append /metrics).
+crowdsec_webui_prometheus_url: "http://{{ docker_gateway }}:6060/metrics"
