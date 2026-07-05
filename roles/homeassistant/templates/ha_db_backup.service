@@ -1,0 +1,13 @@
+[Unit]
+Description=Home Assistant Postgres DB backup
+OnFailure=systemd-notify@%i.service
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User={{ ansible_user }}
+WorkingDirectory={{ logs_dir }}
+ExecStart=/usr/local/bin/ha_db_backup.sh
+StandardOutput=journal
+StandardError=journal

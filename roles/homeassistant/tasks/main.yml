@@ -34,6 +34,38 @@
     append: true
   become: true
 
+# Recorder DB + login role in the shared Postgres (roles/beelink). Idempotent:
+# only creates when absent, so it's a no-op on the current host and makes a
+# fresh host restore-ready. Runs before the VM so HA finds its DB on first boot.
+- name: Ensure HA recorder role and database exist
+  when: ha_db_create_enabled | bool
+  vars:
+    pg: "docker exec -e PGPASSWORD={{ ha_db_pg_password }} {{ ha_db_pg_container }} psql -U {{ ha_db_pg_user }} -tAX"
+  block:
+    - name: Check/create the recorder login role
+      ansible.builtin.shell: |
+        if [ "$({{ pg }} -c "SELECT 1 FROM pg_roles WHERE rolname='{{ ha_db_user }}'")" != "1" ]; then
+          {{ pg }} -v pw="{{ ha_db_password }}" -c "CREATE ROLE \"{{ ha_db_user }}\" LOGIN PASSWORD :'pw'"
+          echo CHANGED
+        fi
+      args:
+        executable: /bin/bash
+      register: ha_role_create
+      changed_when: "'CHANGED' in ha_role_create.stdout"
+      no_log: true
+
+    - name: Check/create the recorder database
+      ansible.builtin.shell: |
+        if [ "$({{ pg }} -c "SELECT 1 FROM pg_database WHERE datname='{{ ha_db_name }}'")" != "1" ]; then
+          {{ pg }} -c "CREATE DATABASE \"{{ ha_db_name }}\" OWNER \"{{ ha_db_user }}\" ENCODING 'UTF8'"
+          echo CHANGED
+        fi
+      args:
+        executable: /bin/bash
+      register: ha_db_create
+      changed_when: "'CHANGED' in ha_db_create.stdout"
+      no_log: true
+
 # Editing netplan over SSH can cut connectivity, so the bridge is opt-in.
 # The existing host is already bridged; enable only on a fresh host.
 - name: Configure the VM network bridge
@@ -97,3 +129,42 @@
     name: "{{ ha_vm_name }}"
     state: running
   become: true
+
+# HA's recorder DB lives in the shared Postgres (roles/beelink), outside the
+# HAOS VM, so HA's own backups don't cover it. Dump it daily with rotation.
+- name: Home Assistant recorder DB backup
+  when: ha_db_backup_enabled | bool
+  become: true
+  block:
+    - name: Ensure the HA DB backup directory exists
+      ansible.builtin.file:
+        path: "{{ ha_db_backup_dir }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0750"
+
+    - name: Install the HA DB backup script
+      ansible.builtin.template:
+        src: ha_db_backup.sh.j2
+        dest: /usr/local/bin/ha_db_backup.sh
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Install the HA DB backup systemd service
+      ansible.builtin.template:
+        src: ha_db_backup.service
+        dest: /etc/systemd/system/ha_db_backup.service
+
+    - name: Install the HA DB backup systemd timer
+      ansible.builtin.template:
+        src: ha_db_backup.timer
+        dest: /etc/systemd/system/ha_db_backup.timer
+
+    - name: Enable the HA DB backup timer
+      ansible.builtin.systemd:
+        name: ha_db_backup.timer
+        enabled: true
+        state: started
+        daemon_reload: true

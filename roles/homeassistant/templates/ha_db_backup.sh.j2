@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Managed by Ansible (roles/homeassistant). Daily dump of Home Assistant's
+# recorder database from the shared Postgres container (roles/beelink).
+# Consumer-owned: HA needs the DB, so its backup lives with the HA role.
+set -euo pipefail
+
+DIR="{{ ha_db_backup_dir }}"
+KEEP={{ ha_db_backup_keep }}
+DB="{{ ha_db_name }}"
+STAMP="$(date +%Y%m%d-%H%M%S)"
+OUT="$DIR/$DB-$STAMP.dump"
+
+mkdir -p "$DIR"
+trap 'rm -f "$OUT.part"' EXIT
+
+# Consistent live snapshot (MVCC — safe while HA is running).
+# Custom format (-Fc): compressed, restore with `pg_restore -d $DB`.
+docker exec -e PGPASSWORD='{{ ha_db_pg_password }}' {{ ha_db_pg_container }} \
+  pg_dump -U {{ ha_db_pg_user }} -Fc "$DB" > "$OUT.part"
+mv "$OUT.part" "$OUT"
+
+# Rotation: keep the newest $KEEP dumps, drop the rest.
+find "$DIR" -maxdepth 1 -type f -name "$DB-*.dump" -printf '%T@ %p\n' \
+  | sort -rn | awk -v k="$KEEP" 'NR>k {print $2}' | xargs -r rm -f || true
+
+echo "ha db backup ok: $OUT ($(du -h "$OUT" | cut -f1)); kept newest $KEEP"
+
+# TODO(off-site): push $DIR to Backblaze later, e.g.
+#   rclone copy "$DIR" backblaze:<bucket>/homeassistant-db --transfers=2

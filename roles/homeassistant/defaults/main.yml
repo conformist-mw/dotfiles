@@ -34,3 +34,26 @@ ha_ovmf_vars_template: "/usr/share/OVMF/OVMF_VARS_4M.fd"
 # Editing netplan over SSH can drop connectivity, so the bridge is only
 # touched when explicitly opted in (the existing host is already bridged).
 ha_manage_network: false
+
+# Daily backup of HA's recorder database. HA's history lives in the shared
+# Postgres container (roles/beelink), NOT inside the HAOS VM — so it is not
+# captured by HA's own full backups. This dump is consumer-owned (lives with
+# the HA role) and covers only the homeassistant DB.
+# Codify the recorder DB + login role so a fresh host is restore-ready
+# (empty DB/role created here → pg_restore the dump → HA connects via its
+# db_url). Idempotent: never touches an existing role/db, so it's a no-op on
+# the current host. ha_db_password MUST equal the password in HA's recorder
+# db_url (it lives in sops); a mismatch breaks a from-scratch restore.
+ha_db_create_enabled: true
+ha_db_user: "homeassistant"
+# ha_db_password comes from group_vars secrets (sops).
+
+ha_db_backup_enabled: true
+ha_db_name: "homeassistant"
+ha_db_pg_container: "postgres"
+ha_db_pg_user: "postgres"
+# TODO: source from group_vars secrets (beelink still hardcodes POSTGRES_PASSWORD).
+ha_db_pg_password: "postgres"
+ha_db_backup_dir: "{{ data_dir }}/backups/homeassistant-db"
+ha_db_backup_keep: 7                       # keep newest N daily dumps on disk
+ha_db_backup_oncalendar: "*-*-* 03:30:00"  # after HA full backup (03:00)

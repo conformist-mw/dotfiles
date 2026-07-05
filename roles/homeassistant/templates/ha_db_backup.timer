@@ -1,0 +1,9 @@
+[Unit]
+Description=Home Assistant Postgres DB backup timer
+
+[Timer]
+OnCalendar={{ ha_db_backup_oncalendar }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target
