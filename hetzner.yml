@@ -11,11 +11,9 @@
     - { role: vim, tags: [base, vim] }
     - { role: vim, tags: [base, vim-root], vars: { user: "root" } }
     - { role: wireguard, tags: [base, wireguard] }
-    - {
-        role: watchtower,
-        tags: [base, watchtower],
-        vars: { watchtower_schedule: "0 0 10 * * *" },
-      }
+    # watchtower intentionally disabled: image updates move to renovate (manual PRs)
+    # ahead of the k3s migration. Role kept in roles/ for reference. Container removed
+    # from the host manually. See MIGRATION.md.
 
     # Infrastructure
     - { role: traefik-vps, tags: [infra, traefik] }

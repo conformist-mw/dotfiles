@@ -2,15 +2,38 @@
   ansible.builtin.include_role:
     name: labels_generator
 
+# Resolve GPU group GIDs on the host at deploy time. render is a dynamically
+# allocated system group (no fixed GID across hosts/reinstalls) — never hardcode.
+- name: Get render group info
+  ansible.builtin.getent:
+    database: group
+    key: render
+
+- name: Set render group fact
+  ansible.builtin.set_fact:
+    gid_render: "{{ getent_group['render'][1] }}"
+
+- name: Get video group info
+  ansible.builtin.getent:
+    database: group
+    key: video
+
+- name: Set video group fact
+  ansible.builtin.set_fact:
+    gid_video: "{{ getent_group['video'][1] }}"
+
 - name: Immich database
   community.docker.docker_container:
-    image: docker.io/tensorchord/pgvecto-rs:pg14-v0.2.0
+    # VectorChord image (bundles vchord + pgvectors). Migrated off deprecated
+    # pgvecto.rs in v3 — immich v3 auto-reindexes vectors->vchord on first start.
+    # Extension preload + PG tuning are baked into this image, so no `command:`
+    # override (setting shared_preload_libraries here would break vchord loading).
+    image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
     pull: true
     name: "{{ app_name }}_database"
     restart_policy: "unless-stopped"
     restart: true
-    command: >-
-      postgres -c shared_preload_libraries=vectors.so -c 'search_path="$$user", public, vectors' -c logging_collector=on -c max_wal_size=2GB -c shared_buffers=512MB -c wal_compression=on
+    shm_size: "128M"
     networks:
       - name: "{{ docker_network }}"
     volumes:
@@ -23,7 +46,8 @@
 
 - name: Immich container
   community.docker.docker_container:
-    image: ghcr.io/immich-app/immich-server:release
+    # Pinned version (watchtower removed; image bumps now go through renovate PRs).
+    image: ghcr.io/immich-app/immich-server:v3.0.1
     pull: true
     name: "{{ app_name }}"
     restart_policy: "unless-stopped"
@@ -35,14 +59,24 @@
       - "/mnt/ssd/photos:/home/user/photos"
       - "/etc/localtime:/etc/localtime:ro"
     user: "1000:1000"
+    # Intel QuickSync hardware transcoding (N100 / UHD Gen12). GIDs resolved above
+    # so the non-root user can reach the render node. N100 encodes H.264/HEVC via
+    # QSV only (no hardware AV1 encode) — select Quick Sync + HEVC/H.264 in the UI.
+    groups:
+      - "{{ gid_render }}"
+      - "{{ gid_video }}"
+    devices:
+      - "/dev/dri/renderD128:/dev/dri/renderD128"
     env:
-      IMMICH_VERSION: "release"
+      IMMICH_VERSION: "v3.0.1"
       DB_USERNAME: "{{ app_name }}"
       DB_PASSWORD: "{{ app_name }}"
       DB_DATABASE_NAME: "{{ app_name }}"
       DB_HOSTNAME: "{{ app_name }}_database"
       REDIS_HOSTNAME: "redis"
-      IMMICH_LOG_LEVEL: "debug"
+      # immich log levels: verbose | debug | log | warn | error (default: log).
+      # there is no "info" level — "log" is the normal/info-equivalent level.
+      IMMICH_LOG_LEVEL: "log"
     labels: "{{ labels }}"
 
 - name: Check if cache dir exists
@@ -52,7 +86,8 @@
 
 - name: Immich machine learning container
   community.docker.docker_container:
-    image: ghcr.io/immich-app/immich-machine-learning:release
+    # Pinned version (watchtower removed; image bumps now go through renovate PRs).
+    image: ghcr.io/immich-app/immich-machine-learning:v3.0.1
     pull: true
     name: "{{ app_name }}_machine_learning"
     restart_policy: "unless-stopped"
