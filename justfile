@@ -42,6 +42,13 @@ secrets-hetzner:
 secrets-rekey:
   find group_vars host_vars roles -name '*.sops.yaml' -exec sops updatekeys -y {} \;
 
+# === Keenetic (home router) ===
+# snapshot running-config + components over SSH into roles/keenetic/backups/ (git-ignored).
+# password comes from SOPS (keenetic_admin_password in group_vars/all/secrets.sops.yaml).
+keenetic-backup *args:
+  KEEN_PASS="$(sops -d --extract '["keenetic_admin_password"]' group_vars/all/secrets.sops.yaml)" \
+    roles/keenetic/dump-config.sh {{ args }}
+
 # === Utilities ===
 list-tags-bee:
   uv run ansible-playbook beelink.yml --list-tags
