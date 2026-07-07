@@ -50,6 +50,7 @@
       TELEGRAM_ALLOWED_CHATS: "{{ lessons_allowed_chats | default('') }}"
       TELEGRAM_NOTIFY_CHAT: "{{ lessons_notify_chat | default('') }}"
       TELEGRAM_REMINDER_DELAY_MIN: "{{ lessons_reminder_delay_min | default('60') }}"
+      ICS_TOKEN: "{{ lessons_ics_token | default('') }}"
     volumes:
       - "{{ lessons_dir }}:/data"
     labels:
@@ -70,3 +71,12 @@
       traefik.http.routers.lessons-bot.middlewares: "no-auth-chain@file"
       traefik.http.routers.lessons-bot.service: "lessons"
       traefik.http.routers.lessons-bot.priority: "100"
+      # ICS feed for HA's Remote Calendar — machine-to-machine, so it bypasses
+      # auth and is guarded by the ICS_TOKEN query param instead.
+      traefik.http.routers.lessons-ics.entrypoints: "websecure"
+      traefik.http.routers.lessons-ics.tls: "true"
+      traefik.http.routers.lessons-ics.tls.certresolver: "letsencrypt"
+      traefik.http.routers.lessons-ics.rule: "Host(`lessons.{{ ansible_host }}`) && PathPrefix(`/calendar.ics`)"
+      traefik.http.routers.lessons-ics.middlewares: "no-auth-chain@file"
+      traefik.http.routers.lessons-ics.service: "lessons"
+      traefik.http.routers.lessons-ics.priority: "100"
