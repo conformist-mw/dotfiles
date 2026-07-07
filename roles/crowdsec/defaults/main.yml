@@ -1,0 +1,6 @@
+---
+# Stable, human-readable name for the local CrowdSec agent's LAPI machine.
+# Replaces the random hash the Debian package auto-registers (e.g. ba492…), so
+# `cscli machines list` is readable and host rebuilds reuse one identity instead
+# of accumulating stale machines.
+crowdsec_agent_machine: "{{ inventory_hostname }}-agent"

@@ -109,3 +109,46 @@
   become: true
   when: crowdsec_capi_password is defined
   notify: restart crowdsec
+
+# --- Stable local-agent identity ---------------------------------------------
+# The Debian package auto-registers the local agent under a random hash
+# (e.g. ba492…) and mints a fresh one on every host rebuild, leaving the old
+# entries as stale machines. Register the agent under a stable name and own its
+# credentials file so `cscli machines list` stays clean across rebuilds. This
+# also repairs the file if another role clobbered it (the crowdsec-web-ui role
+# historically wrote its watcher creds here — now fixed with `--file /dev/null`).
+- name: List registered LAPI machines
+  ansible.builtin.command: cscli machines list -o json
+  register: crowdsec_machines
+  changed_when: false
+  become: true
+
+- name: Register the local agent under a stable name
+  ansible.builtin.command: >-
+    cscli machines add {{ crowdsec_agent_machine }} --auto --force
+    --file /etc/crowdsec/local_api_credentials.yaml
+  register: crowdsec_agent_register
+  when: crowdsec_agent_machine not in (crowdsec_machines.stdout | from_json | map(attribute='machineId') | list)
+  become: true
+
+# Adopt the new credentials immediately, before pruning the old machine, so the
+# running agent is never authenticating as an identity we're about to delete.
+- name: Restart crowdsec to adopt the stable agent credentials
+  ansible.builtin.systemd:
+    name: crowdsec
+    state: restarted
+  when: crowdsec_agent_register is changed
+  become: true
+
+# Remove auto-registered local machines (random hashes) that aren't our stable
+# name. Scoped to loopback so remote watchers (e.g. the web UI container on the
+# docker bridge) are never touched. Safe: the agent now runs as the stable name.
+- name: Prune stale auto-registered local machines
+  ansible.builtin.command: cscli machines delete {{ item.machineId }}
+  loop: "{{ crowdsec_machines.stdout | from_json }}"
+  loop_control:
+    label: "{{ item.machineId }}"
+  when:
+    - item.ipAddress in ['127.0.0.1', '::1']
+    - item.machineId != crowdsec_agent_machine
+  become: true

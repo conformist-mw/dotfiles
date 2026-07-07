@@ -28,9 +28,16 @@
       changed_when: true
 
     - name: Register the watcher machine in CrowdSec LAPI
+      # -f is required. Without it, cscli dumps the generated credentials to its
+      # default path (/etc/crowdsec/local_api_credentials.yaml) — which is the
+      # *native agent's* own creds file — and clobbers it, silently repointing
+      # the local agent at this watcher identity on its next restart. We only
+      # need the machine registered in the DB (the container authenticates from
+      # lapi.env below), so discard the credentials dump.
       ansible.builtin.command: >-
         cscli machines add {{ crowdsec_webui_machine }}
         --password {{ webui_pw.stdout }} --force
+        --file /dev/null
       become: true
 
     - name: Persist watcher credentials as the container env_file
