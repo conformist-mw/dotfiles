@@ -1,0 +1,9 @@
+---
+family_visits_image: "olegsmedyuk/family-visits:latest"
+family_visits_dir: "{{ data_dir }}/family-visits"
+family_visits_subdomain: "visits"
+
+family_visits_gemini_model: "gemini-flash-lite-latest"
+family_visits_daily_digest_time: "08:00"
+family_visits_weekly_digest_dow: "0"
+family_visits_weekly_digest_time: "18:00"

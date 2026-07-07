@@ -1,0 +1,62 @@
+---
+# Secrets (family_visits_*) come from host_vars/hetzner/secrets.sops.yaml,
+# auto-loaded and decrypted by the community.sops vars plugin.
+- name: Ensure family-visits data directory
+  ansible.builtin.file:
+    path: "{{ family_visits_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Family-visits container
+  community.docker.docker_container:
+    image: "{{ family_visits_image }}"
+    pull: true
+    name: family-visits
+    restart: true
+    restart_policy: "unless-stopped"
+    user: "{{ puid }}:{{ pgid }}"
+    networks:
+      - name: "{{ docker_network }}"
+    env:
+      TZ: "{{ tz }}"
+      APP_TZ: "{{ tz }}"
+      TELEGRAM_BOT_TOKEN: "{{ family_visits_bot_token | default('') }}"
+      TELEGRAM_WEBHOOK_URL: "https://{{ family_visits_subdomain }}.{{ ansible_host }}{{ family_visits_webhook_path | default('/tgwebhook') }}"
+      TELEGRAM_WEBHOOK_SECRET: "{{ family_visits_webhook_secret | default('') }}"
+      TELEGRAM_ALLOWED_CHATS: "{{ family_visits_allowed_chats | default('') }}"
+      TELEGRAM_NOTIFY_CHAT: "{{ family_visits_notify_chat | default('') }}"
+      GEMINI_API_KEY: "{{ family_visits_gemini_key | default('') }}"
+      GEMINI_MODEL: "{{ family_visits_gemini_model }}"
+      DAILY_DIGEST_TIME: "{{ family_visits_daily_digest_time }}"
+      WEEKLY_DIGEST_DOW: "{{ family_visits_weekly_digest_dow }}"
+      WEEKLY_DIGEST_TIME: "{{ family_visits_weekly_digest_time }}"
+      ICS_TOKEN: "{{ family_visits_ics_token | default('') }}"
+    volumes:
+      - "{{ family_visits_dir }}:/data"
+    labels:
+      traefik.enable: "true"
+      # Base router — protected by auth (no UI today, but keeps the idiom so a
+      # future admin page is behind auth by default).
+      traefik.http.routers.family-visits.entrypoints: "websecure"
+      traefik.http.routers.family-visits.tls: "true"
+      traefik.http.routers.family-visits.tls.certresolver: "letsencrypt"
+      traefik.http.routers.family-visits.rule: "Host(`{{ family_visits_subdomain }}.{{ ansible_host }}`)"
+      traefik.http.services.family-visits.loadbalancer.server.port: "8090"
+      traefik.http.routers.family-visits.middlewares: "auth-chain@file"
+      # Telegram webhook — secret path (in SOPS), bypasses auth so Telegram can POST.
+      traefik.http.routers.family-visits-bot.entrypoints: "websecure"
+      traefik.http.routers.family-visits-bot.tls: "true"
+      traefik.http.routers.family-visits-bot.tls.certresolver: "letsencrypt"
+      traefik.http.routers.family-visits-bot.rule: "Host(`{{ family_visits_subdomain }}.{{ ansible_host }}`) && PathPrefix(`{{ family_visits_webhook_path | default('/tgwebhook') }}`)"
+      traefik.http.routers.family-visits-bot.middlewares: "no-auth-chain@file"
+      traefik.http.routers.family-visits-bot.service: "family-visits"
+      traefik.http.routers.family-visits-bot.priority: "100"
+      # ICS feed for HA's Remote Calendar — machine-to-machine, so it bypasses
+      # auth and is guarded by the ICS_TOKEN query param instead.
+      traefik.http.routers.family-visits-ics.entrypoints: "websecure"
+      traefik.http.routers.family-visits-ics.tls: "true"
+      traefik.http.routers.family-visits-ics.tls.certresolver: "letsencrypt"
+      traefik.http.routers.family-visits-ics.rule: "Host(`{{ family_visits_subdomain }}.{{ ansible_host }}`) && PathPrefix(`/calendar.ics`)"
+      traefik.http.routers.family-visits-ics.middlewares: "no-auth-chain@file"
+      traefik.http.routers.family-visits-ics.service: "family-visits"
+      traefik.http.routers.family-visits-ics.priority: "100"
