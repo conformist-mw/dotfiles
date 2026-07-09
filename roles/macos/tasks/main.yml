@@ -8,6 +8,7 @@
     - config/zed
     - config/atuin
     - config/agterm
+    - config/revdiff
 
 - name: Copy dotfiles
   copy:
@@ -32,6 +33,7 @@
     - config/agterm/ghostty.conf
     - config/agterm/keymap.conf
     - config/agterm/restore-denylist.conf
+    - config/revdiff/config
 
 - name: Link Brewfile
   file:

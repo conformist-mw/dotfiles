@@ -1,0 +1,6 @@
+; revdiff config — TUI for reviewing diffs. Run `revdiff --dump-config` to see every option
+; with its default; this file only overrides what differs from the defaults.
+
+; Let [ and ] jump across file boundaries: pressing ] on a file's last hunk moves to the next
+; file's first hunk (instead of stopping at the end of the current file).
+cross-file-hunks = true

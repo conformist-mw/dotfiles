@@ -77,6 +77,8 @@ brew "pkgconf"
 brew "poppler"
 # Search tool like grep and The Silver Searcher
 brew "ripgrep"
+# TUI for reviewing diffs, files, and documents with inline annotations
+brew "revdiff"
 # Extremely fast tool to remove dupes and other lint from your filesystem
 brew "rmlint"
 # Extremely fast Python linter, written in Rust
