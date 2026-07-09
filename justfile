@@ -49,6 +49,13 @@ keenetic-backup *args:
   KEEN_PASS="$(sops -d --extract '["keenetic_admin_password"]' group_vars/all/secrets.sops.yaml)" \
     roles/keenetic/dump-config.sh {{ args }}
 
+# apply a batch of CLI commands over SSH (companion to keenetic-backup). one command per
+# line in the file arg; use `exit` to leave sub-contexts. secret-bearing command files
+# (Wi-Fi PSK etc.) live outside the repo. e.g. `just keenetic-apply /tmp/guest.txt`.
+keenetic-apply *args:
+  KEEN_PASS="$(sops -d --extract '["keenetic_admin_password"]' group_vars/all/secrets.sops.yaml)" \
+    roles/keenetic/apply-config.sh {{ args }}
+
 # === Utilities ===
 list-tags-bee:
   uv run ansible-playbook beelink.yml --list-tags
