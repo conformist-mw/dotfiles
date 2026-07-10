@@ -45,6 +45,10 @@
 
 - name: Install Homebrew packages from Brewfile
   command: brew bundle install --global
+  environment:
+    # Install serially: parallel bundle installs race for cellar locks on
+    # shared deps (e.g. cmake/go) and spuriously fail unrelated upgrades.
+    HOMEBREW_BUNDLE_INSTALL_JOBS: "1"
   register: brew_bundle
   changed_when: brew_bundle.stdout is regex('(Installing|Upgrading|Downloading)')
   tags: install

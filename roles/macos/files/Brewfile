@@ -160,4 +160,4 @@ cask "vivaldi"
 # Multimedia player
 cask "wakatime"
 # Simple menu bar app to download YouTube movies
-cask "zed"
+cask "zed", args: { no_quarantine: true }
