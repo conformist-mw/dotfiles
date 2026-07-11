@@ -1,0 +1,13 @@
+[Unit]
+Description=Immich Postgres dump backup
+OnFailure=systemd-notify@%i.service
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=user
+WorkingDirectory={{ logs_dir }}
+ExecStart=/usr/local/bin/db_backup.sh
+StandardOutput=journal
+StandardError=journal

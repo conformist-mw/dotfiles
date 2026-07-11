@@ -1,0 +1,9 @@
+[Unit]
+Description=Immich Postgres dump timer
+
+[Timer]
+OnCalendar=2:30:0
+Persistent=true
+
+[Install]
+WantedBy=timers.target

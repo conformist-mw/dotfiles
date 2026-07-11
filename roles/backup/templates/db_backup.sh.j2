@@ -1,0 +1,32 @@
+#!/bin/bash
+# Immich Postgres backup with rotation + offsite copy.
+# Managed by Ansible (roles/backup). Runs before the photo rclone jobs.
+set -euo pipefail
+
+BACKUP_DIR="{{ db_backup_dir }}"
+KEEP={{ db_backup_keep }}
+LOG="{{ logs_dir }}/db_backup.log"
+
+mkdir -p "$BACKUP_DIR"
+# Drop any half-written dump left behind by a previously interrupted run.
+rm -f "$BACKUP_DIR"/*.sql.gz.tmp
+
+TS=$(date +%Y%m%d-%H%M%S)
+OUT="$BACKUP_DIR/immich-$TS.sql.gz"
+
+# Full cluster dump (globals/roles + immich DB). --clean --if-exists => idempotent restore.
+/usr/bin/docker exec immich_database pg_dumpall --clean --if-exists --username=immich | gzip > "$OUT.tmp"
+# Verify the gzip stream before trusting it, so we never keep a truncated dump.
+gzip -t "$OUT.tmp"
+mv "$OUT.tmp" "$OUT"
+
+# Rotation: keep the newest $KEEP dumps, delete older ones.
+ls -1t "$BACKUP_DIR"/immich-*.sql.gz | tail -n +$((KEEP + 1)) | xargs -r rm -f
+
+echo "$(date -Is) local dump OK: $OUT ($(du -h "$OUT" | cut -f1)); kept newest $KEEP" | tee -a "$LOG"
+
+{% if db_backup_offsite %}
+# Offsite: mirror the rotated local set so pruned dumps drop remotely too.
+/usr/bin/rclone copy "$BACKUP_DIR" keenetic:/backup/db --delete-during --log-file="$LOG" --log-level=INFO
+/usr/bin/rclone copy "$BACKUP_DIR" backblaze:{{ b2_db_bucket }} --delete-during --log-file="$LOG" --log-level=INFO
+{% endif %}

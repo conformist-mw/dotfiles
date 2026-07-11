@@ -1,0 +1,4 @@
+db_backup_dir: "{{ data_dir }}/db-backup"
+db_backup_keep: 10
+db_backup_offsite: true
+b2_db_bucket: "xxxxx-db"

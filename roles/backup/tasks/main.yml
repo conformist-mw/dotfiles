@@ -22,6 +22,14 @@
     group: "{{ ansible_user }}"
     mode: "0600"
 
+- name: Ensure Immich DB backup dir exists
+  ansible.builtin.file:
+    dest: "{{ db_backup_dir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0750"
+
 - name: Copy backup scripts
   ansible.builtin.template:
     src: "{{ item }}_backup.sh.j2"
@@ -32,6 +40,7 @@
   loop:
     - "backblaze"
     - "keenetic"
+    - "db"
   become: true
 
 - name: Copy systemd service
@@ -41,6 +50,7 @@
   loop:
     - "backblaze"
     - "keenetic"
+    - "db"
   become: true
 
 - name: Copy systemd timer
@@ -50,6 +60,7 @@
   loop:
     - "backblaze"
     - "keenetic"
+    - "db"
   become: true
 
 - name: enable backup timer
@@ -61,6 +72,7 @@
   loop:
     - "backblaze"
     - "keenetic"
+    - "db"
   become: true
 
 # - name: Install borg
