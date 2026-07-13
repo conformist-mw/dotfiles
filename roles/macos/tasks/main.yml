@@ -43,6 +43,15 @@
     force: true
   tags: install
 
+- name: Update Homebrew (refresh taps)
+  # brew bundle's implicit auto-update is throttled to 24h, so a deploy within
+  # that window sees a stale git-clone tap (e.g. umputun/apps) and misses new
+  # cask versions. Force a refresh so bundle always upgrades to the latest.
+  command: brew update
+  register: brew_update
+  changed_when: "'Already up-to-date' not in brew_update.stdout"
+  tags: install
+
 - name: Install Homebrew packages from Brewfile
   command: brew bundle install --global
   environment:
