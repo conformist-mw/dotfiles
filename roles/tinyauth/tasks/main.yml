@@ -43,6 +43,7 @@
       TINYAUTH_APPS_GLANCES_USERS_ALLOW: "{{ tinyauth_group_admin }}"
       TINYAUTH_APPS_PIHOLE_USERS_ALLOW: "{{ tinyauth_group_admin }}"
       TINYAUTH_APPS_MOVIES_USERS_ALLOW: "{{ tinyauth_group_admin }}"
+      TINYAUTH_APPS_CROWDSEC_USERS_ALLOW: "{{ tinyauth_group_admin }}"
     labels:
       traefik.enable: "true"
       traefik.http.routers.tinyauth.entrypoints: "websecure"
