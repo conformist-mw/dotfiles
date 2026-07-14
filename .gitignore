@@ -14,7 +14,11 @@ roles/keenetic/backups/
 *_wg.conf
 *.wgconf
 
-# Scratch/planning .md docs — plans and discussion notes that aren't repo-ready.
-# Kept locally to describe the system later; don't commit these as-is.
-NETWORK.md
-auth-migration-plan.md
+# Markdown is scratch/planning by default in this repo (plans, discussion notes that
+# aren't repo-ready) — ignore all .md and whitelist only the real docs below.
+# `!README.md` (no slash) un-ignores every README.md at any depth: root + each role.
+# Scratch docs (NETWORK.md, MIGRATION.md, *-plan.md, k3s-learning.md, …) stay ignored,
+# kept locally to formalize later.
+*.md
+!README.md
+!docs/SECRETS.md
