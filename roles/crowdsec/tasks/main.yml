@@ -84,6 +84,17 @@
   become: true
   notify: restart crowdsec
 
+# Home Assistant LL-HLS camera streaming (rotating token paths + benign 400s)
+# otherwise self-bans the viewer's IP via http-probing / http-crawl-non_statics.
+# See the template header for the full mechanism.
+- name: Whitelist — HA LL-HLS camera streaming
+  ansible.builtin.template:
+    src: ha-hls-whitelist.yaml.j2
+    dest: /etc/crowdsec/parsers/s02-enrich/ha-hls-whitelist.yaml
+    mode: "0644"
+  become: true
+  notify: restart crowdsec
+
 # Progressive ban durations (8h → 16h → 24h …) instead of the stock flat 4h.
 # Cuts repeat alerts from persistent scanners so we stay under the CrowdSec
 # Console Community alert quota (500/mo); network-level protection is unchanged.

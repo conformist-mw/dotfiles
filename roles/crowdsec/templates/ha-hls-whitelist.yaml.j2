@@ -1,0 +1,18 @@
+{# Parser-level whitelist (s02-enrich) that drops Home Assistant LL-HLS camera
+   traffic before it reaches the scenarios. A wall tablet / browser watching a
+   camera polls /api/hls/<token>/playlist.m3u8?_HLS_msn=..&_HLS_part=.. ; the
+   token rotates every stream session (so each request looks like a *new* URL)
+   and expired parts return 400. That trips two scenarios at once:
+     - crowdsecurity/http-probing         (many unique 4xx URIs from one IP)
+     - crowdsecurity/http-crawl-non_statics (.m3u8 is classed as non-static)
+   and self-bans the viewer's public IP at the firewall bouncer.
+
+   Scoped to the homeassistant@file router AND the /api/hls/ prefix so probing
+   protection stays fully active on every other vhost and HA path.
+   Field names verified with `cscli explain --type traefik`. #}
+name: local/ha-hls-whitelist
+description: "Whitelist HA LL-HLS camera streaming (benign 400s on rotating token paths)"
+whitelist:
+  reason: "Home Assistant HLS camera stream — not http-probing"
+  expression:
+    - evt.Meta.traefik_router_name == 'homeassistant@file' && evt.Parsed.request startsWith '/api/hls/'
