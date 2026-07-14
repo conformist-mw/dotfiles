@@ -59,6 +59,8 @@ brew "iperf3"
 brew "ipython"
 # Lightweight and flexible command-line JSON processor
 brew "jq"
+# Feature-rich interactive Jira CLI
+brew "jira-cli"
 # Handy way to save and run project-specific commands
 brew "just"
 # Postgres C API library

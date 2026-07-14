@@ -49,6 +49,14 @@ export GPG_TTY=$(tty)
 export NX_NO_CLOUD=true
 export NX_INTERACTIVE=false
 
+# jira-cli: pull the API token from the macOS Keychain only for the duration of
+# the call, so it never sits in every shell's env. Store/update the token with:
+#   security add-generic-password -a "$USER" -s jira-cli-token -w [-U]
+jira() {
+  JIRA_API_TOKEN="$(security find-generic-password -s jira-cli-token -w 2>/dev/null)" \
+    command jira "$@"
+}
+
 eval "$(starship init zsh)"
 eval "$(zoxide init zsh)"
 eval "$(atuin init zsh)"
