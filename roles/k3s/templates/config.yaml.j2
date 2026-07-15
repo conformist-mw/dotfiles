@@ -1,0 +1,10 @@
+# Managed by Ansible (roles/k3s). k3s reads this on startup.
+# https://docs.k3s.io/installation/configuration#configuration-file
+disable:
+{% for item in k3s_disable %}
+  - {{ item }}
+{% endfor %}
+tls-san:
+{% for san in k3s_tls_san %}
+  - {{ san }}
+{% endfor %}

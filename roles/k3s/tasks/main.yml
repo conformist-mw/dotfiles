@@ -1,0 +1,87 @@
+---
+# --- install k3s (server, single node) ------------------------------------
+
+- name: Ensure k3s config dir exists
+  ansible.builtin.file:
+    path: /etc/rancher/k3s
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Write k3s config.yaml (declarative flags)
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: /etc/rancher/k3s/config.yaml
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Restart k3s
+
+- name: Check installed k3s version
+  ansible.builtin.command: k3s --version
+  register: k3s_installed
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Download k3s install script
+  ansible.builtin.get_url:
+    url: https://get.k3s.io
+    dest: /usr/local/bin/k3s-install.sh
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+  when: k3s_version not in k3s_installed.stdout
+
+- name: Install/upgrade k3s to the pinned version
+  ansible.builtin.command: /usr/local/bin/k3s-install.sh
+  environment:
+    INSTALL_K3S_VERSION: "{{ k3s_version }}"
+    # config.yaml above owns the flags; installer just lays down the pinned binary + unit.
+  become: true
+  when: k3s_version not in k3s_installed.stdout
+  register: k3s_install
+  changed_when: k3s_install.rc == 0
+
+- name: Ensure k3s service is started and enabled
+  ansible.builtin.service:
+    name: k3s
+    state: started
+    enabled: true
+  become: true
+
+# --- fetch kubeconfig to the control machine (the Mac) ---------------------
+# tagged so you can re-pull the kubeconfig alone: `just deploy-bee-tag kubeconfig`
+
+- name: Read k3s.yaml from the node
+  ansible.builtin.slurp:
+    src: /etc/rancher/k3s/k3s.yaml
+  become: true
+  register: k3s_kubeconfig
+  tags: [kubeconfig]
+
+- name: Ensure local ~/.kube exists
+  ansible.builtin.file:
+    path: "{{ k3s_local_kubeconfig | dirname }}"
+    state: directory
+    mode: "0700"
+  delegate_to: localhost
+  become: false
+  tags: [kubeconfig]
+
+- name: Write rewritten kubeconfig locally (server + context renamed)
+  ansible.builtin.copy:
+    # k3s writes server https://127.0.0.1:6443 and names everything "default".
+    content: >-
+      {{ k3s_kubeconfig.content | b64decode
+         | replace('https://127.0.0.1:6443', 'https://' ~ k3s_api_host ~ ':' ~ (k3s_api_port | string))
+         | replace('default', k3s_context_name) }}
+    dest: "{{ k3s_local_kubeconfig }}"
+    mode: "0600"
+  delegate_to: localhost
+  become: false
+  tags: [kubeconfig]

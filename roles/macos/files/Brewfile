@@ -63,6 +63,8 @@ brew "jq"
 brew "jira-cli"
 # Handy way to save and run project-specific commands
 brew "just"
+# Kubernetes CLI (kubectl) — talks to the k3s cluster on bee
+brew "kubernetes-cli"
 # Postgres C API library
 brew "libpq"
 # Utility for directing compilation

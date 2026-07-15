@@ -13,6 +13,7 @@
     # from the host manually. See MIGRATION.md.
 
     # Infrastructure
+    - { role: k3s, tags: [infra, k3s] }
     - { role: traefik, tags: [infra, traefik] }
     - { role: cockpit, tags: [infra, cockpit] }
 

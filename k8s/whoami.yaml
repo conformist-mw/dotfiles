@@ -1,0 +1,50 @@
+# Pilot #1 — throwaway. Teaches the 3 core objects on zero real data.
+# Apply:    KUBECONFIG=~/.kube/bee.yaml kubectl apply -f k8s/whoami.yaml
+# Reach:    kubectl port-forward svc/whoami 8080:80   # then curl localhost:8080
+# Tear down: kubectl delete -f k8s/whoami.yaml
+#
+# whoami just echoes the request + which pod served it — handy for seeing the
+# Service spread traffic across replicas.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whoami
+  labels:
+    app: whoami          # label ON the Deployment object itself
+spec:
+  replicas: 2            # 2 so port-forward + curl shows different pod hostnames
+  selector:
+    matchLabels:
+      app: whoami        # (1) how the Deployment finds ITS pods — by label, not name
+  template:              # the pod blueprint (≈ ECS task definition)
+    metadata:
+      labels:
+        app: whoami      # (2) label stamped on every pod; MUST match the selector above
+    spec:
+      containers:
+        - name: whoami
+          image: traefik/whoami:v1.10.3   # pinned, never :latest (see MIGRATION.md)
+          ports:
+            - containerPort: 80
+          resources:
+            requests: { cpu: "5m", memory: "16Mi" }
+            limits: { memory: "32Mi" }
+          readinessProbe:                  # no traffic until this passes
+            httpGet: { path: /, port: 80 }
+            initialDelaySeconds: 2
+          livenessProbe:                   # restart the container if this starts failing
+            httpGet: { path: /, port: 80 }
+            initialDelaySeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami
+spec:
+  type: ClusterIP        # in-cluster only; we reach it via `kubectl port-forward`
+  selector:
+    app: whoami          # (3) the Service load-balances over pods with this label
+  ports:
+    - port: 80           # port the Service listens on (cluster-internal)
+      targetPort: 80     # container port it forwards to

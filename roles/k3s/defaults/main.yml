@@ -1,0 +1,28 @@
+---
+# Pinned k3s version. Bump = edit here + commit (never track a channel/`latest`).
+# Confirm the exact tag against https://github.com/k3s-io/k3s/releases before applying.
+k3s_version: "v1.36.2+k3s1"
+
+# Flags passed declaratively via /etc/rancher/k3s/config.yaml (not INSTALL_K3S_EXEC).
+# traefik disabled so k3s doesn't grab 80/443 while the Docker Traefik is still running.
+# servicelb (klipper) is left enabled for now.
+k3s_disable:
+  - traefik
+
+# Where the fetched+rewritten kubeconfig lands on the control machine (the Mac).
+# NOT committed — it carries the cluster admin credential. Keep it out of the repo.
+k3s_local_kubeconfig: "{{ lookup('env', 'HOME') }}/.kube/bee.yaml"
+
+# Host:port the rewritten kubeconfig should point kubectl at (k3s writes 127.0.0.1).
+k3s_api_host: "{{ ansible_host }}"
+k3s_api_port: 6443
+
+# Extra names baked into the API-server serving cert (SANs). k3s only puts the
+# node hostname (`bee`), `localhost` and the cluster DNS names in by default — NOT
+# `bee.home` — so kubectl connecting by `bee.home` would fail cert verification.
+# Changing this restarts k3s, which regenerates the serving cert.
+k3s_tls_san:
+  - "{{ k3s_api_host }}"
+
+# Context/cluster/user name in the rewritten kubeconfig (k3s calls everything "default").
+k3s_context_name: "bee"
