@@ -48,3 +48,26 @@ spec:
   ports:
     - port: 80           # port the Service listens on (cluster-internal)
       targetPort: 80     # container port it forwards to
+---
+# Ingress: routes Host: whoami.bee.home -> the whoami Service. Needs the Traefik
+# controller from k8s/ingress/traefik.yaml running (an Ingress does nothing on its own).
+# Validate from the NODE (hostPort 8080 is host-local, not reachable through Docker's
+# 127.0.0.1): ssh bee, then
+#   curl -H 'Host: whoami.bee.home' http://127.0.0.1:8080
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: whoami
+spec:
+  ingressClassName: traefik    # ← matches the IngressClass; tells Traefik "this is mine"
+  rules:
+    - host: whoami.bee.home
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80

@@ -1,0 +1,125 @@
+# k3s ingress controller — Traefik deployed as raw manifests (NOT the k3s addon).
+# Migration strategy A: the Docker Traefik keeps :80 as the LAN front door; THIS
+# Traefik binds the node's :8080 (hostPort). Per migrated hostname, the Docker Traefik
+# gets a file-provider route `X.bee.home -> http://<bee-ip>:8080`, and this controller
+# routes by Host header into the right k8s Service via an Ingress object.
+#
+# Apply:    KUBECONFIG=~/.kube/bee.yaml kubectl apply -f k8s/ingress/traefik.yaml
+# Dashboard: kubectl -n ingress port-forward deploy/traefik 9000:9000  # http://localhost:9000/dashboard/
+# LAN-only: no TLS / no Let's Encrypt here (public traffic goes via hetzner).
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ingress
+---
+# Identity the controller pod runs as (≈ ECS task role).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: traefik
+  namespace: ingress
+---
+# What that identity is ALLOWED to do, cluster-wide: watch Ingresses/Services/Endpoints
+# so it knows where to route. This is the RBAC half of the ECS "task role" concept.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: traefik-ingress-controller
+rules:
+  - apiGroups: [""]
+    resources: [services, secrets, nodes]
+    verbs: [get, list, watch]
+  - apiGroups: [discovery.k8s.io]
+    resources: [endpointslices]
+    verbs: [get, list, watch]
+  - apiGroups: [networking.k8s.io]
+    resources: [ingresses, ingressclasses]
+    verbs: [get, list, watch]
+  - apiGroups: [networking.k8s.io]
+    resources: [ingresses/status]
+    verbs: [update]
+---
+# Bind the role to the service account (grant the permissions to that identity).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: traefik-ingress-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: traefik-ingress-controller
+subjects:
+  - kind: ServiceAccount
+    name: traefik
+    namespace: ingress
+---
+# Ingress objects reference this class (`ingressClassName: traefik`) so Traefik knows
+# they're for it. Kept explicit (not default) so the wiring is visible on each Ingress.
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: traefik
+spec:
+  controller: traefik.io/ingress-controller
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traefik
+  namespace: ingress
+  labels:
+    app: traefik
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traefik
+  template:
+    metadata:
+      labels:
+        app: traefik
+    spec:
+      serviceAccountName: traefik      # run as the identity defined above
+      containers:
+        - name: traefik
+          image: traefik:v3.7.8        # pinned; never :latest (see MIGRATION.md)
+          args:
+            - --entrypoints.web.address=:8000       # public routing entrypoint
+            - --entrypoints.traefik.address=:9000   # dashboard/api/ping (internal only)
+            - --api.dashboard=true
+            - --api.insecure=true                   # dashboard on the :9000 entrypoint; not host-exposed
+            - --ping=true                           # /ping healthcheck on :9000
+            - --providers.kubernetesingress=true
+            - --providers.kubernetesingress.ingressclass=traefik
+            - --log.level=INFO
+          ports:
+            - name: web
+              containerPort: 8000
+              hostPort: 8080          # bind the NODE's :8080 → Docker Traefik targets this
+            - name: traefik
+              containerPort: 9000     # no hostPort: reach via port-forward only
+          readinessProbe:
+            httpGet: { path: /ping, port: 9000 }
+          livenessProbe:
+            httpGet: { path: /ping, port: 9000 }
+          resources:
+            requests: { cpu: "20m", memory: "64Mi" }
+            limits: { memory: "128Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik
+  namespace: ingress
+spec:
+  type: ClusterIP        # in-cluster + host reach it; the node :8080 comes from hostPort above
+  selector:
+    app: traefik
+  ports:
+    - name: web
+      port: 80
+      targetPort: 8000
+    - name: dashboard
+      port: 9000
+      targetPort: 9000
