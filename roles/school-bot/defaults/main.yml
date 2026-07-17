@@ -1,0 +1,3 @@
+---
+school_bot_image: "ghcr.io/blikzes-bit/telegram-school-bot:latest"
+school_bot_dir: "{{ data_dir }}/school-bot"
