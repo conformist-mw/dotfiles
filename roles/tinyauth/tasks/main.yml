@@ -37,13 +37,15 @@
       TINYAUTH_APPS_LESSONS_USERS_ALLOW: "{{ tinyauth_group_parents }}"
       TINYAUTH_APPS_METERS_USERS_ALLOW: "{{ tinyauth_group_parents }}"
       TINYAUTH_APPS_RSSTT_USERS_ALLOW: "{{ tinyauth_group_admin }}"
-      TINYAUTH_APPS_DASH_USERS_ALLOW: "{{ tinyauth_group_admin }}"
-      TINYAUTH_APPS_DOZZLE_USERS_ALLOW: "{{ tinyauth_group_admin }}"
-      TINYAUTH_APPS_TRAEFIK_USERS_ALLOW: "{{ tinyauth_group_admin }}"
-      TINYAUTH_APPS_GLANCES_USERS_ALLOW: "{{ tinyauth_group_admin }}"
+      # egor (school-bot owner) gets read-only observability + his dash. Kept in a
+      # dedicated group so he does NOT inherit pihole/movies/rsstt admin access.
+      TINYAUTH_APPS_DASH_USERS_ALLOW: "{{ tinyauth_group_admin }},{{ tinyauth_group_egor }}"
+      TINYAUTH_APPS_DOZZLE_USERS_ALLOW: "{{ tinyauth_group_admin }},{{ tinyauth_group_egor }}"
+      TINYAUTH_APPS_TRAEFIK_USERS_ALLOW: "{{ tinyauth_group_admin }},{{ tinyauth_group_egor }}"
+      TINYAUTH_APPS_GLANCES_USERS_ALLOW: "{{ tinyauth_group_admin }},{{ tinyauth_group_egor }}"
       TINYAUTH_APPS_PIHOLE_USERS_ALLOW: "{{ tinyauth_group_admin }}"
       TINYAUTH_APPS_MOVIES_USERS_ALLOW: "{{ tinyauth_group_admin }}"
-      TINYAUTH_APPS_CROWDSEC_USERS_ALLOW: "{{ tinyauth_group_admin }}"
+      TINYAUTH_APPS_CROWDSEC_USERS_ALLOW: "{{ tinyauth_group_admin }},{{ tinyauth_group_egor }}"
     labels:
       traefik.enable: "true"
       traefik.http.routers.tinyauth.entrypoints: "websecure"
