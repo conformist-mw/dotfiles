@@ -1,0 +1,31 @@
+---
+# Long-polling Telegram bot (aiogram) — no Traefik/webhook/subdomain needed.
+# The bot reaches Telegram via outbound connections only.
+#
+# Secret `school_bot_token` is NOT stored in this role. The age-key holder must
+# add it to host_vars/hetzner/secrets.sops.yaml (e.g. `just secrets-hetzner`):
+#     school_bot_token: "123456:ABC-..."
+# It is auto-decrypted by the community.sops vars plugin at deploy time.
+- name: Ensure school-bot data directory
+  ansible.builtin.file:
+    path: "{{ school_bot_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: School-bot container
+  community.docker.docker_container:
+    image: "{{ school_bot_image }}"
+    pull: true
+    name: school-bot
+    restart: true
+    restart_policy: "unless-stopped"
+    user: "{{ puid }}:{{ pgid }}"
+    networks:
+      - name: "{{ docker_network }}"
+    env:
+      TZ: "{{ tz }}"
+      TIMEZONE: "{{ tz }}"
+      BOT_TOKEN: "{{ school_bot_token | default('') }}"
+      DATABASE_URL: "sqlite+aiosqlite:////data/school_bot.db"
+    volumes:
+      - "{{ school_bot_dir }}:/data"
