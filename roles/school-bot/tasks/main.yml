@@ -10,7 +10,10 @@
   ansible.builtin.file:
     path: "{{ school_bot_dir }}"
     state: directory
+    owner: "{{ school_bot_uid }}"
+    group: "{{ school_bot_gid }}"
     mode: "0755"
+  become: true
 
 - name: School-bot container
   community.docker.docker_container:
@@ -19,7 +22,7 @@
     name: school-bot
     restart: true
     restart_policy: "unless-stopped"
-    user: "{{ puid }}:{{ pgid }}"
+    user: "{{ school_bot_uid }}:{{ school_bot_gid }}"
     networks:
       - name: "{{ docker_network }}"
     env:

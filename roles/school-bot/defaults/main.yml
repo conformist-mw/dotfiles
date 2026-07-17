@@ -1,3 +1,8 @@
 ---
 school_bot_image: "ghcr.io/blikzes-bit/telegram-school-bot:latest"
 school_bot_dir: "{{ data_dir }}/school-bot"
+# Owner of the data dir AND the uid the container runs as — MUST match so the
+# bot can write its SQLite DB. Defaults to the deploy user (puid/pgid); override
+# in host_vars to hand ownership to a dedicated login (see host_vars/hetzner).
+school_bot_uid: "{{ puid }}"
+school_bot_gid: "{{ pgid }}"

@@ -1,0 +1,17 @@
+---
+# Human logins on the VPS beyond the ansible deploy user (vps_user).
+# Created by the `vps` role. SSH *public* keys are not secret (GitHub serves
+# them at github.com/<user>.keys), so they live here in plaintext, not SOPS.
+
+# egor's own data area, kept OUT of vps_user's data_dir. Apps deployed for egor
+# lay out their subdirs under here (school-bot today, room for more later).
+egor_data_dir: "/home/egor/data"
+
+vps_users:
+  - name: egor
+    uid: 1010
+    gid: 1010
+    groups: [docker]   # lets him `docker logs/exec/stop` his own bot over SSH
+    shell: /bin/bash
+    ssh_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG1VUoSlBSKHPsxayEQOk1a5sgUal9/ecHylyMib6wQK"
+    data_dir: "{{ egor_data_dir }}"   # created + chowned to him by the vps role

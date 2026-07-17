@@ -1,0 +1,7 @@
+---
+# Run the school-bot under egor's login: data under his own dir (see users.yml),
+# container uid/gid = egor so it can write the bind-mounted SQLite DB.
+# uid/gid MUST match the egor entry in vps_users.
+school_bot_dir: "{{ egor_data_dir }}/school-bot"
+school_bot_uid: "1010"
+school_bot_gid: "1010"

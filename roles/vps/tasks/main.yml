@@ -13,6 +13,55 @@
     path: "{{ server_dir }}"
     state: directory
 
+# Extra human logins (e.g. egor for the school-bot). Defined in
+# host_vars/hetzner/users.yml. Deploy still runs as vps_user; these users get
+# SSH access + docker group so they can manage their own containers.
+- name: Create human user groups
+  ansible.builtin.group:
+    name: "{{ item.name }}"
+    gid: "{{ item.gid }}"
+    state: present
+  loop: "{{ vps_users | default([]) }}"
+  loop_control:
+    label: "{{ item.name }}"
+  become: true
+
+- name: Create human users
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    uid: "{{ item.uid }}"
+    group: "{{ item.name }}"
+    groups: "{{ item.groups | default([]) }}"
+    append: true
+    shell: "{{ item.shell | default('/bin/bash') }}"
+    create_home: true
+  loop: "{{ vps_users | default([]) }}"
+  loop_control:
+    label: "{{ item.name }}"
+  become: true
+
+- name: Install authorized SSH keys for human users
+  ansible.posix.authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ item.ssh_key }}"
+    state: present
+  loop: "{{ vps_users | default([]) }}"
+  loop_control:
+    label: "{{ item.name }}"
+  become: true
+
+- name: Ensure per-user data dirs (apps lay out subdirs under these)
+  ansible.builtin.file:
+    path: "{{ item.data_dir }}"
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+    mode: "0755"
+  loop: "{{ vps_users | default([]) | selectattr('data_dir', 'defined') | list }}"
+  loop_control:
+    label: "{{ item.name }}"
+  become: true
+
 # wg interface sysctls (route_localnet) are owned by the wireguard role now.
 
 - name: Install crowdsec
