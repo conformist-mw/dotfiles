@@ -9,28 +9,9 @@
     state: directory
     mode: "0755"
 
-- name: Check if prod DB exists
-  ansible.builtin.stat:
-    path: "{{ lessons_dir }}/lessons.db"
-  register: lessons_db
-
-- name: Seed prod DB from bundled Excel (first deploy only)
-  when: not lessons_db.stat.exists
-  community.docker.docker_container:
-    name: lessons-import
-    image: "{{ lessons_image }}"
-    pull: true
-    detach: false
-    cleanup: true
-    user: "{{ puid }}:{{ pgid }}"
-    volumes:
-      - "{{ lessons_dir }}:/data"
-    entrypoint: /app/import
-    command:
-      - "-src"
-      - "/app/seed.xlsx"
-      - "-db"
-      - "/data/lessons.db"
+# No automatic seeding: the image no longer bundles the Excel file (it holds
+# personal data). A fresh install starts empty; see DEPLOY.md in the lessons
+# repo for the one-off manual import command.
 
 - name: Lessons container
   community.docker.docker_container:
