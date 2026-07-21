@@ -1,0 +1,41 @@
+# {{ ansible_managed }} — roles/gatus. Do not edit on the host; edit the role.
+# Alerts go to Telegram (same bot/chat as tg-sendmail: telegram_alerts_* in sops).
+alerting:
+  telegram:
+    token: "{{ telegram_alerts_bot_token }}"
+    id: "{{ telegram_alerts_chat_id }}"
+    default-alert:
+      send-on-resolved: true
+      failure-threshold: 3
+      success-threshold: 2
+
+{% if gatus_http_endpoints | length > 0 %}
+endpoints:
+{% for ep in gatus_http_endpoints %}
+  - name: {{ ep.name }}
+    group: http
+    url: "{{ ep.url }}"
+    interval: {{ ep.interval | default('2m') }}
+    conditions:
+{% for c in ep.conditions %}
+      - "{{ c }}"
+{% endfor %}
+    alerts:
+      - type: telegram
+{% endfor %}
+{% endif %}
+
+# Push-based checks for containers that can't be polled over HTTP. State is fed
+# by /usr/local/bin/gatus-container-check.sh (systemd timer). heartbeat.interval
+# makes Gatus mark the endpoint DOWN if no push arrives (pusher/host died).
+external-endpoints:
+{% for c in gatus_watched_containers %}
+  - name: {{ c }}
+    group: containers
+    token: "{{ gatus_external_token }}"
+    heartbeat:
+      interval: {{ gatus_heartbeat_interval }}
+    alerts:
+      - type: telegram
+        description: "container {{ c }} is down / crash-looping"
+{% endfor %}

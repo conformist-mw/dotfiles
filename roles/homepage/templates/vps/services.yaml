@@ -1,11 +1,4 @@
 - applications:
-    - whoami:
-        href: https://whoami.{{ ansible_host }}
-        description: "Whoami to debug"
-        icon: "mdi-head-question"
-        container: "whoami"
-        server: "local-docker"
-
     - Traefik:
         href: https://traefik.{{ ansible_host }}
         description: "Traefik dashboard"
@@ -71,6 +64,18 @@
         description: "Security engine dashboard"
         icon: "crowdsec"
         container: "crowdsec-web-ui"
+        server: "local-docker"
+    - Gatus:
+        href: https://gatus.{{ ansible_host }}
+        description: "Uptime & alerts"
+        icon: "gatus"
+        container: "gatus"
+        server: "local-docker"
+    - Beszel:
+        href: https://beszel.{{ ansible_host }}
+        description: "Host & container metrics"
+        icon: "beszel"
+        container: "beszel"
         server: "local-docker"
 
 - proxy:

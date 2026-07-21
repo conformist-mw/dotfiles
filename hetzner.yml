@@ -37,3 +37,7 @@
     - { role: home-meters, tags: [apps, home-meters, "home_meters"] }
     - { role: family-visits, tags: [apps, family-visits, "family_visits"] }
     - { role: school-bot, tags: [apps, school-bot, "school_bot"] }
+
+    # Monitoring
+    - { role: beszel, tags: [apps, monitoring, beszel] }
+    - { role: gatus, tags: [apps, monitoring, gatus] }

@@ -1,0 +1,56 @@
+---
+app_name: "gatus"
+app_subdomain: "gatus"
+app_port: 8080
+app_data_dir: "{{ data_dir }}/gatus"
+
+# Host-only published port so the on-host pusher can reach Gatus's push API
+# WITHOUT going through traefik+tinyauth (bypasses the edge auth-chain).
+gatus_push_port: 8095
+
+# The hetzner inventory rule label only references app_name; override it so the
+# hostname uses app_subdomain (gatus.<host>). Same trick as crowdsec-web-ui.
+gatus_extra_labels:
+  - key: "traefik.http.routers.{{ app_name }}.rule"
+    value: "Host(`{{ app_subdomain }}.{{ ansible_host }}`)"
+
+# How often the on-host pusher reports container state to Gatus.
+gatus_push_interval_sec: 120
+# Gatus marks an external endpoint DOWN if no push arrives within this window
+# (min 10s). Must be comfortably larger than gatus_push_interval_sec so a single
+# slow run doesn't false-alarm. Catches the pusher/host itself dying.
+gatus_heartbeat_interval: "5m"
+
+# Long-running containers that should always be up. Each becomes a Gatus
+# external-endpoint (group "containers") AND a line in the on-host pusher.
+# Single source of truth — edit here to add/remove watched containers.
+# Portless containers (e.g. school-bot) can only be watched this way; HTTP
+# services can additionally go in gatus_http_endpoints below.
+gatus_watched_containers:
+  - school-bot
+  - rsstt
+  - ceilings-app        # role: commeilfaut
+  - ceilings-scheduler  # role: commeilfaut
+  - segments
+  - lessons
+  - home-meters
+  - family-visits
+  - homepage
+  - dozzle
+  - crowdsec-web-ui
+  - tinyauth
+  - traefik
+  - pihole
+# NB: crowdsec runs as a native systemd service on the host (not a container),
+# so it isn't watched here — its LAPI is reached via DNAT (see crowdsec-web-ui).
+
+# HTTP(S) endpoints Gatus polls directly. Kept minimal on purpose — most apps
+# sit behind tinyauth and would return the auth page, not the app itself, so
+# prefer the container-state check above for those. Extend as needed.
+gatus_http_endpoints:
+  - name: edge-tls
+    url: "https://{{ ansible_host }}"
+    interval: "5m"
+    conditions:
+      - "[CONNECTED] == true"
+      - "[CERTIFICATE_EXPIRATION] > 168h"

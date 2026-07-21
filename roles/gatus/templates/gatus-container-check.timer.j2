@@ -1,0 +1,11 @@
+# {{ ansible_managed }} — roles/gatus.
+[Unit]
+Description=Run the Gatus container-state pusher periodically
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec={{ gatus_push_interval_sec }}s
+AccuracySec=15s
+
+[Install]
+WantedBy=timers.target

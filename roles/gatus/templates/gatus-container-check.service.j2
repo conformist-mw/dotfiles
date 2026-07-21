@@ -1,0 +1,9 @@
+# {{ ansible_managed }} — roles/gatus.
+[Unit]
+Description=Push container liveness to Gatus (external-endpoints)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/gatus-container-check.sh

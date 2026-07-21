@@ -1,0 +1,104 @@
+---
+# Gatus: status page + alerting. HTTP/TCP endpoints are polled directly; portless
+# containers (school-bot et al.) can't be polled, so an on-host systemd timer
+# pushes their `docker inspect` state to Gatus external-endpoints. Alerts go to
+# Telegram via the same bot/chat as tg-sendmail (telegram_alerts_* from sops).
+- name: Ensure Gatus data + config directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ app_data_dir }}"
+    - "{{ app_data_dir }}/config"
+
+# --- External-endpoint push token (generated once, kept out of the repo) ------
+- name: Check for an existing external-endpoint token
+  ansible.builtin.stat:
+    path: "{{ app_data_dir }}/external_token"
+  register: gatus_token_file
+
+- name: Provision the external-endpoint token
+  when: not gatus_token_file.stat.exists
+  block:
+    - name: Generate a token
+      ansible.builtin.command: openssl rand -hex 24
+      register: gatus_token_gen
+      changed_when: true
+
+    - name: Persist the token
+      ansible.builtin.copy:
+        dest: "{{ app_data_dir }}/external_token"
+        content: "{{ gatus_token_gen.stdout }}"
+        mode: "0600"
+
+- name: Read the external-endpoint token
+  ansible.builtin.slurp:
+    src: "{{ app_data_dir }}/external_token"
+  register: gatus_token_slurp
+
+- name: Set the token fact (shared by Gatus config + the pusher)
+  ansible.builtin.set_fact:
+    gatus_external_token: "{{ gatus_token_slurp.content | b64decode | trim }}"
+
+# --- Gatus config + container -------------------------------------------------
+# Gatus watches config.yaml and hot-reloads on change, so no restart handler.
+- name: Render Gatus config
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: "{{ app_data_dir }}/config/config.yaml"
+    mode: "0640"
+
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+  vars:
+    additional_labels: "{{ gatus_extra_labels }}"
+
+- name: Gatus container
+  community.docker.docker_container:
+    name: "{{ app_name }}"
+    image: ghcr.io/twin/gatus:latest
+    pull: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    # 127.0.0.1 only: the on-host pusher posts here, bypassing traefik+tinyauth.
+    # Traefik still routes the public host via the docker network (app_port).
+    published_ports:
+      - "127.0.0.1:{{ gatus_push_port }}:8080"
+    volumes:
+      - "{{ app_data_dir }}/config:/config"
+    labels: "{{ labels }}"
+
+# --- On-host pusher: reports container liveness to Gatus external-endpoints ----
+- name: Install the container-state pusher script
+  ansible.builtin.template:
+    src: gatus-container-check.sh.j2
+    dest: /usr/local/bin/gatus-container-check.sh
+    mode: "0755"
+  become: true
+
+- name: Install the pusher systemd service
+  ansible.builtin.template:
+    src: gatus-container-check.service.j2
+    dest: /etc/systemd/system/gatus-container-check.service
+    mode: "0644"
+  become: true
+  notify: Reload systemd
+
+- name: Install the pusher systemd timer
+  ansible.builtin.template:
+    src: gatus-container-check.timer.j2
+    dest: /etc/systemd/system/gatus-container-check.timer
+    mode: "0644"
+  become: true
+  notify: Reload systemd
+
+- name: Enable + start the pusher timer
+  ansible.builtin.systemd:
+    name: gatus-container-check.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true

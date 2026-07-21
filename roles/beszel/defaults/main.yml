@@ -1,0 +1,21 @@
+---
+app_name: "beszel"
+app_subdomain: "beszel"
+app_port: 8090
+app_data_dir: "{{ data_dir }}/beszel"
+
+# The hetzner inventory rule label only references app_name; override it so the
+# hostname uses app_subdomain (beszel.<host>). Same trick as crowdsec-web-ui.
+beszel_extra_labels:
+  - key: "traefik.http.routers.{{ app_name }}.rule"
+    value: "Host(`{{ app_subdomain }}.{{ ansible_host }}`)"
+
+# Agent registration is two-phase (the hub mints these on first-run):
+#   1. Deploy this role — the hub comes up, the agent is skipped.
+#   2. Open https://beszel.<host> (behind tinyauth), create the admin user.
+#   3. Settings → Tokens: create a universal token  -> beszel_agent_token
+#      "Add System" dialog shows the hub public KEY  -> beszel_agent_key
+#   4. Add both to host_vars/hetzner/secrets.sops.yaml and re-run — agent starts.
+# Kept empty here so the agent task is skipped until they're provided.
+beszel_agent_key: ""
+beszel_agent_token: ""
