@@ -1,6 +1,6 @@
 [Unit]
 Description=Home Assistant Postgres DB backup
-OnFailure=systemd-notify@%i.service
+OnFailure=systemd-notify@%n.service
 After=docker.service
 Requires=docker.service
 

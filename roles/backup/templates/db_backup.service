@@ -1,6 +1,6 @@
 [Unit]
 Description=Immich Postgres dump backup
-OnFailure=systemd-notify@%i.service
+OnFailure=systemd-notify@%n.service
 After=network.target docker.service
 Requires=docker.service
 

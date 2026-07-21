@@ -1,6 +1,6 @@
 [Unit]
 Description=Glances
-OnFailure=systemd-notify@%i.service
+OnFailure=systemd-notify@%n.service
 After=network.target
 
 [Service]
