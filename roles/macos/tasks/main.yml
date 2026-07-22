@@ -9,6 +9,7 @@
     - config/atuin
     - config/agterm
     - config/revdiff
+    - config/just
 
 - name: Copy dotfiles
   copy:
@@ -16,7 +17,7 @@
     dest: "~/.{{ item }}"
     mode: '0644'
   loop:
-    - justfile
+    - config/just/justfile
     - zshrc
     - config/git/config
     - config/git/ignore

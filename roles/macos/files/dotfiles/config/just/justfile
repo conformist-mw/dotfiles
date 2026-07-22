@@ -4,6 +4,11 @@ default:
 
 ############ AWS SSO START ############
 
+# Login to AWS SSO using the welltech sso-session
+[group('AWS')]
+aws-sso-login:
+    aws sso login --sso-session welltech
+
 # Check AWS CodeArtifact token to not refresh if not needed
 [group('CodeArtifact')]
 check-ca-token:
@@ -49,6 +54,12 @@ update-uv-conf:
 codeartifact-login:
     @just check-ca-token || just login-ca
     just update-uv-conf
+
+# Remove global private CodeArtifact config (uv.toml + pip.conf) so uv/pip use public PyPI
+[group('CodeArtifact')]
+clean-ca:
+    rm -f ~/.config/uv/uv.toml ~/.config/pip/pip.conf
+    @echo "Removed ~/.config/uv/uv.toml and ~/.config/pip/pip.conf"
 
 ############ AWS SSO END ############
 

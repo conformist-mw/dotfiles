@@ -57,6 +57,21 @@ jira() {
     command jira "$@"
 }
 
+# gjust: run the global justfile (~/.config/just/justfile) from ANY directory,
+# executing in the current dir. Plain `just` still uses the nearest local
+# justfile — this is a separate command so the two never clash.
+gjust() { just --justfile "$HOME/.config/just/justfile" --working-directory "$PWD" "$@"; }
+
+# Completion for gjust: reuse just's clap completer, but resolved against the
+# global justfile (inject `--justfile <path>` into the words just sees).
+_gjust() {
+  (( $+functions[_clap_dynamic_completer_just] )) || source <(JUST_COMPLETE=zsh just 2>/dev/null)
+  words[1,1]=(just --justfile "$HOME/.config/just/justfile")
+  (( CURRENT += 2 ))
+  _clap_dynamic_completer_just "$@"
+}
+compdef _gjust gjust
+
 eval "$(starship init zsh)"
 eval "$(zoxide init zsh)"
 eval "$(atuin init zsh)"
