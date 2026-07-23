@@ -74,7 +74,8 @@ brew "media-info"
 # Open source relational database management system
 brew "mysql-client"
 # Platform built on V8 to build network applications
-brew "node"
+# pinned to node 22 to match CI (npm ships bundled, 10.9.x — same major as CI's 10.9.3)
+brew "node@22"
 # Package compiler and linker metadata toolkit
 brew "pkgconf"
 # PDF rendering library (based on the xpdf-3.0 code base)
