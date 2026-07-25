@@ -1,0 +1,5 @@
+- hosts: ha
+  gather_facts: false
+  become: true
+  roles:
+    - { role: ha_config, tags: [ha, ha_config] }

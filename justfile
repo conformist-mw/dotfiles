@@ -17,6 +17,10 @@ deploy-hetzner:
 deploy-hetzner-tag tag:
   uv run ansible-playbook hetzner.yml --tags {{ tag }}
 
+# === Home Assistant config ===
+deploy-ha:
+  uv run ansible-playbook ha.yml
+
 # === MacOS ===
 deploy-mac:
   uv run ansible-playbook macos.yml

@@ -1,0 +1,34 @@
+---
+# Reload runs from the controller against the HA core REST API (the addon shell
+# has no SUPERVISOR_TOKEN, and the core token in sops works here). Handlers fire
+# in definition order, so config-check gates the reload.
+
+- name: Validate HA config
+  delegate_to: localhost
+  become: false
+  ansible.builtin.uri:
+    url: "{{ ha_url }}/api/config/core/check_config"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ ha_token }}"
+    status_code: 200
+  register: ha_check
+  failed_when: ha_check.json.result != "valid"
+  listen: reload ha config
+
+- name: Reload automations, scripts and scenes
+  delegate_to: localhost
+  become: false
+  ansible.builtin.uri:
+    url: "{{ ha_url }}/api/services/{{ item }}/reload"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ ha_token }}"
+    body_format: json
+    body: {}
+    status_code: 200
+  loop:
+    - automation
+    - script
+    - scene
+  listen: reload ha config

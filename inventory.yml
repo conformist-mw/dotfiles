@@ -20,6 +20,17 @@ machines:
         - { key: "traefik.http.routers.{{ app_name }}.rule", value: "Host(`{{ app_subdomain | default(app_name) }}.{{ ansible_host }}`)" }
         - { key: "traefik.http.services.{{ app_name }}.loadbalancer.server.port", value: "{{ app_port }}" }
 
+    ha:
+      # HAOS guest, reached via the Advanced SSH & Web Terminal addon.
+      # hassio can't write /config (root-owned) but has passwordless sudo.
+      ansible_host: 192.168.1.223
+      ansible_user: hassio
+      ansible_python_interpreter: /usr/bin/python3
+      ansible_become: true
+      ansible_become_method: sudo
+      # addon's ssh has no sftp/scp server side; use piped transfer
+      ansible_ssh_transfer_method: piped
+
     hetzner:
       ansible_host: conformist.name
       ansible_user: vps_user

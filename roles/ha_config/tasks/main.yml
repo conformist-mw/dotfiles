@@ -1,0 +1,34 @@
+---
+# Deploys the config layer into the HAOS /config git checkout:
+#   pull the repo, render secrets.yaml from sops, reload HA.
+# Assumes the repo is already initialised in /config (bootstrap was manual —
+# /config is pre-populated by HAOS so `git clone` can't be used). .storage
+# (integrations, registries, auth) is runtime state and NOT managed here.
+
+- name: Trust /config as a git safe directory
+  ansible.builtin.command:
+    cmd: git config --global --replace-all safe.directory {{ ha_config_dir }}
+  changed_when: false
+
+- name: Pull ha-config
+  ansible.builtin.command:
+    cmd: git pull --ff-only
+    chdir: "{{ ha_config_dir }}"
+  environment:
+    GIT_SSH_COMMAND: >-
+      ssh -i {{ ha_config_deploy_key }} -o IdentitiesOnly=yes
+      -o UserKnownHostsFile={{ ha_config_known_hosts }}
+      -o StrictHostKeyChecking=accept-new
+  register: ha_git_pull
+  changed_when: "'Already up to date' not in ha_git_pull.stdout"
+  notify: reload ha config
+
+- name: Render secrets.yaml
+  ansible.builtin.template:
+    src: secrets.yaml.j2
+    dest: "{{ ha_config_dir }}/secrets.yaml"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  notify: reload ha config

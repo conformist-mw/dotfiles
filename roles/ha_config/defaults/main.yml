@@ -1,0 +1,9 @@
+---
+ha_config_dir: /config
+ha_config_repo: git@github.com:conformist-mw/ha-config.git
+ha_config_branch: main
+ha_config_deploy_key: /config/.ssh/gh_ha
+ha_config_known_hosts: /config/.ssh/known_hosts
+
+# core REST API (reload/check) — reached from the controller, not the addon
+ha_url: "http://{{ ansible_host }}:8123"
