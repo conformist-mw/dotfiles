@@ -1,0 +1,66 @@
+# Ingress objects for the rehearsal box only — applied on rpi, never on bee.
+# The shared manifests route *.bee.home (that is what goes to bee) and those names resolve
+# to bee, so browsing the rehearsal needs its own: *.rpi.home already resolves to this node.
+#
+# Apply: KUBECONFIG=~/.kube/rpi.yaml kubectl apply -f k8s/rehearsal/ingress-rpi.yaml
+# Then http://whoami.rpi.home | http://photo.rpi.home | http://traefik.rpi.home/dashboard/
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: whoami-rpi
+  namespace: default
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: whoami.rpi.home
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: whoami
+                port:
+                  number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: immich-rpi
+  namespace: immich
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: photo.rpi.home
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: immich
+                port:
+                  number: 2283
+---
+# Traefik's own dashboard/API entrypoint (:9000, --api.insecure). Handy while poking at
+# routers/services during the rehearsal; deliberately NOT part of the bee-bound manifests,
+# where the dashboard stays behind `kubectl port-forward`.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: traefik-dashboard-rpi
+  namespace: ingress
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: traefik.rpi.home
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: traefik
+                port:
+                  number: 9000
