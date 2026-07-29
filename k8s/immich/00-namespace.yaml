@@ -1,0 +1,8 @@
+# 00- prefix on purpose: `kubectl apply -f k8s/immich/` feeds the directory to the API
+# server in filename order, so the namespace has to sort ahead of everything that lives
+# in it — otherwise database.yaml and machine-learning.yaml fail with "namespaces
+# \"immich\" not found" on a first apply (found while rehearsing the cutover on rpi).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: immich

@@ -1,0 +1,130 @@
+# immich server — honest swap onto the EXISTING photo libraries on /mnt/ssd.
+# Runs as 1000:1000 (photo dirs are owned 1000:1000, same as the docker `user: 1000:1000`).
+# GPU/QuickSync transcoding is DEFERRED (no /dev/dri passthrough yet) — software fallback;
+# add the device + render/video groups (993/44) in a later step.
+#
+# ⚠️ SINGLE WRITER: stop the docker `immich` container before this pod starts.
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: immich-upload
+spec:
+  capacity: { storage: 500Gi }
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  hostPath:
+    path: /mnt/ssd/photos-upload
+    type: Directory
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: immich-photos
+spec:
+  capacity: { storage: 500Gi }
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  hostPath:
+    path: /mnt/ssd/photos
+    type: Directory
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: { name: immich-upload, namespace: immich }
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: ""
+  volumeName: immich-upload
+  resources: { requests: { storage: 500Gi } }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: { name: immich-photos, namespace: immich }
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: ""
+  volumeName: immich-photos
+  resources: { requests: { storage: 500Gi } }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immich
+  namespace: immich
+  labels: { app: immich }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }        # never two servers writing the upload dir
+  selector:
+    matchLabels: { app: immich }
+  template:
+    metadata:
+      labels: { app: immich }
+    spec:
+      # MUST stay false. k8s otherwise injects docker-link-style env vars for every
+      # Service in the namespace — REDIS_PORT=tcp://10.43.x.x:6379, IMMICH_PORT=tcp://…
+      # — and immich parses both as plain integers, so the server dies at boot with
+      # "expected number, received NaN". Found while rehearsing the cutover on rpi.
+      enableServiceLinks: false
+      # NO fsGroup: the photo dirs are already 1000:1000 and the pod runs as 1000, so we
+      # don't need it — and fsGroup would trigger a recursive chown of the whole 576G
+      # library on every pod start (very slow). runAsUser 1000 already has full access.
+      securityContext: { runAsUser: 1000, runAsGroup: 1000 }
+      containers:
+        - name: immich
+          image: ghcr.io/immich-app/immich-server:v3.0.1
+          env:
+            - { name: DB_HOSTNAME, value: "immich-database" }   # k8s Service name (was immich_database)
+            - { name: DB_USERNAME, value: "immich" }
+            - { name: DB_PASSWORD, value: "immich" }
+            - { name: DB_DATABASE_NAME, value: "immich" }
+            - { name: REDIS_HOSTNAME, value: "redis" }
+            - { name: IMMICH_LOG_LEVEL, value: "log" }
+            - { name: TZ, value: "Europe/Kyiv" }                # replaces the /etc/localtime bind mount
+          ports:
+            - containerPort: 2283
+          volumeMounts:
+            - { name: upload, mountPath: /usr/src/app/upload }
+            - { name: photos, mountPath: /home/user/photos }
+          readinessProbe:
+            tcpSocket: { port: 2283 }   # port-open; browser check confirms real health
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 12
+      volumes:
+        - name: upload
+          persistentVolumeClaim: { claimName: immich-upload }
+        - name: photos
+          persistentVolumeClaim: { claimName: immich-photos }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: immich
+  namespace: immich
+spec:
+  selector: { app: immich }
+  ports:
+    - { port: 2283, targetPort: 2283 }
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: immich
+  namespace: immich
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: photo.bee.home
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: immich
+                port:
+                  number: 2283

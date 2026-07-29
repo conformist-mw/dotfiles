@@ -1,0 +1,44 @@
+# redis for immich — BullMQ job queue / cache, not durable state. Run it fresh on an
+# emptyDir (avoids a uid/permission dance on the old bind mount). Losing it on a pod
+# restart just re-runs queued jobs; no photos or DB rows live here.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: immich
+  labels: { app: redis }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector:
+    matchLabels: { app: redis }
+  template:
+    metadata:
+      labels: { app: redis }
+    spec:
+      enableServiceLinks: false   # see server.yaml — no need for the docker-link env vars
+      securityContext: { runAsUser: 999, runAsGroup: 999, fsGroup: 999 }  # redis user; make emptyDir writable
+      containers:
+        - name: redis
+          image: docker.io/library/redis:7
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - { name: data, mountPath: /data }
+          readinessProbe:
+            exec: { command: ["redis-cli", "ping"] }
+            initialDelaySeconds: 5
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis            # server connects here (REDIS_HOSTNAME=redis)
+  namespace: immich
+spec:
+  selector: { app: redis }
+  ports:
+    - { port: 6379, targetPort: 6379 }

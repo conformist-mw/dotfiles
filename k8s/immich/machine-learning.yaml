@@ -1,0 +1,69 @@
+# immich machine-learning — reuses the EXISTING model cache (avoids re-downloading
+# models). Cache dir is owned 0:0 and the ML image runs as root, so no securityContext
+# (mirrors the docker container). Server reaches it at http://immich-machine-learning:3003
+# (immich default), which is why the Service is named immich-machine-learning.
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: immich-mlcache
+spec:
+  capacity: { storage: 10Gi }
+  accessModes: [ReadWriteOnce]
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  hostPath:
+    path: /home/user/homelab_data/immich/cache
+    type: Directory
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: immich-mlcache
+  namespace: immich
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: ""
+  volumeName: immich-mlcache
+  resources: { requests: { storage: 10Gi } }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: immich-machine-learning
+  namespace: immich
+  labels: { app: immich-machine-learning }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector:
+    matchLabels: { app: immich-machine-learning }
+  template:
+    metadata:
+      labels: { app: immich-machine-learning }
+    spec:
+      enableServiceLinks: false   # see server.yaml — injected *_PORT vars break immich
+      containers:
+        - name: machine-learning
+          image: ghcr.io/immich-app/immich-machine-learning:v3.0.1
+          ports:
+            - containerPort: 3003
+          volumeMounts:
+            - { name: cache, mountPath: /cache }
+          readinessProbe:
+            tcpSocket: { port: 3003 }
+            initialDelaySeconds: 15
+            periodSeconds: 10
+      volumes:
+        - name: cache
+          persistentVolumeClaim: { claimName: immich-mlcache }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: immich-machine-learning
+  namespace: immich
+spec:
+  selector: { app: immich-machine-learning }
+  ports:
+    - { port: 3003, targetPort: 3003 }
