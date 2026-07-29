@@ -20,6 +20,24 @@ machines:
         - { key: "traefik.http.routers.{{ app_name }}.rule", value: "Host(`{{ app_subdomain | default(app_name) }}.{{ ansible_host }}`)" }
         - { key: "traefik.http.services.{{ app_name }}.loadbalancer.server.port", value: "{{ app_port }}" }
 
+    rpi:
+      # Throwaway rehearsal box for the k3s migration (RPi 4B, Raspberry Pi OS / Debian 13,
+      # arm64). Deliberately given bee's paths and docker network so both the ansible roles
+      # and the k8s/ manifests apply here UNCHANGED — what is validated here is literally
+      # what gets applied to bee. Nothing real lives on this host.
+      ansible_host: 192.168.1.200
+      ansible_user: pi
+      arch: linux/arm64
+      ansible_python_interpreter: /usr/bin/python3
+      data_dir: "/home/user/homelab_data" # bee's path, not this box's $HOME (/home/pi)
+      logs_dir: "/home/user/homelab_logs"
+      docker_network: "homelab_net"
+      docker_subnet: "10.1.1.0/24"
+      docker_gateway: "10.1.1.1"
+      # No traefik on this box (k3s ingress handles routing); labels_generator still
+      # needs the var to exist, so hand it an empty set.
+      traefik_labels: []
+
     ha:
       # HAOS guest, reached via the Advanced SSH & Web Terminal addon.
       # hassio can't write /config (root-owned) but has passwordless sudo.

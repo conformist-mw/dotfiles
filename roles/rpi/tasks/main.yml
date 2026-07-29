@@ -1,0 +1,110 @@
+---
+# rpi — throwaway rehearsal box for the k3s migration (Raspberry Pi 4B, Raspberry Pi OS
+# on Debian 13 trixie, arm64). Two jobs:
+#   1. make the kernel able to run kubelet at all (memory cgroup),
+#   2. make the box look enough like bee that k8s/ manifests apply UNCHANGED.
+# See docs/k3s-learning.md. Not a production host — safe to reinstall at any time.
+
+- name: Allow the ansible user to sudo without a password
+  # bee's user already has this; codified here so the first run (with
+  # -e ansible_become_password=...) is the only one that ever needs the password.
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/010_{{ ansible_user }}-nopasswd"
+    content: "{{ ansible_user }} ALL=(ALL) NOPASSWD: ALL\n"
+    owner: root
+    group: root
+    mode: "0440"
+    validate: "visudo -cf %s"
+  become: true
+
+- name: Install base packages
+  # iptables: docker-ce depends on it anyway, but it is also how the KUBE-*/DOCKER
+  # chains get inspected while debugging. k3s carries its OWN iptables binaries in
+  # /var/lib/rancher/k3s/data/*/bin and does not use this one.
+  # iptables-persistent is deliberately NOT here — no DNAT rules to persist (unlike bee).
+  ansible.builtin.apt:
+    name:
+      - btop
+      - curl
+      - iptables
+    update_cache: true
+    state: present
+  become: true
+
+# --- kernel cmdline: memory cgroup ----------------------------------------
+
+- name: Read the kernel cmdline
+  ansible.builtin.slurp:
+    src: /boot/firmware/cmdline.txt
+  register: rpi_cmdline
+
+- name: Enable the memory cgroup on the kernel cmdline
+  # cmdline.txt MUST stay a single line — append, never add a newline.
+  # No owner/group/mode: /boot/firmware is vfat, permissions come from the mount.
+  ansible.builtin.copy:
+    dest: /boot/firmware/cmdline.txt
+    content: "{{ (rpi_cmdline.content | b64decode | trim) ~ ' ' ~ rpi_cgroup_flags ~ '\n' }}"
+  when: rpi_cgroup_flags not in (rpi_cmdline.content | b64decode)
+  register: rpi_cmdline_set
+  become: true
+
+# --- firmware config: kill the wifi radio ---------------------------------
+
+- name: Disable the onboard wifi radio
+  # Wired eth0 is the only link this box needs; the overlay switches the chip off at
+  # boot (declarative and permanent, unlike `nmcli radio wifi off`).
+  ansible.builtin.lineinfile:
+    path: /boot/firmware/config.txt
+    line: dtoverlay=disable-wifi
+    # config.txt is sectioned and the file ends inside `[all]`, so appending lands there.
+    insertafter: EOF
+  register: rpi_wifi_off
+  become: true
+
+# --- headless ---------------------------------------------------------------
+
+- name: Check the default systemd target
+  ansible.builtin.command: systemctl get-default
+  register: rpi_default_target
+  changed_when: false
+
+- name: Boot to multi-user (no display manager)
+  ansible.builtin.command: systemctl set-default multi-user.target
+  when: rpi_default_target.stdout != "multi-user.target"
+  changed_when: true
+  become: true
+
+- name: Purge the desktop stack
+  ansible.builtin.apt:
+    name: "{{ rpi_desktop_packages }}"
+    state: absent
+    purge: true
+    autoremove: true
+  become: true
+
+# --- reboot if the boot config moved ---------------------------------------
+
+- name: Reboot to pick up the new boot config
+  ansible.builtin.reboot:
+    reboot_timeout: 300
+  when: rpi_cmdline_set.changed or rpi_wifi_off.changed
+  become: true
+
+- name: Verify the memory cgroup controller is present
+  # Hard gate: without it kubelet dies on start and k3s never comes up.
+  ansible.builtin.command: grep -E '^memory\s' /proc/cgroups
+  register: rpi_memory_cgroup
+  changed_when: false
+  failed_when: rpi_memory_cgroup.rc != 0 or rpi_memory_cgroup.stdout.split()[3] != "1"
+
+# --- bee-shaped filesystem --------------------------------------------------
+
+- name: Create the bee-mirroring data dirs
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ puid }}"
+    group: "{{ pgid }}"
+    mode: "0755"
+  loop: "{{ rpi_bee_mirror_dirs }}"
+  become: true

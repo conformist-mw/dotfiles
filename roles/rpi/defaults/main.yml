@@ -1,0 +1,30 @@
+---
+# Kernel cmdline flags kubelet needs. Raspberry Pi OS boots with `cgroup_disable=memory`
+# baked in by the firmware (it is NOT in cmdline.txt), so /proc/cgroups ships without the
+# memory controller and kubelet refuses to start. These flags come later on the command
+# line and win.
+rpi_cgroup_flags: "cgroup_memory=1 cgroup_enable=memory"
+
+# Desktop stack to purge — this box is a headless k3s rehearsal node, not a workstation.
+rpi_desktop_packages:
+  - chromium
+  - chromium-common
+  - chromium-l10n
+  - chromium-sandbox
+  - labwc
+  - lightdm
+  - lightdm-gtk-greeter
+  - pi-greeter
+  - xserver-xorg
+  - xserver-xorg-core
+
+# Directories mirrored from bee so k8s/ manifests (which carry bee's absolute hostPath
+# paths) apply here unchanged. `/mnt/ssd` is a real disk on bee, a plain dir on the SD here.
+rpi_bee_mirror_dirs:
+  - "{{ data_dir }}"
+  - "{{ data_dir }}/immich"
+  - "{{ data_dir }}/immich/cache"
+  - "{{ data_dir }}/immich/postgres/data"
+  - /mnt/ssd
+  - /mnt/ssd/photos
+  - /mnt/ssd/photos-upload

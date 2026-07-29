@@ -1,0 +1,11 @@
+# Rehearsal host for the k3s migration — see docs/k3s-learning.md.
+# Order matters: docker-immich comes up FIRST and seeds real data on bee-identical paths,
+# so the docker -> k3s cutover can be rehearsed against data that actually exists.
+# No `handlers/main.yml` import: those handlers save iptables rules, which this box has none of.
+- hosts: rpi
+  roles:
+    - { role: rpi, tags: [base, rpi] }
+    - { role: docker, tags: [base, docker] }
+    - { role: k3s, tags: [infra, k3s] }
+    # pulls in redis via its meta dependency (roles/immich/meta/main.yml)
+    - { role: immich, tags: [apps, immich] }

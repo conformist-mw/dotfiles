@@ -17,6 +17,15 @@ deploy-hetzner:
 deploy-hetzner-tag tag:
   uv run ansible-playbook hetzner.yml --tags {{ tag }}
 
+# === RPi (throwaway k3s rehearsal box) ===
+# first run only, before roles/rpi installs the NOPASSWD sudoers drop-in:
+#   uv run ansible-playbook rpi.yml -e ansible_become_password=...
+deploy-rpi:
+  uv run ansible-playbook rpi.yml
+
+deploy-rpi-tag tag:
+  uv run ansible-playbook rpi.yml --tags {{ tag }}
+
 # === Home Assistant config ===
 deploy-ha:
   uv run ansible-playbook ha.yml
@@ -71,3 +80,4 @@ syntax-check:
   uv run ansible-playbook beelink.yml --syntax-check
   uv run ansible-playbook hetzner.yml --syntax-check
   uv run ansible-playbook macos.yml --syntax-check
+  uv run ansible-playbook rpi.yml --syntax-check
