@@ -10,8 +10,9 @@ k3s_disable:
   - traefik
 
 # Where the fetched+rewritten kubeconfig lands on the control machine (the Mac).
+# One file per host (each host is its own single-node cluster, see MIGRATION.md).
 # NOT committed — it carries the cluster admin credential. Keep it out of the repo.
-k3s_local_kubeconfig: "{{ lookup('env', 'HOME') }}/.kube/bee.yaml"
+k3s_local_kubeconfig: "{{ lookup('env', 'HOME') }}/.kube/{{ inventory_hostname }}.yaml"
 
 # Host:port the rewritten kubeconfig should point kubectl at (k3s writes 127.0.0.1).
 k3s_api_host: "{{ ansible_host }}"
@@ -25,4 +26,4 @@ k3s_tls_san:
   - "{{ k3s_api_host }}"
 
 # Context/cluster/user name in the rewritten kubeconfig (k3s calls everything "default").
-k3s_context_name: "bee"
+k3s_context_name: "{{ inventory_hostname }}"
