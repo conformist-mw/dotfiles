@@ -1,10 +1,12 @@
 # k3s ingress controller — Traefik deployed as raw manifests (NOT the k3s addon).
-# Migration strategy A: the Docker Traefik keeps :80 as the LAN front door; THIS
-# Traefik binds the node's :8080 (hostPort). Per migrated hostname, the Docker Traefik
-# gets a file-provider route `X.bee.home -> http://<bee-ip>:8080`, and this controller
-# routes by Host header into the right k8s Service via an Ingress object.
+# This controller IS the LAN front door: it takes the node's :80 via hostPort, exactly
+# where the Docker Traefik sits today. No per-hostname bridging between the two — the
+# docker stack and this one swap wholesale, so :80 has one owner at any moment.
 #
-# Apply:    KUBECONFIG=~/.kube/bee.yaml kubectl apply -f k8s/ingress/traefik.yaml
+# ⚠️ On bee that means: stop the Docker Traefik BEFORE applying this, or the two fight
+# over :80. On rpi (the rehearsal box) nothing else holds the port.
+#
+# Apply:    KUBECONFIG=~/.kube/rpi.yaml kubectl apply -f k8s/ingress/traefik.yaml
 # Dashboard: kubectl -n ingress port-forward deploy/traefik 9000:9000  # http://localhost:9000/dashboard/
 # LAN-only: no TLS / no Let's Encrypt here (public traffic goes via hetzner).
 ---
@@ -96,7 +98,9 @@ spec:
           ports:
             - name: web
               containerPort: 8000
-              hostPort: 8080          # bind the NODE's :8080 → Docker Traefik targets this
+              # hostPort is a DNAT on the node, so :80 needs no extra capability and the
+              # container keeps listening on the unprivileged :8000.
+              hostPort: 80
             - name: traefik
               containerPort: 9000     # no hostPort: reach via port-forward only
           readinessProbe:
@@ -113,7 +117,7 @@ metadata:
   name: traefik
   namespace: ingress
 spec:
-  type: ClusterIP        # in-cluster + host reach it; the node :8080 comes from hostPort above
+  type: ClusterIP        # in-cluster + host reach it; the node :80 comes from hostPort above
   selector:
     app: traefik
   ports:
