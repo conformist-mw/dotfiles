@@ -90,12 +90,21 @@
   when: rpi_cmdline_set.changed or rpi_wifi_off.changed
   become: true
 
-- name: Verify the memory cgroup controller is present
+- name: Read the available cgroup controllers
+  # This box is cgroup v2 only, so cgroup.controllers is the source of truth —
+  # /proc/cgroups lists the v1 hierarchies and omits memory even once it is enabled.
+  ansible.builtin.slurp:
+    src: /sys/fs/cgroup/cgroup.controllers
+  register: rpi_cgroup_controllers
+
+- name: Verify the memory cgroup controller is available
   # Hard gate: without it kubelet dies on start and k3s never comes up.
-  ansible.builtin.command: grep -E '^memory\s' /proc/cgroups
-  register: rpi_memory_cgroup
-  changed_when: false
-  failed_when: rpi_memory_cgroup.rc != 0 or rpi_memory_cgroup.stdout.split()[3] != "1"
+  ansible.builtin.assert:
+    that: "'memory' in (rpi_cgroup_controllers.content | b64decode).split()"
+    fail_msg: >-
+      No memory cgroup controller. cmdline.txt carries {{ rpi_cgroup_flags }} but the
+      running kernel has not picked it up — reboot the host and re-run.
+    success_msg: memory cgroup controller present
 
 # --- bee-shaped filesystem --------------------------------------------------
 
