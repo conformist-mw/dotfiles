@@ -47,6 +47,27 @@ spec:
       labels: { app: immich-database }
     spec:
       enableServiceLinks: false   # see server.yaml — no need for the docker-link env vars
+      initContainers:
+        # Refuse to start unless the hostPath really holds the existing cluster.
+        # `hostPath: type: Directory` only proves the path EXISTS — if it were empty or
+        # pointed somewhere wrong, the postgres entrypoint would happily initdb a brand
+        # new cluster and immich would migrate into it, leaving a silently empty library
+        # next to untouched photos on disk. Failing closed is the cheaper outcome.
+        # ⚠️ This makes these manifests adoption-only. To bootstrap an EMPTY data dir
+        # (fresh rehearsal box), drop this initContainer for the first start.
+        - name: assert-pgdata
+          image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
+          command:
+            - sh
+            - -c
+            - |
+              test -f /var/lib/postgresql/data/PG_VERSION || {
+                echo "PGDATA has no PG_VERSION — refusing to start so postgres cannot initdb over it." >&2
+                exit 1
+              }
+              echo "PGDATA adopted, PG_VERSION=$(cat /var/lib/postgresql/data/PG_VERSION)"
+          volumeMounts:
+            - { name: pgdata, mountPath: /var/lib/postgresql/data }
       containers:
         - name: postgres
           image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
