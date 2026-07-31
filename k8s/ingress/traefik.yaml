@@ -74,6 +74,12 @@ metadata:
     app: traefik
 spec:
   replicas: 1
+  # Recreate, NOT the default RollingUpdate: this pod owns the node's :80 through
+  # hostPort, and on a single node a surge replica can never schedule beside it —
+  # `0/1 nodes are available: 1 node(s) didn't have free ports`. The rollout then hangs
+  # forever on the old revision. Recreate accepts a second of downtime instead, which is
+  # the only outcome actually available here.
+  strategy: { type: Recreate }
   selector:
     matchLabels:
       app: traefik
