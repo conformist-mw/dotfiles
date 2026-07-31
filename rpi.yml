@@ -7,5 +7,10 @@
     - { role: rpi, tags: [base, rpi] }
     - { role: docker, tags: [base, docker] }
     - { role: k3s, tags: [infra, k3s] }
-    # pulls in redis via its meta dependency (roles/immich/meta/main.yml)
-    - { role: immich, tags: [apps, immich] }
+    # immich is k3s-managed here now (k8s/immich/), so the docker role MUST stay off:
+    # it would start a second postgres on the pod's PGDATA, and postgres cannot defend
+    # itself across PID namespaces — the postmaster.pid of a live pod looks stale to a
+    # container that cannot see that PID, so the lock gets cleared and both write.
+    # Re-enable only to re-seed the docker era from scratch, and stop the pods first.
+    # (pulls in redis via its meta dependency, roles/immich/meta/main.yml)
+    # - { role: immich, tags: [apps, immich] }
