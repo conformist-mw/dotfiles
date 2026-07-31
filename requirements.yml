@@ -1,4 +1,10 @@
 ---
+roles:
+  # Docker install: apt key + repo, packages, service, docker group. Pinned like every
+  # other version in this repo — a bump is a commit (see MIGRATION.md).
+  - name: geerlingguy.docker
+    version: 8.0.0
+
 collections:
   - ansible.posix
   - community.general

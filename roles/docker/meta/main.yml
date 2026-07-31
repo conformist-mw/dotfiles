@@ -1,0 +1,29 @@
+---
+# The docker install itself is not our problem to solve. geerlingguy.docker manages the
+# apt key and repo through `deb822_repository`, which owns a named .sources file — so the
+# duplicate-entry failure that our hand-rolled apt_repository call produced (apt refusing
+# to read ANY source once signed-by changed) is structurally impossible there. It also
+# drops the legacy /etc/apt/sources.list.d/docker.list this repo used to write, and
+# supports both trixie and noble.
+#
+# What stays ours is in tasks/main.yml: the homelab docker network.
+dependencies:
+  - role: geerlingguy.docker
+    # The role's own tasks carry no `become` — it expects the play to run privileged,
+    # while this repo escalates per task. Setting it here applies to the whole role.
+    become: true
+    # Matches what this repo did by hand (the ansible user needs the docker socket).
+    docker_users: ["{{ ansible_user }}"]
+    # Explicit, though it is also the role default: the old tasks used `state: latest`,
+    # which silently upgraded docker on every deploy — against this repo's rule that
+    # nothing floats and every version change is a commit.
+    docker_packages_state: present
+    # Exactly the package set this repo already had. The role's default also pulls
+    # docker-ce-rootless-extras and docker-buildx-plugin, and rootless-extras pins itself
+    # to the engine version — on hetzner (still on 27.5.0) that would have dragged the
+    # engine to 29.x and fired the restart handler, bouncing every container on the public
+    # VPS as a side effect of changing roles. An engine upgrade gets its own commit.
+    docker_packages:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
