@@ -1,0 +1,207 @@
+# Front-door routes to things that are NOT in the cluster and never will be: daemons
+# running natively on bee, the Home Assistant QEMU guest, and the router's own web UI.
+# This replaces the file-provider block in roles/traefik/templates/dynamic.yml once the
+# k3s Traefik takes over :80 from the docker one.
+#
+# The pattern, three objects per target:
+#   Service WITHOUT a selector — nothing selects pods, so no controller fills in the
+#     endpoints and kubernetes leaves them to us;
+#   EndpointSlice — the endpoints we fill in by hand, an arbitrary IP:port on the LAN.
+#     It attaches to its Service purely through the `kubernetes.io/service-name` label,
+#     and its port NAME must match the Service's port name or the wiring silently
+#     resolves to nothing;
+#   Ingress — completely ordinary from here on; it cannot tell this Service from one
+#     backed by pods.
+#
+# Why not a Traefik file provider (which would be closer to a copy-paste of dynamic.yml):
+# these stay plain kubernetes objects, so `kubectl get ingress -A` lists EVERY hostname
+# the front door serves. With half the routes hidden in a ConfigMap, it would not.
+#
+# ⚠️ Addresses are deliberately literal. The two LAN guests (HA, router) are simply
+# their own IPs. The two host daemons are NOT bee's LAN address: glances and cockpit
+# both listen on 127.0.0.1 only, and today the docker Traefik reaches them through a
+# DNAT onto the docker bridge (10.1.1.1 + net.ipv4.conf.*.route_localnet, see the
+# expose_local_port role). That bridge disappears with docker, so they point at cni0
+# instead — the interface pods actually talk to.
+#
+# ⚠️ NOT SELF-CONTAINED: at cutover each daemon has to be rebound to that interface,
+# which is a change at the source rather than another layer of DNAT:
+#   glances — `--bind=10.42.0.1` in its systemd unit (currently --bind=127.0.0.1)
+#   cockpit — a socket drop-in with ListenStream=10.42.0.1:9090
+# Until then these two routes answer 502, correctly: nothing is listening there.
+# 10.42.0.1 is k3s's default cluster CIDR gateway; it is the same on bee and rpi.
+# The eventual plan for glances is a hostNetwork DaemonSet, which retires its entry here.
+#
+# Apply: KUBECONFIG=~/.kube/bee.yaml kubectl apply -f k8s/external/
+---
+# --- glances: native systemd daemon on bee -----------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: glances
+  namespace: external
+spec:
+  ports:
+    - { name: http, port: 61208, targetPort: 61208 }
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: glances
+  namespace: external
+  labels:
+    kubernetes.io/service-name: glances   # the ONLY thing tying this to the Service
+addressType: IPv4
+ports:
+  - { name: http, port: 61208, protocol: TCP }   # name must match the Service port
+endpoints:
+  - addresses: ["10.42.0.1"]                     # the node, on cni0 — see the header
+    conditions: { ready: true }
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: glances
+  namespace: external
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: glances.bee.home
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: glances
+                port:
+                  number: 61208
+---
+# --- cockpit: native daemon on bee -------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: cockpit
+  namespace: external
+spec:
+  ports:
+    - { name: http, port: 9090, targetPort: 9090 }
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: cockpit
+  namespace: external
+  labels:
+    kubernetes.io/service-name: cockpit
+addressType: IPv4
+ports:
+  - { name: http, port: 9090, protocol: TCP }
+endpoints:
+  - addresses: ["10.42.0.1"]                     # the node, on cni0 — see the header
+    conditions: { ready: true }
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cockpit
+  namespace: external
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: cockpit.bee.home
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cockpit
+                port:
+                  number: 9090
+---
+# --- home assistant: KVM/QEMU guest on bee, stays a VM (see docs/k3s-learning.md) ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ha
+  namespace: external
+spec:
+  ports:
+    - { name: http, port: 8123, targetPort: 8123 }
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: ha
+  namespace: external
+  labels:
+    kubernetes.io/service-name: ha
+addressType: IPv4
+ports:
+  - { name: http, port: 8123, protocol: TCP }
+endpoints:
+  - addresses: ["192.168.1.223"]   # the HAOS guest
+    conditions: { ready: true }
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ha
+  namespace: external
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: ha.bee.home
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ha
+                port:
+                  number: 8123
+---
+# --- router: the Keenetic web UI ---------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: router
+  namespace: external
+spec:
+  ports:
+    - { name: http, port: 80, targetPort: 80 }
+---
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: router
+  namespace: external
+  labels:
+    kubernetes.io/service-name: router
+addressType: IPv4
+ports:
+  - { name: http, port: 80, protocol: TCP }
+endpoints:
+  - addresses: ["192.168.1.1"]
+    conditions: { ready: true }
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: router
+  namespace: external
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: router.bee.home
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: router
+                port:
+                  number: 80

@@ -1,0 +1,6 @@
+# 00- prefix: `kubectl apply -f k8s/external/` applies in filename order, so the
+# namespace has to sort ahead of what lives in it (see k8s/immich/00-namespace.yaml).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: external
