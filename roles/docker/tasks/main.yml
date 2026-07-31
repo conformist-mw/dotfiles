@@ -20,18 +20,18 @@
     mode: "0644"
   become: true
 
-- name: Drop the old apt-key keyring
-  # Left behind by the previous apt_key-based task; nothing references it anymore.
-  ansible.builtin.file:
-    path: /etc/apt/keyrings/docker.gpg
-    state: absent
-  become: true
-
 - name: Add apt repo
-  ansible.builtin.apt_repository:
-    repo: deb [arch={{ [ansible_architecture] | map('extract', deb_architecture) | first }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable
-    state: present
-    filename: docker
+  # Own the file outright (same shape as roles/crowdsec and roles/speedtest) instead of
+  # ansible.builtin.apt_repository. That module matches an entry by its FULL option set,
+  # so changing signed-by appends a SECOND line rather than rewriting the first — and apt
+  # then refuses to read ANY source ("Conflicting values set for option Signed-By"),
+  # breaking every later apt task on the host. Reproduced on the rehearsal box.
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/docker.list
+    content: "deb [arch={{ [ansible_architecture] | map('extract', deb_architecture) | first }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable\n"
+    owner: root
+    group: root
+    mode: "0644"
   vars:
     deb_architecture: { "aarch64": "arm64", "x86_64": "amd64" }
   become: true
@@ -45,6 +45,18 @@
       - docker-compose-plugin
     state: latest
     update_cache: yes
+  become: true
+
+- name: Drop the old apt-key keyring
+  # Deliberately AFTER the install task: that task refreshes the cache against the
+  # rewritten docker.list, so by the time this runs nothing references docker.gpg and a
+  # failed refresh leaves the old key in place to fall back on.
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/apt/keyrings/docker.gpg
+    - /etc/apt/keyrings/docker.gpg~ # apt_key's backup file, same vintage
   become: true
 
 - name: start and enable docker daemon
