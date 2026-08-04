@@ -1,0 +1,4 @@
+---
+# Run one test on first install to accept the license/GDPR non-interactively so
+# later manual `speedtest` runs never prompt. Guarded by `creates` (once per host).
+speedtest_accept_on_install: true

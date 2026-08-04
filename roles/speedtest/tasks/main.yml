@@ -1,0 +1,74 @@
+---
+# Official Ookla speedtest CLI (accurate, multi-connection, picks a local server).
+# Replaces the legacy single-threaded python `speedtest-cli`, which under-reports
+# on fast links. Distro/arch handling mirrors the `docker` role: override
+# `ansible_distribution_release` in the playbook where Ookla lags a release
+# (e.g. bee is Ubuntu noble, but Ookla has no noble repo yet → pin to jammy).
+
+- name: Remove legacy python speedtest-cli (under-reports; replaced by Ookla)
+  ansible.builtin.apt:
+    name: speedtest-cli
+    state: absent
+  become: true
+
+- name: Ensure apt keyrings dir
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+  become: true
+
+- name: Add Ookla Speedtest apt signing key
+  # Plain download of the armored key, NOT ansible.builtin.apt_key: that module shells out
+  # to `apt-key`, which apt 3.0 (Debian 13) no longer ships, so the role could not run on
+  # trixie at all. apt reads .asc directly through signed-by, so nothing needs dearmoring.
+  ansible.builtin.get_url:
+    url: https://packagecloud.io/ookla/speedtest-cli/gpgkey
+    dest: /etc/apt/keyrings/ookla_speedtest-cli-archive-keyring.asc
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+
+- name: Add Ookla Speedtest apt repository
+  # This file is owned outright rather than managed with apt_repository, so changing the
+  # signed-by path above rewrites the single line instead of appending a second entry —
+  # which is what left apt unable to read ANY source when the docker role tried it.
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list.d/ookla_speedtest-cli.list
+    content: "deb [arch={{ [ansible_architecture] | map('extract', deb_architecture) | first }} signed-by=/etc/apt/keyrings/ookla_speedtest-cli-archive-keyring.asc] https://packagecloud.io/ookla/speedtest-cli/{{ ansible_distribution | lower }}/ {{ ansible_distribution_release }} main\n"
+    mode: "0644"
+  vars:
+    deb_architecture: { "aarch64": "arm64", "x86_64": "amd64" }
+  become: true
+
+- name: Install official Ookla speedtest CLI
+  ansible.builtin.apt:
+    name: speedtest
+    state: present
+    update_cache: true
+  become: true
+
+- name: Drop the old apt-key keyring
+  # Written by the earlier apt_key-based version of this role, which ran on both hosts
+  # before it was committed. Deliberately AFTER the install task: that one refreshes the
+  # cache against the rewritten .list, so a failed refresh leaves the old key to fall
+  # back on rather than stranding apt with a source pointing at a deleted file.
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/apt/keyrings/ookla_speedtest-cli-archive-keyring.gpg
+    - /etc/apt/keyrings/ookla_speedtest-cli-archive-keyring.gpg~ # apt_key's backup
+  become: true
+
+- name: Accept Ookla license & GDPR once (runs a first test; non-interactive after)
+  ansible.builtin.command: speedtest --accept-license --accept-gdpr --format=json
+  args:
+    # Written by the CLI once the license is accepted, so this runs exactly once per host.
+    # No become: the config belongs to the user who will run `speedtest` interactively.
+    creates: "{{ ansible_env.HOME }}/.config/ookla/speedtest-cli.json"
+  # No `changed_when: true`: it reported "changed" even on the runs where `creates` had
+  # already skipped the command, so the role could never settle to changed=0 and its
+  # idempotency was impossible to read off a deploy.
+  when: speedtest_accept_on_install | bool

@@ -8,6 +8,12 @@
     - { role: docker, tags: [base, docker] }
     - { role: vim, tags: [base, vim] }
     - { role: vim, tags: [base, vim-root], vars: { user: "root" } }
+    # Ookla has no ubuntu/noble repo yet; jammy debs run fine on noble.
+    - {
+        role: speedtest,
+        tags: [base, speedtest],
+        vars: { ansible_distribution_release: "jammy" },
+      }
     # watchtower intentionally disabled: image updates move to renovate (manual PRs)
     # ahead of the k3s migration. Role kept in roles/ for reference. Container removed
     # from the host manually. See MIGRATION.md.
