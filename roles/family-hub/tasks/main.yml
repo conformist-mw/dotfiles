@@ -1,0 +1,85 @@
+---
+# family-hub is the merged lessons + family-visits app: one container, one bot,
+# one SQLite file, one ICS feed.
+#
+# Secret var names still read lessons_* / family_visits_*: they live in
+# encrypted files (this role's vars/secrets.sops.yaml and
+# host_vars/hetzner/secrets.sops.yaml) and renaming a key means re-encrypting
+# secret material — a deliberate follow-up, not part of the merge.
+- name: Load family-hub secrets (sops)
+  community.sops.load_vars:
+    file: "{{ role_path }}/vars/secrets.sops.yaml"
+
+- name: Ensure family-hub data directory
+  ansible.builtin.file:
+    path: "{{ family_hub_dir }}"
+    state: directory
+    mode: "0755"
+
+# No automatic seeding: the image bundles no Excel file (it holds personal
+# data). A fresh install starts empty; see DEPLOY.md in the family-hub repo for
+# the one-off manual import command.
+
+- name: Family-hub container
+  community.docker.docker_container:
+    image: "{{ family_hub_image }}"
+    pull: true
+    name: family-hub
+    restart: true
+    restart_policy: "unless-stopped"
+    user: "{{ puid }}:{{ pgid }}"
+    networks:
+      - name: "{{ docker_network }}"
+    env:
+      TZ: "{{ tz }}"
+      TELEGRAM_BOT_TOKEN: "{{ lessons_bot_token | default('') }}"
+      TELEGRAM_WEBHOOK_URL: "https://{{ family_hub_webhook_host }}{{ lessons_webhook_path | default('/tgwebhook') }}"
+      TELEGRAM_WEBHOOK_SECRET: "{{ lessons_webhook_secret | default('') }}"
+      TELEGRAM_ALLOWED_CHATS: "{{ lessons_allowed_chats | default('') }}"
+      TELEGRAM_NOTIFY_CHAT: "{{ lessons_notify_chat | default('') }}"
+      TELEGRAM_REMINDER_DELAY_MIN: "{{ lessons_reminder_delay_min | default('60') }}"
+      # Free-text appointment capture. The key is the one the retired
+      # family-visits role used; without it the bot still serves everything
+      # except capture.
+      GEMINI_API_KEY: "{{ family_hub_gemini_api_key | default(family_visits_gemini_key | default('')) }}"
+      GEMINI_MODEL: "{{ family_hub_gemini_model }}"
+      VISIT_PEOPLE: "{{ family_hub_visit_people }}"
+      # NOTIFICATIONS_ENABLED is deliberately unset: Home Assistant sends the
+      # daily/weekly appointment summaries from the ICS feed below, so enabling
+      # them here would double-post to the family group. Lesson reminders are a
+      # separate ticker and are unaffected.
+      ICS_TOKEN: "{{ lessons_ics_token | default('') }}"
+    volumes:
+      - "{{ family_hub_dir }}:/data"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.family-hub.entrypoints: "websecure"
+      traefik.http.routers.family-hub.tls: "true"
+      traefik.http.routers.family-hub.tls.certresolver: "letsencrypt"
+      traefik.http.routers.family-hub.rule: "Host(`{{ family_hub_host }}`) || Host(`{{ family_hub_legacy_host }}`)"
+      traefik.http.services.family-hub.loadbalancer.server.port: "8080"
+      traefik.http.routers.family-hub.middlewares: "auth-chain@file"
+      # Telegram webhook endpoint must bypass oauth so Telegram can POST to it.
+      # The path itself is a secret (lives in SOPS), so the endpoint is not
+      # discoverable from the public repo.
+      #
+      # The host alternation MUST stay parenthesized on this and the ICS router:
+      # `||` binds looser than `&&` in Traefik rules, so
+      # `Host(a) || Host(b) && PathPrefix(p)` would match ALL of host a and
+      # serve the whole app with no auth.
+      traefik.http.routers.family-hub-bot.entrypoints: "websecure"
+      traefik.http.routers.family-hub-bot.tls: "true"
+      traefik.http.routers.family-hub-bot.tls.certresolver: "letsencrypt"
+      traefik.http.routers.family-hub-bot.rule: "(Host(`{{ family_hub_host }}`) || Host(`{{ family_hub_legacy_host }}`)) && PathPrefix(`{{ lessons_webhook_path | default('/tgwebhook') }}`)"
+      traefik.http.routers.family-hub-bot.middlewares: "no-auth-chain@file"
+      traefik.http.routers.family-hub-bot.service: "family-hub"
+      traefik.http.routers.family-hub-bot.priority: "100"
+      # ICS feed for HA's Remote Calendar — machine-to-machine, so it bypasses
+      # auth and is guarded by the ICS_TOKEN query param instead.
+      traefik.http.routers.family-hub-ics.entrypoints: "websecure"
+      traefik.http.routers.family-hub-ics.tls: "true"
+      traefik.http.routers.family-hub-ics.tls.certresolver: "letsencrypt"
+      traefik.http.routers.family-hub-ics.rule: "(Host(`{{ family_hub_host }}`) || Host(`{{ family_hub_legacy_host }}`)) && PathPrefix(`/calendar.ics`)"
+      traefik.http.routers.family-hub-ics.middlewares: "no-auth-chain@file"
+      traefik.http.routers.family-hub-ics.service: "family-hub"
+      traefik.http.routers.family-hub-ics.priority: "100"

@@ -1,3 +1,0 @@
----
-lessons_image: "olegsmedyuk/lessons:latest"
-lessons_dir: "{{ data_dir }}/lessons"

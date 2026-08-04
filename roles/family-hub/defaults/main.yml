@@ -1,0 +1,21 @@
+---
+family_hub_image: "olegsmedyuk/family-hub:latest"
+# Data dir and DB filename keep their old names: the volume already exists on
+# the VPS with lessons.db in it, and renaming would mean a migration with
+# nothing to gain.
+family_hub_dir: "{{ data_dir }}/lessons"
+
+# The app answers on the new host and, transitionally, the old one. The webhook
+# URL is built from family_hub_webhook_host, which stays on the legacy host
+# until DNS + cert for the new one are confirmed live: a webhook URL without a
+# valid cert means Telegram cannot deliver and the bot goes dark.
+family_hub_host: "family.{{ ansible_host }}"
+family_hub_legacy_host: "lessons.{{ ansible_host }}"
+family_hub_webhook_host: "{{ family_hub_legacy_host }}"
+
+family_hub_gemini_model: "gemini-flash-lite-latest"
+
+# Optional roster used to normalize the "who" of a captured appointment.
+# Deliberately empty here — this repo is public and those are family names.
+# Set family_hub_visit_people in host_vars/hetzner/secrets.sops.yaml to fill it.
+family_hub_visit_people: ""
