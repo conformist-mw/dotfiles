@@ -32,9 +32,8 @@ gatus_watched_containers:
   - ceilings-app        # role: commeilfaut
   - ceilings-scheduler  # role: commeilfaut
   - segments
-  - lessons
+  - family-hub
   - home-meters
-  - family-visits
   - homepage
   - dozzle
   - crowdsec-web-ui
