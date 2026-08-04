@@ -5,13 +5,13 @@ family_hub_image: "olegsmedyuk/family-hub:latest"
 # nothing to gain.
 family_hub_dir: "{{ data_dir }}/lessons"
 
-# The app answers on the new host and, transitionally, the old one. The webhook
-# URL is built from family_hub_webhook_host, which stays on the legacy host
-# until DNS + cert for the new one are confirmed live: a webhook URL without a
-# valid cert means Telegram cannot deliver and the bot goes dark.
+# The app answers on the new host and, transitionally, the old one — the alias
+# only keeps stale bookmarks working and can be dropped once nobody misses it.
+# The webhook is registered on family_hub_webhook_host, now the new host: its
+# DNS and Let's Encrypt cert are live and verified.
 family_hub_host: "family.{{ ansible_host }}"
 family_hub_legacy_host: "lessons.{{ ansible_host }}"
-family_hub_webhook_host: "{{ family_hub_legacy_host }}"
+family_hub_webhook_host: "{{ family_hub_host }}"
 
 family_hub_gemini_model: "gemini-flash-lite-latest"
 
