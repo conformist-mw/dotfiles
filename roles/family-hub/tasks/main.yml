@@ -44,6 +44,7 @@
       GEMINI_API_KEY: "{{ family_hub_gemini_api_key | default(family_visits_gemini_key | default('')) }}"
       GEMINI_MODEL: "{{ family_hub_gemini_model }}"
       VISIT_PEOPLE: "{{ family_hub_visit_people }}"
+      APPOINTMENT_COST_PROMPT_MIN: "{{ family_hub_cost_prompt_min }}"
       # NOTIFICATIONS_ENABLED is deliberately unset: Home Assistant sends the
       # daily/weekly appointment summaries from the ICS feed below, so enabling
       # them here would double-post to the family group. Lesson reminders are a

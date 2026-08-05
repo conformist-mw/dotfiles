@@ -15,6 +15,10 @@ family_hub_webhook_host: "{{ family_hub_host }}"
 
 family_hub_gemini_model: "gemini-flash-lite-latest"
 
+# Minutes after an appointment starts before the bot asks in the family group
+# what it cost; the answer is a reply to that message. "-1" disables it.
+family_hub_cost_prompt_min: "60"
+
 # Optional roster used to normalize the "who" of a captured appointment.
 # Deliberately empty here — this repo is public and those are family names.
 # Set family_hub_visit_people in host_vars/hetzner/secrets.sops.yaml to fill it.
