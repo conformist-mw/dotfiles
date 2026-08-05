@@ -57,21 +57,21 @@
       traefik.http.routers.family-hub.entrypoints: "websecure"
       traefik.http.routers.family-hub.tls: "true"
       traefik.http.routers.family-hub.tls.certresolver: "letsencrypt"
-      traefik.http.routers.family-hub.rule: "Host(`{{ family_hub_host }}`) || Host(`{{ family_hub_legacy_host }}`)"
+      traefik.http.routers.family-hub.rule: "Host(`{{ family_hub_host }}`)"
       traefik.http.services.family-hub.loadbalancer.server.port: "8080"
       traefik.http.routers.family-hub.middlewares: "auth-chain@file"
       # Telegram webhook endpoint must bypass oauth so Telegram can POST to it.
       # The path itself is a secret (lives in SOPS), so the endpoint is not
       # discoverable from the public repo.
       #
-      # The host alternation MUST stay parenthesized on this and the ICS router:
-      # `||` binds looser than `&&` in Traefik rules, so
-      # `Host(a) || Host(b) && PathPrefix(p)` would match ALL of host a and
+      # If a second host is ever added back here, the alternation must be
+      # parenthesized: `||` binds looser than `&&` in Traefik rules, so
+      # `Host(a) || Host(b) && PathPrefix(p)` matches ALL of host a and would
       # serve the whole app with no auth.
       traefik.http.routers.family-hub-bot.entrypoints: "websecure"
       traefik.http.routers.family-hub-bot.tls: "true"
       traefik.http.routers.family-hub-bot.tls.certresolver: "letsencrypt"
-      traefik.http.routers.family-hub-bot.rule: "(Host(`{{ family_hub_host }}`) || Host(`{{ family_hub_legacy_host }}`)) && PathPrefix(`{{ lessons_webhook_path | default('/tgwebhook') }}`)"
+      traefik.http.routers.family-hub-bot.rule: "Host(`{{ family_hub_host }}`) && PathPrefix(`{{ lessons_webhook_path | default('/tgwebhook') }}`)"
       traefik.http.routers.family-hub-bot.middlewares: "no-auth-chain@file"
       traefik.http.routers.family-hub-bot.service: "family-hub"
       traefik.http.routers.family-hub-bot.priority: "100"
@@ -80,7 +80,7 @@
       traefik.http.routers.family-hub-ics.entrypoints: "websecure"
       traefik.http.routers.family-hub-ics.tls: "true"
       traefik.http.routers.family-hub-ics.tls.certresolver: "letsencrypt"
-      traefik.http.routers.family-hub-ics.rule: "(Host(`{{ family_hub_host }}`) || Host(`{{ family_hub_legacy_host }}`)) && PathPrefix(`/calendar.ics`)"
+      traefik.http.routers.family-hub-ics.rule: "Host(`{{ family_hub_host }}`) && PathPrefix(`/calendar.ics`)"
       traefik.http.routers.family-hub-ics.middlewares: "no-auth-chain@file"
       traefik.http.routers.family-hub-ics.service: "family-hub"
       traefik.http.routers.family-hub-ics.priority: "100"

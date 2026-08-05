@@ -27,11 +27,11 @@
         container: "ceilings-app"
         server: "local-docker"
 
-    - Lessons:
-        href: https://lessons.{{ ansible_host }}
-        description: "Kids' lessons tracker"
+    - Family Hub:
+        href: https://family.{{ ansible_host }}
+        description: "Lessons tracker + family appointments"
         icon: "mdi-school"
-        container: "lessons"
+        container: "family-hub"
         server: "local-docker"
 
     - Home meters:
