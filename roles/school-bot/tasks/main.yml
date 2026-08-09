@@ -1,11 +1,14 @@
 ---
-# Long-polling Telegram bot (aiogram) — no Traefik/webhook/subdomain needed.
-# The bot reaches Telegram via outbound connections only.
+# One image, three roles behind its entrypoint: `migrate`, `bot`, `web`. The bot
+# (long-polling, outbound only) and the Mini App API share database/models.py, so
+# they ship under one tag — separate tags would invite a version skew where one
+# half has a column the other does not know about.
 #
-# Secret `school_bot_token` is NOT stored in this role. The age-key holder must
-# add it to host_vars/hetzner/secrets.sops.yaml (e.g. `just secrets-hetzner`):
+# Secrets are NOT stored in this role. The age-key holder keeps them in
+# host_vars/hetzner/secrets.sops.yaml (`just secrets-hetzner`):
 #     school_bot_token: "123456:ABC-..."
-# It is auto-decrypted by the community.sops vars plugin at deploy time.
+#     school_bot_session_secret: "<random>"
+# They are auto-decrypted by the community.sops vars plugin at deploy time.
 - name: Ensure school-bot data directory
   ansible.builtin.file:
     path: "{{ school_bot_dir }}"
@@ -15,6 +18,75 @@
     mode: "0755"
   become: true
 
+- name: Check whether the database already exists
+  ansible.builtin.stat:
+    path: "{{ school_bot_dir }}/school_bot.db"
+  register: school_bot_db
+
+- name: Look up the running containers
+  community.docker.docker_container_info:
+    name: "{{ item }}"
+  loop:
+    - school-bot
+    - school-web
+  register: school_bot_containers
+
+# Migrations are an explicit step, not a side effect of the bot starting: the bot
+# only verifies that the schema is at head and refuses to start on a mismatch, so
+# a deploy that skipped this would come back up dead. Both roles are stopped
+# first — a schema change with the old code still attached to the SQLite file is
+# the one window where the two can genuinely disagree.
+- name: Stop the containers before touching the schema
+  community.docker.docker_container:
+    name: "{{ item.item }}"
+    state: stopped
+  loop: "{{ school_bot_containers.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when: item.exists
+
+# Taken through sqlite3's backup API rather than by copying the file: with WAL
+# enabled the committed-but-not-checkpointed tail lives in school_bot.db-wal, and
+# a plain copy of the .db alone would silently lose it.
+- name: Back up the database before migrating
+  community.docker.docker_container:
+    image: "{{ school_bot_image }}"
+    pull: true
+    name: school-bot-backup
+    detach: false
+    cleanup: true
+    user: "{{ school_bot_uid }}:{{ school_bot_gid }}"
+    volumes:
+      - "{{ school_bot_dir }}:/data"
+    command:
+      - python
+      - -c
+      - >-
+        import sqlite3;
+        src = sqlite3.connect('/data/school_bot.db');
+        dst = sqlite3.connect('/data/school_bot.db.predeploy-{{ ansible_date_time.iso8601_basic_short }}');
+        src.backup(dst);
+        dst.close();
+        src.close()
+  when: school_bot_db.stat.exists
+
+- name: Apply database migrations
+  community.docker.docker_container:
+    image: "{{ school_bot_image }}"
+    pull: true
+    name: school-bot-migrate
+    detach: false
+    cleanup: true
+    user: "{{ school_bot_uid }}:{{ school_bot_gid }}"
+    networks:
+      - name: "{{ docker_network }}"
+    env:
+      TZ: "{{ tz }}"
+      DATABASE_URL: "sqlite+aiosqlite:////data/school_bot.db"
+    volumes:
+      - "{{ school_bot_dir }}:/data"
+    command: migrate
+
 - name: School-bot container
   community.docker.docker_container:
     image: "{{ school_bot_image }}"
@@ -22,6 +94,9 @@
     name: school-bot
     restart: true
     restart_policy: "unless-stopped"
+    # The image's default CMD, spelled out so the pair below reads as the two
+    # roles it is — and so `web` below cannot be mistaken for an omission.
+    command: bot
     user: "{{ school_bot_uid }}:{{ school_bot_gid }}"
     networks:
       - name: "{{ docker_network }}"
@@ -30,5 +105,82 @@
       TIMEZONE: "{{ tz }}"
       BOT_TOKEN: "{{ school_bot_token | default('') }}"
       DATABASE_URL: "sqlite+aiosqlite:////data/school_bot.db"
+      # The bot hashes the one-time Mini App launch token with this and the API
+      # looks it up by the same hash — if the two ever disagree, opening the app
+      # fails with "launch token is invalid" and nothing says why.
+      SESSION_SECRET: "{{ school_bot_session_secret | default('') }}"
+      WEB_APP_SHORT_NAME: "{{ school_bot_app_short_name }}"
+      # Only used for the fallback launch link (the bot reads its own username
+      # from getMe); without it that fallback points at a dev localhost URL.
+      WEB_APP_URL: "https://{{ school_bot_host }}"
     volumes:
       - "{{ school_bot_dir }}:/data"
+    # No HEALTHCHECK is baked into the image: the two roles are checked
+    # differently, so each container declares its own. The bot's scheduler
+    # touches HEARTBEAT_FILE every minute.
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          python -c "import os,sys,time; p=os.environ['HEARTBEAT_FILE'];
+          sys.exit(0 if os.path.exists(p) and time.time()-os.path.getmtime(p)<150 else 1)"
+      interval: 60s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+- name: School-web container (Mini App API + built frontend)
+  community.docker.docker_container:
+    image: "{{ school_bot_image }}"
+    pull: true
+    name: school-web
+    restart: true
+    restart_policy: "unless-stopped"
+    # Without this the image's default CMD applies and this container starts a
+    # SECOND long-polling bot on the same token — Telegram then hands updates to
+    # whichever instance asked last and both log getUpdates conflicts.
+    command: web
+    user: "{{ school_bot_uid }}:{{ school_bot_gid }}"
+    networks:
+      - name: "{{ docker_network }}"
+    env:
+      TZ: "{{ tz }}"
+      TIMEZONE: "{{ tz }}"
+      BOT_TOKEN: "{{ school_bot_token | default('') }}"
+      DATABASE_URL: "sqlite+aiosqlite:////data/school_bot.db"
+      SESSION_SECRET: "{{ school_bot_session_secret | default('') }}"
+      APP_ENV: "production"
+      WEB_APP_URL: "https://{{ school_bot_host }}"
+      WEB_APP_SHORT_NAME: "{{ school_bot_app_short_name }}"
+      # Invitation links are built server-side, so unlike the bot the API has no
+      # getMe to fall back on and needs the username handed to it.
+      BOT_USERNAME: "{{ school_bot_username }}"
+      # Must name the proxy, and it is traefik on the docker network — not a
+      # wildcard, because trusting X-Forwarded-For from anyone lets a client
+      # spoof its IP. Get it wrong and the auth rate limiter sees traefik's
+      # address on every request and collapses into one bucket shared by all
+      # users, throttling the family instead of an attacker.
+      FORWARDED_ALLOW_IPS: "{{ docker_subnet }}"
+    volumes:
+      - "{{ school_bot_dir }}:/data"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.school-web.entrypoints: "websecure"
+      traefik.http.routers.school-web.tls: "true"
+      traefik.http.routers.school-web.tls.certresolver: "letsencrypt"
+      traefik.http.routers.school-web.rule: "Host(`{{ school_bot_host }}`)"
+      traefik.http.services.school-web.loadbalancer.server.port: "8000"
+      # Telegram opens the Mini App in its own webview, which carries no tinyauth
+      # cookie and cannot complete an interactive login. The app authenticates
+      # every request itself against the signed initData Telegram hands it.
+      traefik.http.routers.school-web.middlewares: "no-auth-chain@file"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          python -c "import urllib.request,sys;
+          sys.exit(0 if urllib.request.urlopen('http://localhost:8000/api/v1/health').status==200 else 1)"
+      interval: 60s
+      timeout: 5s
+      start_period: 20s
+      retries: 3

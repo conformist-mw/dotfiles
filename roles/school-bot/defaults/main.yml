@@ -1,8 +1,18 @@
 ---
-school_bot_image: "ghcr.io/blikzes-bit/telegram-school-bot:latest"
+# Our fork, not upstream's registry: main here is upstream/main plus whatever we
+# have in flight, and it is what CI publishes. Pinned to an explicit sha tag —
+# with :latest a redeploy would silently pick up whatever landed last.
+school_bot_image: "ghcr.io/conformist-mw/telegram-school-bot:sha-1a019bc"
 school_bot_dir: "{{ data_dir }}/school-bot"
-# Owner of the data dir AND the uid the container runs as — MUST match so the
+# Owner of the data dir AND the uid the containers run as — MUST match so the
 # bot can write its SQLite DB. Defaults to the deploy user (puid/pgid); override
 # in host_vars to hand ownership to a dedicated login (see host_vars/hetzner).
 school_bot_uid: "{{ puid }}"
 school_bot_gid: "{{ pgid }}"
+
+# The Mini App: its host, and the short name BotFather knows it by. Together
+# with the bot's username they form the t.me/<bot>/<short_name>?startapp=<token>
+# links used for launching the app and for invitations.
+school_bot_host: "school.{{ ansible_host }}"
+school_bot_app_short_name: "schoolbotforyouapp"
+school_bot_username: "schoolbotforyoubot"
