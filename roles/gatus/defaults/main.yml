@@ -28,6 +28,7 @@ gatus_heartbeat_interval: "5m"
 # services can additionally go in gatus_http_endpoints below.
 gatus_watched_containers:
   - school-bot
+  - school-web
   - rsstt
   - ceilings-app        # role: commeilfaut
   - ceilings-scheduler  # role: commeilfaut
