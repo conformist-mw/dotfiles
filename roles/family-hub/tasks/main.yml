@@ -36,6 +36,11 @@
       TELEGRAM_WEBHOOK_URL: "https://{{ family_hub_webhook_host }}{{ lessons_webhook_path | default('/tgwebhook') }}"
       TELEGRAM_WEBHOOK_SECRET: "{{ lessons_webhook_secret | default('') }}"
       TELEGRAM_ALLOWED_CHATS: "{{ lessons_allowed_chats | default('') }}"
+      # Who may open the Mini App. Deliberately NOT the chat allowlist above:
+      # a Mini App authenticates the person who tapped it, so its initData
+      # carries a user id even when it was launched from the family group.
+      # Empty means nobody, which is the safe direction to fail.
+      TELEGRAM_MINI_USERS: "{{ lessons_mini_users | default('') }}"
       TELEGRAM_NOTIFY_CHAT: "{{ lessons_notify_chat | default('') }}"
       TELEGRAM_REMINDER_DELAY_MIN: "{{ lessons_reminder_delay_min | default('60') }}"
       # Free-text appointment capture. The key is the one the retired
@@ -75,6 +80,21 @@
       traefik.http.routers.family-hub-bot.middlewares: "no-auth-chain@file"
       traefik.http.routers.family-hub-bot.service: "family-hub"
       traefik.http.routers.family-hub-bot.priority: "100"
+      # Telegram Mini App. Bypasses oauth because Telegram's web view cannot
+      # carry an oauth2-proxy session; it is guarded instead by an HMAC over
+      # the launch payload plus TELEGRAM_MINI_USERS above. /mini itself is a
+      # data-free shell, and everything under /mini/api/ verifies per request.
+      #
+      # The bypass covers only this prefix — the dashboard, payments and
+      # courses stay behind auth-chain. The priority matters: without it the
+      # catch-all Host() router wins and the Mini App hits the oauth wall.
+      traefik.http.routers.family-hub-mini.entrypoints: "websecure"
+      traefik.http.routers.family-hub-mini.tls: "true"
+      traefik.http.routers.family-hub-mini.tls.certresolver: "letsencrypt"
+      traefik.http.routers.family-hub-mini.rule: "Host(`{{ family_hub_host }}`) && PathPrefix(`/mini`)"
+      traefik.http.routers.family-hub-mini.middlewares: "no-auth-chain@file"
+      traefik.http.routers.family-hub-mini.service: "family-hub"
+      traefik.http.routers.family-hub-mini.priority: "100"
       # ICS feed for HA's Remote Calendar — machine-to-machine, so it bypasses
       # auth and is guarded by the ICS_TOKEN query param instead.
       traefik.http.routers.family-hub-ics.entrypoints: "websecure"
