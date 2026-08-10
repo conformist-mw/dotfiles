@@ -96,11 +96,11 @@
         description: "RSS to Telegram"
         icon: "mdi-rss"
         siteMonitor: https://rsstt.conformist.name
-    - Lessons:
-        href: https://lessons.conformist.name
-        description: "Kids' lessons tracker"
+    - Family Hub:
+        href: https://family.conformist.name
+        description: "Lessons tracker + family appointments"
         icon: "mdi-school"
-        siteMonitor: https://lessons.conformist.name
+        siteMonitor: https://family.conformist.name
     - Home meters:
         href: https://meters.conformist.name
         description: "Utility meter readings"
