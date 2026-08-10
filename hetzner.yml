@@ -36,7 +36,6 @@
     - { role: segments, tags: [apps, segments] }
     - { role: family-hub, tags: [apps, family-hub, "family_hub"] }
     - { role: home-meters, tags: [apps, home-meters, "home_meters"] }
-    - { role: family-visits, tags: [apps, family-visits, "family_visits"] }
     - { role: school-bot, tags: [apps, school-bot, "school_bot"] }
 
     # Monitoring
