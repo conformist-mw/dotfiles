@@ -1,9 +1,9 @@
 ---
 family_hub_image: "olegsmedyuk/family-hub:latest"
-# Data dir and DB filename keep their old names: the volume already exists on
-# the VPS with lessons.db in it, and renaming would mean a migration with
-# nothing to gain.
-family_hub_dir: "{{ data_dir }}/lessons"
+# Must agree with the -db flag in the image's CMD. When they disagree SQLite
+# creates an empty database at the new path and the app comes up healthy and
+# blank, so a change here is verified by row counts, not by the log.
+family_hub_dir: "{{ data_dir }}/family-hub"
 
 # The bot the token in family_hub_bot_token belongs to. Not a secret and not
 # read by the container — it is here so the deployment says which Telegram

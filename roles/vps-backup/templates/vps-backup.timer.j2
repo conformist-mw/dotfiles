@@ -1,0 +1,11 @@
+[Unit]
+Description=VPS SQLite snapshot timer
+
+[Timer]
+OnCalendar={{ vps_backup_time }}
+# The VPS is not always up at 03:20 — a missed run should happen late rather
+# than not at all.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

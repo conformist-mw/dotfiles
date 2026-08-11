@@ -1,0 +1,17 @@
+---
+# Offsite backup for the VPS. The bucket and its application key belong to the
+# host, not to any one app: whatever else lands here later adds an entry to
+# vps_backup_sqlite rather than a second bucket and a second key.
+vps_backup_dir: "{{ data_dir }}/backups"
+
+# How many snapshots of each database to keep. The remote mirrors this set, so
+# a pruned local snapshot is pruned there too — this is history, not an
+# archive, and the point of it is yesterday, not last year.
+vps_backup_keep: 14
+
+vps_backup_time: "03:20"
+
+# What to snapshot. Each entry needs a name (used as the file prefix) and the
+# path to a SQLite database on the host. Empty here on purpose: the list is a
+# property of the host, and lives in host_vars.
+vps_backup_sqlite: []

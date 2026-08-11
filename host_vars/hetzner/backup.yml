@@ -1,0 +1,6 @@
+---
+# What the vps-backup role snapshots. Paths are on the host, not inside a
+# container — the role reads the files the containers write.
+vps_backup_sqlite:
+  - name: family-hub
+    path: "{{ data_dir }}/family-hub/family-hub.db"

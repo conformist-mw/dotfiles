@@ -1,0 +1,68 @@
+---
+# The VPS had no backups at all until this role: the only copies of the family
+# data were on the same disk as the original.
+
+- name: Install rclone
+  ansible.builtin.apt:
+    name: rclone
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
+
+- name: Ensure rclone config dir exists
+  ansible.builtin.file:
+    path: ~/.config/rclone
+    state: directory
+    mode: "0700"
+
+# Scoped to this host's own bucket. Deliberately not the account-level key the
+# home box uses for the photo archive: this machine faces the internet, and a
+# key that can only reach one bucket costs one bucket if the host is taken.
+- name: Write rclone backblaze config
+  ansible.builtin.copy:
+    dest: ~/.config/rclone/rclone.conf
+    content: |
+      [backblaze]
+      type = b2
+      account = {{ vps_b2_key_id }}
+      key = {{ vps_b2_key }}
+    mode: "0600"
+  no_log: true
+
+- name: Ensure backup dir exists
+  ansible.builtin.file:
+    path: "{{ vps_backup_dir }}"
+    state: directory
+    mode: "0750"
+
+- name: Install the backup script
+  ansible.builtin.template:
+    src: vps-backup.sh.j2
+    dest: /usr/local/bin/vps-backup.sh
+    mode: "0755"
+  become: true
+
+- name: Install the backup service
+  ansible.builtin.template:
+    src: vps-backup.service.j2
+    dest: /etc/systemd/system/vps-backup.service
+    mode: "0644"
+  become: true
+  notify: Reload systemd
+
+- name: Install the backup timer
+  ansible.builtin.template:
+    src: vps-backup.timer.j2
+    dest: /etc/systemd/system/vps-backup.timer
+    mode: "0644"
+  become: true
+  notify: Reload systemd
+
+- name: Enable + start the backup timer
+  ansible.builtin.systemd:
+    name: vps-backup.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true

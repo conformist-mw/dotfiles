@@ -1,0 +1,11 @@
+[Unit]
+Description=VPS SQLite snapshots + offsite mirror
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User={{ ansible_user }}
+ExecStart=/usr/local/bin/vps-backup.sh
+StandardOutput=journal
+StandardError=journal

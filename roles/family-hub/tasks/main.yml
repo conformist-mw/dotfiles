@@ -16,6 +16,37 @@
 # data). A fresh install starts empty; see DEPLOY.md in the family-hub repo for
 # the one-off manual import command.
 
+# Migrate as its own step, before the container is touched. The server also
+# migrates on boot, but a failure there happens inside a container this play
+# has already created: docker reports it started, the play goes green, and the
+# app restarts forever. Here a failure stops the play with the old container
+# still serving. This also pulls the new image, so the container task below
+# never races a pull.
+- name: Migrate the family-hub database
+  community.docker.docker_container:
+    name: family-hub-migrate
+    image: "{{ family_hub_image }}"
+    pull: true
+    entrypoint: /app/migrate
+    command: ["-db", "/data/family-hub.db"]
+    user: "{{ puid }}:{{ pgid }}"
+    volumes:
+      - "{{ family_hub_dir }}:/data"
+    detach: false
+    cleanup: true
+    restart_policy: "no"
+    output_logs: true
+  register: family_hub_migrate
+  # The module reports a finished container, not a successful one — a migration
+  # that exits 1 is "changed" unless the exit code is checked by hand. It lives
+  # in `status`, not in container.State: cleanup removes the container before
+  # the module can inspect it.
+  failed_when: (family_hub_migrate.status | default(1)) != 0
+
+- name: Report the schema version
+  ansible.builtin.debug:
+    msg: "{{ family_hub_migrate.container.Output | default('') | trim | split('\n') | last }}"
+
 - name: Family-hub container
   # Diff off: this task's before/after is the container spec, and the container
   # spec is every secret the app has — bot token, webhook secret, ICS token,

@@ -1,0 +1,68 @@
+#!/bin/bash
+# Snapshot the VPS's SQLite databases and mirror them to B2.
+# Managed by Ansible (roles/vps-backup).
+set -euo pipefail
+
+BACKUP_DIR="{{ vps_backup_dir }}"
+KEEP={{ vps_backup_keep }}
+
+mkdir -p "$BACKUP_DIR"
+# Drop anything a previously interrupted run left half-written.
+rm -f "$BACKUP_DIR"/*.tmp
+
+TS=$(date +%Y%m%d-%H%M%S)
+
+snapshot() {
+  local name="$1" src="$2" out="$BACKUP_DIR/$1-$TS.db.gz"
+
+  if [ ! -f "$src" ]; then
+    echo "$(date -Is) $name: no database at $src, skipped" >&2
+    return 0
+  fi
+
+  # Not cp: these databases are open and in WAL mode, and copying one under a
+  # live writer yields a file that only looks fine. sqlite3's own backup API
+  # takes a consistent snapshot of a database being written to. The CLI is not
+  # installed on this host; python3 carries the same API.
+  python3 - "$src" "$out.tmp" <<'PY'
+import gzip, os, shutil, sqlite3, sys, tempfile
+
+src, out = sys.argv[1], sys.argv[2]
+fd, tmp = tempfile.mkstemp(suffix=".db")
+os.close(fd)
+try:
+    con = sqlite3.connect(f"file:{src}?mode=ro", uri=True)
+    dst = sqlite3.connect(tmp)
+    with dst:
+        con.backup(dst)
+    # A snapshot that cannot be read back is worse than a missing one: it
+    # would rotate a good backup out while looking like a good backup.
+    if dst.execute("pragma integrity_check").fetchone()[0] != "ok":
+        raise SystemExit(f"integrity check failed for {src}")
+    dst.close()
+    con.close()
+    with open(tmp, "rb") as f, gzip.open(out, "wb") as g:
+        shutil.copyfileobj(f, g)
+finally:
+    os.unlink(tmp)
+PY
+
+  gzip -t "$out.tmp"
+  mv "$out.tmp" "$out"
+
+  # Keep the newest $KEEP snapshots of this database, drop the rest.
+  ls -1t "$BACKUP_DIR/$name"-*.db.gz | tail -n +$((KEEP + 1)) | xargs -r rm -f
+
+  echo "$(date -Is) $name OK: $(basename "$out") ($(du -h "$out" | cut -f1))"
+}
+
+{% for db in vps_backup_sqlite %}
+snapshot {{ db.name | quote }} {{ db.path | quote }}
+{% endfor %}
+
+# Mirror rather than copy, so a snapshot pruned here is pruned there and the
+# remote keeps the same $KEEP-deep window instead of growing without limit.
+/usr/bin/rclone copy "$BACKUP_DIR" "backblaze:{{ vps_b2_bucket }}" \
+  --delete-during --log-level=INFO
+
+echo "$(date -Is) offsite mirror OK -> backblaze:{{ vps_b2_bucket }}"

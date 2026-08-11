@@ -38,6 +38,10 @@
     - { role: home-meters, tags: [apps, home-meters, "home_meters"] }
     - { role: school-bot, tags: [apps, school-bot, "school_bot"] }
 
+    # Snapshots whatever host_vars/hetzner/backup.yml lists, so it runs after
+    # the apps that write those files.
+    - { role: vps-backup, tags: [apps, backup, "vps_backup"] }
+
     # Monitoring
     - { role: beszel, tags: [apps, monitoring, beszel] }
     - { role: gatus, tags: [apps, monitoring, gatus] }
