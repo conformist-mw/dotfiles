@@ -5,12 +5,20 @@ family_hub_image: "olegsmedyuk/family-hub:latest"
 # nothing to gain.
 family_hub_dir: "{{ data_dir }}/lessons"
 
+# The bot the token in family_hub_bot_token belongs to. Not a secret and not
+# read by the container — it is here so the deployment says which Telegram
+# identity it drives, and so a deep link into the Mini App has a source.
+family_hub_bot_username: "family_core_hub_bot"
+
 # The one host the app answers on. The transitional lessons.* alias is gone —
 # HA, the homepage tile and the Telegram webhook all moved here first.
 family_hub_host: "family.{{ ansible_host }}"
 family_hub_webhook_host: "{{ family_hub_host }}"
 
 family_hub_gemini_model: "gemini-flash-lite-latest"
+
+# Minutes after a lesson before the bot asks the group whether it happened.
+family_hub_reminder_delay_min: "60"
 
 # Minutes after an appointment starts before the bot asks in the family group
 # what it cost; the answer is a reply to that message. "-1" disables it.

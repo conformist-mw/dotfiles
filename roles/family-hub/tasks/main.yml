@@ -2,14 +2,10 @@
 # family-hub is the merged lessons + family-visits app: one container, one bot,
 # one SQLite file, one ICS feed.
 #
-# Secret var names still read lessons_* / family_visits_*: they live in
-# encrypted files (this role's vars/secrets.sops.yaml and
-# host_vars/hetzner/secrets.sops.yaml) and renaming a key means re-encrypting
-# secret material — a deliberate follow-up, not part of the merge.
-- name: Load family-hub secrets (sops)
-  community.sops.load_vars:
-    file: "{{ role_path }}/vars/secrets.sops.yaml"
-
+# Every secret it reads is a family_hub_* key in host_vars/hetzner —
+# secrets belong to a host, not to a role, so there is no vars/ file here to
+# load. Names with no default are required: a typo should fail the play rather
+# than quietly start a bot with an empty token.
 - name: Ensure family-hub data directory
   ansible.builtin.file:
     path: "{{ family_hub_dir }}"
@@ -21,6 +17,11 @@
 # the one-off manual import command.
 
 - name: Family-hub container
+  # Diff off: this task's before/after is the container spec, and the container
+  # spec is every secret the app has — bot token, webhook secret, ICS token,
+  # Gemini key. A run that changes any env var would print all of them to the
+  # terminal and into whatever captured that terminal.
+  diff: false
   community.docker.docker_container:
     image: "{{ family_hub_image }}"
     pull: true
@@ -32,21 +33,20 @@
       - name: "{{ docker_network }}"
     env:
       TZ: "{{ tz }}"
-      TELEGRAM_BOT_TOKEN: "{{ lessons_bot_token | default('') }}"
-      TELEGRAM_WEBHOOK_URL: "https://{{ family_hub_webhook_host }}{{ lessons_webhook_path | default('/tgwebhook') }}"
-      TELEGRAM_WEBHOOK_SECRET: "{{ lessons_webhook_secret | default('') }}"
-      TELEGRAM_ALLOWED_CHATS: "{{ lessons_allowed_chats | default('') }}"
+      TELEGRAM_BOT_TOKEN: "{{ family_hub_bot_token }}"
+      TELEGRAM_WEBHOOK_URL: "https://{{ family_hub_webhook_host }}{{ family_hub_webhook_path }}"
+      TELEGRAM_WEBHOOK_SECRET: "{{ family_hub_webhook_secret }}"
+      TELEGRAM_ALLOWED_CHATS: "{{ family_hub_allowed_chats }}"
       # Who may open the Mini App. Deliberately NOT the chat allowlist above:
       # a Mini App authenticates the person who tapped it, so its initData
       # carries a user id even when it was launched from the family group.
       # Empty means nobody, which is the safe direction to fail.
-      TELEGRAM_MINI_USERS: "{{ lessons_mini_users | default('') }}"
-      TELEGRAM_NOTIFY_CHAT: "{{ lessons_notify_chat | default('') }}"
-      TELEGRAM_REMINDER_DELAY_MIN: "{{ lessons_reminder_delay_min | default('60') }}"
-      # Free-text appointment capture. The key is the one the retired
-      # family-visits role used; without it the bot still serves everything
-      # except capture.
-      GEMINI_API_KEY: "{{ family_hub_gemini_api_key | default(family_visits_gemini_key | default('')) }}"
+      TELEGRAM_MINI_USERS: "{{ family_hub_mini_users }}"
+      TELEGRAM_NOTIFY_CHAT: "{{ family_hub_notify_chat }}"
+      TELEGRAM_REMINDER_DELAY_MIN: "{{ family_hub_reminder_delay_min }}"
+      # Free-text appointment capture. Without the key the bot still serves
+      # everything except capture.
+      GEMINI_API_KEY: "{{ family_hub_gemini_api_key }}"
       GEMINI_MODEL: "{{ family_hub_gemini_model }}"
       VISIT_PEOPLE: "{{ family_hub_visit_people }}"
       APPOINTMENT_COST_PROMPT_MIN: "{{ family_hub_cost_prompt_min }}"
@@ -54,7 +54,7 @@
       # daily/weekly appointment summaries from the ICS feed below, so enabling
       # them here would double-post to the family group. Lesson reminders are a
       # separate ticker and are unaffected.
-      ICS_TOKEN: "{{ lessons_ics_token | default('') }}"
+      ICS_TOKEN: "{{ family_hub_ics_token }}"
     volumes:
       - "{{ family_hub_dir }}:/data"
     labels:
@@ -76,7 +76,7 @@
       traefik.http.routers.family-hub-bot.entrypoints: "websecure"
       traefik.http.routers.family-hub-bot.tls: "true"
       traefik.http.routers.family-hub-bot.tls.certresolver: "letsencrypt"
-      traefik.http.routers.family-hub-bot.rule: "Host(`{{ family_hub_host }}`) && PathPrefix(`{{ lessons_webhook_path | default('/tgwebhook') }}`)"
+      traefik.http.routers.family-hub-bot.rule: "Host(`{{ family_hub_host }}`) && PathPrefix(`{{ family_hub_webhook_path }}`)"
       traefik.http.routers.family-hub-bot.middlewares: "no-auth-chain@file"
       traefik.http.routers.family-hub-bot.service: "family-hub"
       traefik.http.routers.family-hub-bot.priority: "100"
