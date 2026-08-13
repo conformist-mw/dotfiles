@@ -41,6 +41,13 @@
         container: "home-meters"
         server: "local-docker"
 
+    - Subscriptions:
+        href: https://subs.{{ ansible_host }}
+        description: "Subscriptions & mobile plans"
+        icon: "mdi-calendar-refresh"
+        container: "subtrackr"
+        server: "local-docker"
+
     - Pihole:
         href: https://pihole.{{ ansible_host }}/admin
         description: "Network-wide ad blocking"

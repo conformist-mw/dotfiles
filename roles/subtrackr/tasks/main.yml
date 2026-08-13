@@ -1,0 +1,37 @@
+---
+# Subscription tracker (bscott/subtrackr): Go + SQLite, single container, no
+# state outside the DB — logos are stored in the database, not on disk. Its own
+# login is optional and stays off: access is gated at the edge by tinyauth (the
+# default auth-chain@file middleware from the shared traefik_labels).
+
+- name: Ensure subtrackr data directory
+  ansible.builtin.file:
+    path: "{{ app_data_dir }}"
+    state: directory
+    owner: "{{ puid }}"
+    group: "{{ pgid }}"
+    mode: "0755"
+
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+  vars:
+    additional_labels: "{{ subtrackr_extra_labels }}"
+
+- name: Subtrackr container
+  community.docker.docker_container:
+    name: "{{ app_name }}"
+    image: "{{ subtrackr_image }}"
+    pull: true
+    restart_policy: "unless-stopped"
+    # The image runs as root by default; it only ever writes /app/data.
+    user: "{{ puid }}:{{ pgid }}"
+    networks:
+      - name: "{{ docker_network }}"
+    env:
+      TZ: "{{ tz }}"
+      GIN_MODE: "release"
+      DATABASE_PATH: "/app/data/subtrackr.db"
+    volumes:
+      - "{{ app_data_dir }}:/app/data"
+    labels: "{{ labels }}"

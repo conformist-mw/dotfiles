@@ -37,6 +37,7 @@
     - { role: family-hub, tags: [apps, family-hub, "family_hub"] }
     - { role: home-meters, tags: [apps, home-meters, "home_meters"] }
     - { role: school-bot, tags: [apps, school-bot, "school_bot"] }
+    - { role: subtrackr, tags: [apps, subtrackr] }
 
     # Snapshots whatever host_vars/hetzner/backup.yml lists, so it runs after
     # the apps that write those files.

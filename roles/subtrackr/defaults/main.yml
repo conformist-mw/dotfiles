@@ -1,0 +1,14 @@
+---
+app_name: "subtrackr"
+app_subdomain: "subs"
+app_port: 8080
+app_data_dir: "{{ data_dir }}/subtrackr"
+
+# Pinned: watchtower is gone, image bumps come through renovate/manual PRs.
+subtrackr_image: "ghcr.io/bscott/subtrackr:0.6.4"
+
+# The hetzner inventory rule label only references app_name; override it so the
+# hostname is subs.<host> instead of subtrackr.<host>. Same trick as home-meters.
+subtrackr_extra_labels:
+  - key: "traefik.http.routers.{{ app_name }}.rule"
+    value: "Host(`{{ app_subdomain }}.{{ ansible_host }}`)"
