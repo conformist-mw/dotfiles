@@ -1,0 +1,29 @@
+---
+# Names this host must answer to, relative to the zone. One line per app that
+# hetzner.yml actually deploys — if a role serves a hostname, it belongs here,
+# and adding it before the first deploy is the whole point of the dns role.
+#
+# Not the full zone: mail, the router, the WireGuard-proxied home services and
+# the leftovers of retired apps are all still in there and stay there. The role
+# only ever adds, so anything left off this list is untouched rather than
+# removed.
+dns_subdomains:
+  - "@"
+  - www
+  - traefik
+  - tinyauth
+  - pihole
+  - crowdsec
+  - dozzle
+  - glances
+  - dash # homepage (hostname_prefix: "dash.")
+  - rsstt
+  - commeilfaut
+  - segments
+  - family # family-hub
+  - meters # home-meters
+  - school # school-bot + the Mini App
+  - subs # subtrackr
+  - mealie
+  - beszel
+  - gatus

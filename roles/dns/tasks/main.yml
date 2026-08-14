@@ -1,0 +1,108 @@
+---
+# Publishes the A records this host's apps need. Until now every one of them was
+# added by hand in the console, which works right up to the deploy where it is
+# forgotten: the role runs, the container starts, traefik even gets its
+# certificate — dns-01 talks to the zone, not to the name — and the only thing
+# missing is the record, so the app is simply unreachable and nothing says why.
+#
+# Additive on purpose. It creates what is missing and never deletes or rewrites.
+# The zone holds plenty this playbook knows nothing about — mail, the router,
+# names left over from retired apps — and a role that reconciled the zone
+# against the list below would quietly take all of it out. Records pointing
+# somewhere unexpected are reported and left alone; that is a decision, not a
+# drift to correct.
+#
+# Runs from the control node: the token stays off the VPS, and the records can
+# be fixed even when the host itself is down.
+
+- name: Look up the DNS zone
+  delegate_to: localhost
+  become: false
+  ansible.builtin.uri:
+    url: "{{ dns_api }}/zones?name={{ dns_zone }}"
+    headers:
+      Authorization: "Bearer {{ hetzner_dns_api_token }}"
+  register: dns_zone_lookup
+  # The token rides in the header, and uri echoes the headers it was called with.
+  no_log: true
+  check_mode: false
+
+- name: Fail if the zone is not in this account
+  ansible.builtin.fail:
+    msg: >-
+      No zone named {{ dns_zone }} on this Hetzner account. Either the token
+      belongs elsewhere or the zone never made it through the May 2026 move off
+      dns.hetzner.com.
+  when: dns_zone_lookup.json.zones | length == 0
+
+- name: Fetch the zone's A records
+  delegate_to: localhost
+  become: false
+  ansible.builtin.uri:
+    # per_page maxes out at 100 and the zone is well under it; a bigger zone
+    # would need paging, and would silently look half-empty without it.
+    url: "{{ dns_api }}/zones/{{ dns_zone_lookup.json.zones[0].id }}/rrsets?type=A&per_page=100"
+    headers:
+      Authorization: "Bearer {{ hetzner_dns_api_token }}"
+  register: dns_rrsets
+  no_log: true
+  check_mode: false
+
+# Reduced to {name: [address, ...]} first. The API returns each record as an
+# object carrying a comment alongside the value, so comparing the record lists
+# as they arrive would report every name as a mismatch over an empty comment.
+- name: Index the zone's A records by name
+  ansible.builtin.set_fact:
+    dns_current: >-
+      {{ dict(dns_rrsets.json.rrsets | map(attribute='name') | list
+              | zip(dns_rrsets.json.rrsets | map(attribute='records')
+                    | map('map', attribute='value') | map('list') | list)) }}
+
+- name: Work out what is missing and what disagrees
+  ansible.builtin.set_fact:
+    dns_missing: "{{ dns_subdomains | difference(dns_current.keys() | list) }}"
+    dns_elsewhere: >-
+      {{ dns_current | dict2items
+         | selectattr('key', 'in', dns_subdomains)
+         | rejectattr('value', 'eq', [dns_target])
+         | map(attribute='key') | list }}
+
+- name: Report records that point somewhere other than this host
+  ansible.builtin.debug:
+    msg: >-
+      Pointing elsewhere, left untouched: {{ dns_elsewhere | join(', ') }}.
+      Expected {{ dns_target }}.
+  when: dns_elsewhere | length > 0
+
+- name: Report the records already in place
+  ansible.builtin.debug:
+    msg: >-
+      {{ dns_subdomains | length - dns_missing | length }} of
+      {{ dns_subdomains | length }} names already resolve;
+      {{ 'nothing to publish' if dns_missing | length == 0
+         else 'publishing: ' + dns_missing | join(', ') }}
+
+- name: Publish the missing A records
+  delegate_to: localhost
+  become: false
+  ansible.builtin.uri:
+    url: "{{ dns_api }}/zones/{{ dns_zone_lookup.json.zones[0].id }}/rrsets"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ hetzner_dns_api_token }}"
+    body_format: json
+    body:
+      name: "{{ item }}"
+      type: A
+      ttl: "{{ dns_ttl }}"
+      records:
+        - value: "{{ dns_target }}"
+    status_code: [200, 201]
+  loop: "{{ dns_missing }}"
+  # uri reports a POST as ok, so a run that published a record would otherwise
+  # come back green and unchanged. The loop only ever covers missing names, so
+  # reaching this task at all is a change.
+  changed_when: true
+  # The token rides in the header. The debug above names what is being
+  # published, since this task can only censor the item along with it.
+  no_log: true

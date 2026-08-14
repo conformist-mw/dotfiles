@@ -1,0 +1,21 @@
+---
+# Hetzner's own API, so the zone is reachable with the token traefik already
+# holds for the ACME dns-01 challenge (host_vars/hetzner/secrets.sops.yaml).
+# This is the console API — the old dns.hetzner.com one was shut down in May
+# 2026 and its tokens no longer work anywhere.
+dns_api: "https://api.hetzner.cloud/v1"
+
+# The zone is the apex, which for this host is also what ansible_host is set to.
+dns_zone: "{{ ansible_host }}"
+
+# Everything in the zone points at this machine — the apps are all behind the
+# one traefik. Taken from the host rather than written down, so a rebuilt VPS
+# with a new address doesn't need this file edited.
+dns_target: "{{ ansible_default_ipv4.address }}"
+
+dns_ttl: 86400
+
+# Names that must resolve, relative to the zone ("subs", not
+# "subs.conformist.name"; "@" for the apex). Empty here on purpose: what a host
+# serves is a property of the host, so the list lives in host_vars.
+dns_subdomains: []
