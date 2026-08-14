@@ -40,8 +40,11 @@
       # Not cosmetic: this is what mealie puts in the links it mails out and in
       # the OIDC callback. Wrong here means working locally and broken in mail.
       BASE_URL: "https://{{ app_subdomain }}.{{ ansible_host }}"
-      ALLOW_SIGNUP: "{{ mealie_allow_signup }}"
-      SECURITY_MAX_LOGIN_ATTEMPTS: "{{ mealie_max_login_attempts }}"
+      # `| string` is not decoration: a bare {{ }} hands the module back the
+      # var's real type, and docker refuses a non-string env value rather than
+      # guessing what an unquoted 5 or false was meant to be.
+      ALLOW_SIGNUP: "{{ mealie_allow_signup | string }}"
+      SECURITY_MAX_LOGIN_ATTEMPTS: "{{ mealie_max_login_attempts | string }}"
     memory: "{{ mealie_memory }}"
     volumes:
       - "{{ app_data_dir }}:/app/data"
