@@ -15,3 +15,10 @@ vps_backup_time: "03:20"
 # path to a SQLite database on the host. Empty here on purpose: the list is a
 # property of the host, and lives in host_vars.
 vps_backup_sqlite: []
+
+# Directories to archive whole, for apps that keep state outside their
+# database — uploads, generated files, anything a restored .db would reference
+# and not find. Each entry needs a name and a path; `exclude` takes tar
+# patterns, and should list the databases covered above so they are not
+# captured a second time, live and inconsistent, inside the tarball.
+vps_backup_dirs: []

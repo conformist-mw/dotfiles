@@ -1,5 +1,5 @@
 #!/bin/bash
-# Snapshot the VPS's SQLite databases and mirror them to B2.
+# Snapshot the VPS's SQLite databases and data directories, mirror them to B2.
 # Managed by Ansible (roles/vps-backup).
 set -euo pipefail
 
@@ -9,6 +9,11 @@ KEEP={{ vps_backup_keep }}
 mkdir -p "$BACKUP_DIR"
 # Drop anything a previously interrupted run left half-written.
 rm -f "$BACKUP_DIR"/*.tmp
+
+# Keep the newest $KEEP snapshots matching a prefix+suffix, drop the rest.
+rotate() {
+  ls -1t "$BACKUP_DIR/$1"-*"$2" | tail -n +$((KEEP + 1)) | xargs -r rm -f
+}
 
 TS=$(date +%Y%m%d-%H%M%S)
 
@@ -50,14 +55,57 @@ PY
   gzip -t "$out.tmp"
   mv "$out.tmp" "$out"
 
-  # Keep the newest $KEEP snapshots of this database, drop the rest.
-  ls -1t "$BACKUP_DIR/$name"-*.db.gz | tail -n +$((KEEP + 1)) | xargs -r rm -f
+  rotate "$name" .db.gz
+
+  echo "$(date -Is) $name OK: $(basename "$out") ($(du -h "$out" | cut -f1))"
+}
+
+# For state a database does not hold. Mealie is the case that forced it: its
+# recipes are rows, its photos are files, and a restored database alone points
+# at images that no longer exist. Any exclude patterns follow the path.
+archive() {
+  local name="$1" src="$2" out="$BACKUP_DIR/$1-$TS.tar.gz"
+  shift 2
+
+  if [ ! -d "$src" ]; then
+    echo "$(date -Is) $name: no directory at $src, skipped" >&2
+    return 0
+  fi
+
+  local excludes=()
+  local pat
+  for pat in "$@"; do
+    excludes+=(--exclude="$pat")
+  done
+
+  # tar exits 1 when a file it is reading changes underneath it, which is
+  # normal on a live app and not a reason to fail the run — the affected file
+  # is the only casualty. 2 and above is a real error and must not rotate a
+  # good archive out.
+  local rc=0
+  tar -czf "$out.tmp" "${excludes[@]}" \
+    -C "$(dirname "$src")" "$(basename "$src")" || rc=$?
+  if [ "$rc" -gt 1 ]; then
+    echo "$(date -Is) $name FAILED: tar exited $rc" >&2
+    rm -f "$out.tmp"
+    return 1
+  fi
+  [ "$rc" -eq 1 ] && echo "$(date -Is) $name: files changed while archiving" >&2
+
+  gzip -t "$out.tmp"
+  mv "$out.tmp" "$out"
+
+  rotate "$name" .tar.gz
 
   echo "$(date -Is) $name OK: $(basename "$out") ($(du -h "$out" | cut -f1))"
 }
 
 {% for db in vps_backup_sqlite %}
 snapshot {{ db.name | quote }} {{ db.path | quote }}
+{% endfor %}
+{% for d in vps_backup_dirs %}
+archive {{ d.name | quote }} {{ d.path | quote }}{% for e in d.exclude | default([]) %} {{ e | quote }}{% endfor %}
+
 {% endfor %}
 
 # Mirror rather than copy, so a snapshot pruned here is pruned there and the
