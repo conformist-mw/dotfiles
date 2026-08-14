@@ -1,0 +1,48 @@
+---
+# Recipe manager (mealie-recipes/mealie): FastAPI + Nuxt + SQLite, one
+# container. State is split — the database holds the recipes, the data
+# directory holds every photo, and neither is a backup of the other. Both are
+# listed in host_vars/hetzner/backup.yml for that reason.
+#
+# First run creates an admin at changeme@example.com / MyPassword. On a host
+# whose login page is public that is a live hole until it is changed, so change
+# it in the UI before anything else.
+
+- name: Ensure mealie data directory
+  ansible.builtin.file:
+    path: "{{ app_data_dir }}"
+    state: directory
+    owner: "{{ puid }}"
+    group: "{{ pgid }}"
+    mode: "0755"
+
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+  vars:
+    additional_labels: "{{ mealie_extra_labels }}"
+
+- name: Mealie container
+  community.docker.docker_container:
+    name: "{{ app_name }}"
+    image: "{{ mealie_image }}"
+    pull: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    # PUID/PGID rather than `user:`. The image's entrypoint chowns /app/data
+    # as root and then drops to that uid — starting it as an unprivileged user
+    # instead skips the chown and it fails to write its own database.
+    env:
+      TZ: "{{ tz }}"
+      PUID: "{{ puid }}"
+      PGID: "{{ pgid }}"
+      # Not cosmetic: this is what mealie puts in the links it mails out and in
+      # the OIDC callback. Wrong here means working locally and broken in mail.
+      BASE_URL: "https://{{ app_subdomain }}.{{ ansible_host }}"
+      ALLOW_SIGNUP: "{{ mealie_allow_signup }}"
+      SECURITY_MAX_LOGIN_ATTEMPTS: "{{ mealie_max_login_attempts }}"
+    memory: "{{ mealie_memory }}"
+    volumes:
+      - "{{ app_data_dir }}:/app/data"
+    labels: "{{ labels }}"

@@ -6,3 +6,17 @@ vps_backup_sqlite:
     path: "{{ data_dir }}/family-hub/family-hub.db"
   - name: subtrackr
     path: "{{ data_dir }}/subtrackr/subtrackr.db"
+  - name: mealie
+    path: "{{ data_dir }}/mealie/mealie.db"
+
+# Mealie keeps recipe photos and imported assets as files next to its database,
+# so the snapshot above restores every recipe pointing at an image that isn't
+# there. The database is excluded here because it is already captured above,
+# consistently; tarring it live would only add a copy that cannot be trusted.
+vps_backup_dirs:
+  - name: mealie-files
+    path: "{{ data_dir }}/mealie"
+    exclude:
+      - "mealie/mealie.db*"
+      - "mealie/.temp"
+      - "mealie/mealie.log*"

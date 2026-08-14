@@ -36,6 +36,7 @@ gatus_watched_containers:
   - family-hub
   - home-meters
   - subtrackr
+  - mealie
   - homepage
   - dozzle
   - crowdsec-web-ui

@@ -67,6 +67,17 @@ http:
           - rate-limit
           - compression
 
+    # auth-chain without tinyauth. For apps that own their login and so cannot
+    # sit behind a second one — the headers are the part of auth-chain that was
+    # never about tinyauth, and an app exposing its own login page needs them
+    # more than one hidden behind it does.
+    secure-no-auth:
+      chain:
+        middlewares:
+          - auth-headers
+          - rate-limit
+          - compression
+
     rate-limit:
       rateLimit:
         average: 100

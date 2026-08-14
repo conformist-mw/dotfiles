@@ -1,0 +1,37 @@
+---
+app_name: "mealie"
+app_subdomain: "mealie"
+# Mealie serves the API and the frontend off one port; 9000 is the image's
+# default and the container isn't published, so there's nothing to avoid.
+app_port: 9000
+app_data_dir: "{{ data_dir }}/mealie"
+
+# Pinned: watchtower is gone, image bumps come through renovate/manual PRs.
+mealie_image: "ghcr.io/mealie-recipes/mealie:v3.22.0"
+
+# Unlike every other app here, mealie's login can't be turned off — recipes,
+# shopping lists and meal plans all hang off a user — so putting it behind
+# tinyauth as well would mean two passwords to look up a recipe in the kitchen.
+# It gets mealie's own login instead, plus the security headers auth-chain
+# carries: the login page faces the internet, and it is the one part of this
+# host that does so without tinyauth in front of it.
+#
+# app_subdomain matches app_name, so the inventory's Host() rule is already
+# right and only the middleware label needs replacing.
+mealie_extra_labels:
+  - key: "traefik.http.routers.{{ app_name }}.middlewares"
+    value: "secure-no-auth@file"
+
+# Off, because the signup page is reachable by anyone who finds the host. New
+# users are invited from inside the app (Settings → Users) instead.
+mealie_allow_signup: "false"
+
+# Mealie's own lockout, and the only thing standing between a public login form
+# and an unlimited password guess. CrowdSec sees the 401s in traefik's log and
+# bans the source, but that is a second line, not the first.
+mealie_max_login_attempts: 5
+
+# Upstream's own recommendation: mealie's workers grow into whatever memory the
+# host has and sit on it. Left as a variable because it is a property of this
+# VPS, not of the app.
+mealie_memory: "1g"

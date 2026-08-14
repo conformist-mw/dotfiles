@@ -48,6 +48,13 @@
         container: "subtrackr"
         server: "local-docker"
 
+    - Mealie:
+        href: https://mealie.{{ ansible_host }}
+        description: "Recipes & meal planning"
+        icon: "mealie"
+        container: "mealie"
+        server: "local-docker"
+
     - Pihole:
         href: https://pihole.{{ ansible_host }}/admin
         description: "Network-wide ad blocking"
