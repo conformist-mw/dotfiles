@@ -1,6 +1,7 @@
 #!/bin/bash
-# Immich Postgres backup with rotation + offsite copy.
-# Managed by Ansible (roles/backup). Runs before the photo rclone jobs.
+# Immich Postgres dump with rotation. Local only — each offsite destination is its own
+# unit (db_backblaze_backup / db_keenetic_backup) so a dead target can't block the others.
+# Managed by Ansible (roles/backup).
 set -euo pipefail
 
 BACKUP_DIR="{{ db_backup_dir }}"
@@ -20,13 +21,8 @@ OUT="$BACKUP_DIR/immich-$TS.sql.gz"
 gzip -t "$OUT.tmp"
 mv "$OUT.tmp" "$OUT"
 
-# Rotation: keep the newest $KEEP dumps, delete older ones.
+# Rotation: keep the newest $KEEP dumps, delete older ones. The offsite jobs mirror this
+# directory with --delete-during, so pruning here propagates to both remotes.
 ls -1t "$BACKUP_DIR"/immich-*.sql.gz | tail -n +$((KEEP + 1)) | xargs -r rm -f
 
 echo "$(date -Is) local dump OK: $OUT ($(du -h "$OUT" | cut -f1)); kept newest $KEEP" | tee -a "$LOG"
-
-{% if db_backup_offsite %}
-# Offsite: mirror the rotated local set so pruned dumps drop remotely too.
-/usr/bin/rclone copy "$BACKUP_DIR" keenetic:/backup/db --delete-during --log-file="$LOG" --log-level=INFO
-/usr/bin/rclone copy "$BACKUP_DIR" backblaze:{{ b2_db_bucket }} --delete-during --log-file="$LOG" --log-level=INFO
-{% endif %}

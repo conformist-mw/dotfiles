@@ -1,0 +1,9 @@
+[Unit]
+Description=Immich Postgres dump -> Keenetic timer
+
+[Timer]
+OnCalendar=2:50:0
+Persistent=true
+
+[Install]
+WantedBy=timers.target

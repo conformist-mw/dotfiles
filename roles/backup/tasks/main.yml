@@ -30,6 +30,13 @@
     group: "{{ ansible_user }}"
     mode: "0750"
 
+# One unit per job. The DB dump and each of its two offsite copies are separate units on
+# purpose: a dead destination (the keenetic share vanishes whenever the router's USB disk
+# unmounts) must not stop the other copy, and each failure alerts under its own name.
+- name: Build the list of backup jobs
+  ansible.builtin.set_fact:
+    backup_jobs: "{{ ['backblaze', 'keenetic', 'db'] + (['db_backblaze', 'db_keenetic'] if db_backup_offsite | bool else []) }}"
+
 - name: Copy backup scripts
   ansible.builtin.template:
     src: "{{ item }}_backup.sh.j2"
@@ -37,30 +44,21 @@
     owner: root
     group: root
     mode: "0755"
-  loop:
-    - "backblaze"
-    - "keenetic"
-    - "db"
+  loop: "{{ backup_jobs }}"
   become: true
 
 - name: Copy systemd service
   ansible.builtin.template:
     src: "{{ item }}_backup.service"
     dest: "/etc/systemd/system/{{ item }}_backup.service"
-  loop:
-    - "backblaze"
-    - "keenetic"
-    - "db"
+  loop: "{{ backup_jobs }}"
   become: true
 
 - name: Copy systemd timer
   ansible.builtin.copy:
     src: "{{ item }}_backup.timer"
     dest: "/etc/systemd/system/{{ item }}_backup.timer"
-  loop:
-    - "backblaze"
-    - "keenetic"
-    - "db"
+  loop: "{{ backup_jobs }}"
   become: true
 
 - name: enable backup timer
@@ -69,10 +67,7 @@
     enabled: yes
     state: started
     daemon_reload: yes
-  loop:
-    - "backblaze"
-    - "keenetic"
-    - "db"
+  loop: "{{ backup_jobs }}"
   become: true
 
 # - name: Install borg

@@ -1,0 +1,12 @@
+[Unit]
+Description=Immich Postgres dump -> Backblaze
+OnFailure=systemd-notify@%n.service
+After=network.target db_backup.service
+
+[Service]
+Type=oneshot
+User=user
+WorkingDirectory={{ logs_dir }}
+ExecStart=/usr/local/bin/db_backblaze_backup.sh
+StandardOutput=journal
+StandardError=journal

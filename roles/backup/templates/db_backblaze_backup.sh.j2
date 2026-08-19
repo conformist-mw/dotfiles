@@ -1,0 +1,10 @@
+#!/bin/bash
+# Mirror the local Immich dump set to Backblaze. Split out of db_backup.sh so a failure
+# here can't stop the keenetic copy (and vice versa). Managed by Ansible (roles/backup).
+set -euo pipefail
+
+# --delete-during: mirror the rotated local set so pruned dumps drop remotely too.
+# --exclude *.tmp: never ship a dump the db_backup job is still writing.
+/usr/bin/rclone copy "{{ db_backup_dir }}" backblaze:{{ b2_db_bucket }} \
+  --delete-during --exclude "*.tmp" \
+  --log-file="{{ logs_dir }}/db_backblaze.log" --log-level=INFO

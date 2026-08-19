@@ -1,0 +1,9 @@
+[Unit]
+Description=Immich Postgres dump -> Backblaze timer
+
+[Timer]
+OnCalendar=2:45:0
+Persistent=true
+
+[Install]
+WantedBy=timers.target
