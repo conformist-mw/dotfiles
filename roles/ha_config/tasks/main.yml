@@ -1,27 +1,11 @@
 ---
-# Deploys the config layer into the HAOS /config git checkout:
-#   pull the repo, render secrets.yaml from sops, reload HA.
-# Assumes the repo is already initialised in /config (bootstrap was manual —
-# /config is pre-populated by HAOS so `git clone` can't be used). .storage
-# (integrations, registries, auth) is runtime state and NOT managed here.
-
-- name: Trust /config as a git safe directory
-  ansible.builtin.command:
-    cmd: git config --global --replace-all safe.directory {{ ha_config_dir }}
-  changed_when: false
-
-- name: Pull ha-config
-  ansible.builtin.command:
-    cmd: git pull --ff-only
-    chdir: "{{ ha_config_dir }}"
-  environment:
-    GIT_SSH_COMMAND: >-
-      ssh -i {{ ha_config_deploy_key }} -o IdentitiesOnly=yes
-      -o UserKnownHostsFile={{ ha_config_known_hosts }}
-      -o StrictHostKeyChecking=accept-new
-  register: ha_git_pull
-  changed_when: "'Already up to date' not in ha_git_pull.stdout"
-  notify: reload ha config
+# Two layers, two directions (see the ha-config README):
+#   git-owned — configuration.yaml, packages/: pushed from the repo, !secret works.
+#   HA-owned  — automations/scripts/scenes/blueprints/themes: written by the UI
+#               editor, HACS and blueprint imports, so they are fetched back into
+#               the repo as a snapshot instead of being deployed onto them.
+# /config is deliberately not a git checkout — one would conflict with every UI
+# save. .storage (integrations, registries, auth) is runtime state, not managed.
 
 - name: Render secrets.yaml
   ansible.builtin.template:
@@ -32,3 +16,59 @@
     mode: "0600"
   no_log: true
   notify: reload ha config
+
+- name: Push the git-owned layer
+  ansible.builtin.copy:
+    src: "{{ ha_config_repo_dir }}/configuration.yaml"
+    dest: "{{ ha_config_dir }}/configuration.yaml"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: reload ha config
+
+- name: Check for packages/
+  delegate_to: localhost
+  become: false
+  ansible.builtin.stat:
+    path: "{{ ha_config_repo_dir }}/packages"
+  register: ha_packages
+
+- name: Push packages/
+  ansible.builtin.copy:
+    src: "{{ ha_config_repo_dir }}/packages/"
+    dest: "{{ ha_config_dir }}/packages/"
+    owner: root
+    group: root
+    mode: "0644"
+  when: ha_packages.stat.isdir | default(false)
+  notify: reload ha config
+
+# Snapshot-back. slurp rather than fetch: fetch reads as the login user and so
+# ignores become, and the addon's ssh has no sftp/scp server side.
+- name: Enumerate the HA-owned directories
+  ansible.builtin.find:
+    paths: "{{ ha_config_ha_owned_dirs | map('regex_replace', '^', ha_config_dir ~ '/') | list }}"
+    patterns: "*.yaml"
+    recurse: true
+  register: ha_owned_dirs
+
+- name: Read the HA-owned layer
+  ansible.builtin.slurp:
+    src: "{{ item }}"
+  loop: >-
+    {{ (ha_config_ha_owned_files | map('regex_replace', '^', ha_config_dir ~ '/') | list)
+       + (ha_owned_dirs.files | map(attribute='path') | list) }}
+  register: ha_owned
+  loop_control:
+    label: "{{ item | relpath(ha_config_dir) }}"
+
+- name: Snapshot the HA-owned layer into the repo
+  delegate_to: localhost
+  become: false
+  ansible.builtin.copy:
+    content: "{{ item.content | b64decode }}"
+    dest: "{{ ha_config_repo_dir }}/{{ item.source | relpath(ha_config_dir) }}"
+    mode: "0644"
+  loop: "{{ ha_owned.results }}"
+  loop_control:
+    label: "{{ item.source | relpath(ha_config_dir) }}"

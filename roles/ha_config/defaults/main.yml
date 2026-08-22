@@ -1,9 +1,16 @@
 ---
 ha_config_dir: /config
-ha_config_repo: git@github.com:conformist-mw/ha-config.git
-ha_config_branch: main
-ha_config_deploy_key: /config/.ssh/gh_ha
-ha_config_known_hosts: /config/.ssh/known_hosts
+ha_config_repo_dir: "{{ playbook_dir | dirname }}/ha-config"
+
+# Written by HA itself (UI editors, HACS, blueprint imports) — snapshotted back
+# into the repo for history, never pushed onto the server.
+ha_config_ha_owned_files:
+  - automations.yaml
+  - scripts.yaml
+  - scenes.yaml
+ha_config_ha_owned_dirs:
+  - blueprints
+  - themes
 
 # core REST API (reload/check) — reached from the controller, not the addon
 ha_url: "http://{{ ansible_host }}:8123"
