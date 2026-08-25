@@ -50,7 +50,10 @@
       # an .ini left, so there is nothing to clean up — only the new file to own.
       ansible.builtin.copy:
         dest: /etc/tg-sendmail.yaml
-        mode: "0600"
+        # 0644, not 0600: /usr/sbin/sendmail is not setuid, so it runs as whoever
+        # invoked it and has to read this itself. Tightening it to root-only makes
+        # every unprivileged `mailx` fail with "permission denied" (error code 78).
+        mode: "0644"
         content: |
           log:
             level: info
