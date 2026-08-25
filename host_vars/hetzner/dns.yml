@@ -17,7 +17,6 @@ dns_subdomains:
   - dozzle
   - glances
   - dash # homepage (hostname_prefix: "dash.")
-  - rsstt
   - commeilfaut
   - segments
   - family # family-hub

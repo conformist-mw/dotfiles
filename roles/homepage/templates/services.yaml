@@ -91,11 +91,6 @@
         description: "Network-wide ad blocking"
         icon: "pi-hole"
         siteMonitor: https://pihole.conformist.name
-    - RSS to Telegram:
-        href: https://rsstt.conformist.name
-        description: "RSS to Telegram"
-        icon: "mdi-rss"
-        siteMonitor: https://rsstt.conformist.name
     - Family Hub:
         href: https://family.conformist.name
         description: "Lessons tracker + family appointments"

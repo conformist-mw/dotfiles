@@ -13,13 +13,6 @@
         container: "dozzle"
         server: "local-docker"
 
-    - rsstt:
-        href: https://rsstt.{{ ansible_host }}
-        description: "RSS to Telegram"
-        icon: "mdi-rss"
-        container: "rsstt"
-        server: "local-docker"
-
     - Commeilfaut:
         href: https://commeilfaut.{{ ansible_host }}/admin
         description: "Ceilings shop admin"

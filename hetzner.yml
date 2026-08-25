@@ -35,7 +35,6 @@
         tags: [apps, homepage],
         vars: { hostname_prefix: "dash.", path_prefix: "vps/" },
       }
-    - { role: rsstt, tags: [apps, rsstt] }
     - { role: commeilfaut, tags: [apps, commeilfaut] }
     - { role: segments, tags: [apps, segments] }
     - { role: family-hub, tags: [apps, family-hub, "family_hub"] }
