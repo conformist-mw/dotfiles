@@ -1,27 +1,63 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
+  "extends": [
+    "config:recommended"
+  ],
   "timezone": "Europe/Kyiv",
-  "schedule": ["before 6am on monday"],
+  "schedule": [
+    "before 6am on monday"
+  ],
   "prConcurrentLimit": 5,
-  "ignorePaths": ["roles/outdated/**", "roles/watchtower/**"],
+  "ignorePaths": [
+    "roles/outdated/**",
+    "roles/watchtower/**"
+  ],
   "kubernetes": {
-    "managerFilePatterns": ["k8s/*.yaml", "k8s/**/*.yaml"]
+    "managerFilePatterns": [
+      "k8s/*.yaml",
+      "k8s/**/*.yaml"
+    ]
   },
   "customManagers": [
     {
       "customType": "regex",
       "description": "image refs held in role defaults as *_image vars",
-      "managerFilePatterns": ["roles/*/defaults/main.yml"],
-      "matchStrings": ["_image:\\s*\"(?<depName>[^\"\\s:]+):(?<currentValue>[^\"\\s]+)\""],
+      "managerFilePatterns": [
+        "roles/*/defaults/main.yml"
+      ],
+      "matchStrings": [
+        "_image:\\s*\"(?<depName>[^\"\\s:]+):(?<currentValue>[^\"\\s]+)\""
+      ],
       "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "tg-sendmail .deb pinned in the common role",
+      "managerFilePatterns": [
+        "roles/common/defaults/main.yml"
+      ],
+      "matchStrings": [
+        "tg_sendmail_version:\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "depNameTemplate": "conformist-mw/sendmail",
+      "datasourceTemplate": "github-releases"
     }
   ],
   "packageRules": [
     {
       "description": "own images: :latest or sha- tags, no versions to compare",
-      "matchPackageNames": ["olegsmedyuk/**", "ghcr.io/conformist-mw/**"],
+      "matchPackageNames": [
+        "olegsmedyuk/**",
+        "ghcr.io/conformist-mw/**"
+      ],
       "enabled": false
+    },
+    {
+      "description": "every tg-sendmail release is flagged pre-release on GitHub; without this renovate would never offer one",
+      "matchDepNames": [
+        "conformist-mw/sendmail"
+      ],
+      "ignoreUnstable": false
     }
   ]
 }
