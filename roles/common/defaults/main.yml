@@ -1,0 +1,4 @@
+---
+# tg-sendmail: the Telegram-backed /usr/sbin/sendmail both hosts alert through.
+# Pinned like every other version in this repo — a bump is a commit.
+tg_sendmail_version: "0.4.0"

@@ -31,23 +31,33 @@
 - name: Install tg-sendmail for notifications
   block:
     - name: Install tg-sendmail deb
+      # 0.4.0 replaced the one arch-independent _all.deb with per-arch assets, so the
+      # architecture is derived the way the speedtest role already does it. apt refuses
+      # to go backwards, so leaving this behind the installed version fails the whole
+      # role rather than being a quiet no-op.
       ansible.builtin.apt:
-        deb: https://github.com/conformist-mw/sendmail/releases/download/0.3.2/tg-sendmail_0.3.2_all.deb
+        deb: "https://github.com/conformist-mw/sendmail/releases/download/{{ tg_sendmail_version }}/tg-sendmail_{{ tg_sendmail_version }}_{{ [ansible_architecture] | map('extract', deb_architecture) | first }}.deb"
+      vars:
+        deb_architecture: { "aarch64": "arm64", "x86_64": "amd64" }
 
     - name: Install mailx
       ansible.builtin.apt:
         name: bsd-mailx
 
     - name: Copy tg sendmail config
+      # 0.4.0 moved the config from /etc/tg-sendmail.ini to /etc/tg-sendmail.yaml and
+      # changed its shape; the old path is simply not read any more. Neither host has
+      # an .ini left, so there is nothing to clean up — only the new file to own.
       ansible.builtin.copy:
-        dest: /etc/tg-sendmail.ini
+        dest: /etc/tg-sendmail.yaml
+        mode: "0600"
         content: |
-          [main]
-          log_level=info
-          log_path=/var/log/tg-sendmail.log
-          [telegram]
-          chat_id={{ telegram_alerts_chat_id }}
-          bot_token={{ telegram_alerts_bot_token }}
+          log:
+            level: info
+            path: /var/log/tg-sendmail.log
+          telegram:
+            bot_token: "{{ telegram_alerts_bot_token }}"
+            chat_id: "{{ telegram_alerts_chat_id }}"
   become: true
 
 - name: Create systemd-notify service
