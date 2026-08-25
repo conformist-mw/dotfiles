@@ -4,9 +4,6 @@
     "config:recommended"
   ],
   "timezone": "Europe/Kyiv",
-  "schedule": [
-    "before 6am on monday"
-  ],
   "prConcurrentLimit": 5,
   "ignorePaths": [
     "roles/outdated/**",
