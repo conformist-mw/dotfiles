@@ -29,7 +29,6 @@ gatus_heartbeat_interval: "5m"
 gatus_watched_containers:
   - school-bot
   - school-web
-  - rsstt
   - ceilings-app        # role: commeilfaut
   - ceilings-scheduler  # role: commeilfaut
   - segments
