@@ -38,7 +38,7 @@
 - name: homepage container
   community.docker.docker_container:
     name: "{{ app_name }}"
-    image: ghcr.io/gethomepage/homepage:latest
+    image: ghcr.io/gethomepage/homepage:v1.13.2
     restart: true
     restart_policy: "unless-stopped"
     networks:

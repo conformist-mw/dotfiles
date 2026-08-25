@@ -12,7 +12,7 @@
 - name: Traefik container
   community.docker.docker_container:
     name: traefik
-    image: "traefik:latest"
+    image: "traefik:v3.7.10"
     restart: true
     pull: true
     restart_policy: "unless-stopped"

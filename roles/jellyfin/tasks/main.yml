@@ -19,7 +19,7 @@
 
 - name: Jellyfin container
   community.docker.docker_container:
-    image: jellyfin/jellyfin:latest
+    image: jellyfin/jellyfin:10.11.11
     name: jellyfin
     restart_policy: "unless-stopped"
     restart: true

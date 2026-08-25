@@ -58,7 +58,7 @@
 - name: Gatus container
   community.docker.docker_container:
     name: "{{ app_name }}"
-    image: ghcr.io/twin/gatus:latest
+    image: ghcr.io/twin/gatus:v5.36.0
     pull: true
     restart_policy: "unless-stopped"
     networks:

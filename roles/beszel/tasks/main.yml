@@ -24,7 +24,7 @@
 - name: Beszel hub container
   community.docker.docker_container:
     name: "{{ app_name }}"
-    image: henrygd/beszel:latest
+    image: henrygd/beszel:0.18.7
     pull: true
     restart_policy: "unless-stopped"
     networks:
@@ -44,7 +44,7 @@
   when: beszel_agent_key | length > 0 and beszel_agent_token | length > 0
   community.docker.docker_container:
     name: "{{ app_name }}-agent"
-    image: henrygd/beszel-agent:latest
+    image: henrygd/beszel-agent:0.18.7
     pull: true
     restart_policy: "unless-stopped"
     network_mode: host
