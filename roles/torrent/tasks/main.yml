@@ -5,7 +5,7 @@
 - name: qbittorrent
   community.docker.docker_container:
     name: "{{ app_name }}"
-    image: "lscr.io/linuxserver/qbittorrent:latest"
+    image: "lscr.io/linuxserver/qbittorrent:5.2.2_v2.0.13-ls465"
     pull: true
     restart_policy: "unless-stopped"
     networks:
