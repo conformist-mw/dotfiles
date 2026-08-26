@@ -38,3 +38,37 @@
       traefik.http.services.traefik.loadbalancer.server.port: "8080"
       traefik.http.routers.traefik.service: "api@internal"
       traefik.http.routers.traefik.middlewares: "auth-chain@file"
+
+# traefik writes this file itself, through the bind mount above, so neither
+# journald nor docker's json-file rotation ever touches it: it had reached 258M,
+# unrotated since this role was first applied. Redirecting the access log to
+# stdout would have let docker rotate it, but roles/crowdsec acquires this exact
+# path (acquis.d/traefik.yaml) and the whole HTTP detection chain reads it — so
+# the file has to keep its name, and rotation has to happen around it.
+- name: Rotate the traefik access log
+  ansible.builtin.copy:
+    dest: /etc/logrotate.d/traefik
+    mode: "0644"
+    content: |
+      {{ server_dir }}/logs/traefik/access.log {
+        daily
+        # A scan burst can produce more in a day than the daily rotation would
+        # catch, so cap on size as well as age.
+        maxsize 50M
+        rotate 7
+        missingok
+        notifempty
+        compress
+        # Leaves the freshly rotated file uncompressed for one cycle, so crowdsec
+        # can finish reading the tail of it before it turns into a .gz.
+        delaycompress
+        # traefik runs as root in the container and owns this file.
+        create 0644 root root
+        postrotate
+          # traefik closes and reopens its log files on USR1 — documented since
+          # v1.6. Without this it would keep writing to the rotated inode and the
+          # new access.log would stay empty, blinding crowdsec.
+          /usr/bin/docker kill -s USR1 traefik 2>/dev/null || true
+        endscript
+      }
+  become: true
