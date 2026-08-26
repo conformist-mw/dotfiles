@@ -44,6 +44,19 @@
       POSTGRES_DB: "{{ app_name }}"
       POSTGRES_INITDB_ARGS: '--data-checksums'
 
+- name: Ensure the immich /data mountpoint exists
+  # 1000:1000 to match the container's user, as docker would otherwise create
+  # this root-owned and immich could not write it if it ever needed to.
+  # become, because the role never created these dirs itself — docker did, as
+  # root, so app_data_dir and everything under it is root-owned.
+  ansible.builtin.file:
+    path: "{{ app_data_dir }}/media"
+    state: directory
+    owner: "1000"
+    group: "1000"
+    mode: "0755"
+  become: true
+
 - name: Immich container
   community.docker.docker_container:
     # Pinned version (watchtower removed; image bumps now go through renovate PRs).
@@ -56,6 +69,26 @@
       - name: "{{ docker_network }}"
     volumes:
       - "/mnt/ssd/photos-upload:/usr/src/app/upload"
+      # A safety net, not a migration. The image declares VOLUME /data, which is
+      # also where IMMICH_MEDIA_LOCATION defaults to, so without a mount here
+      # docker hands immich a fresh anonymous volume on every recreate.
+      #
+      # Nothing has ever been written there: the library lives under
+      # /usr/src/app/upload (156G, all six subfolders carry .immich markers) and
+      # every one of the 47 /data volumes orphaned over time was empty. The
+      # default only governs NEW writes, while existing assets are read from
+      # absolute paths stored in the DB, so today this mount changes nothing.
+      #
+      # It matters the day an immich release stops recognising the legacy path
+      # and starts writing here: on a bind those files land on disk, where they
+      # are visible and backed up, instead of in a volume the next deploy
+      # orphans and the next prune deletes.
+      #
+      # Moving the library here properly — which IS the upstream layout, its
+      # compose binds UPLOAD_LOCATION to /data — needs the absolute paths in
+      # asset.originalPath and asset_file.path rewritten, so it gets its own
+      # job with a fresh DB dump. Do NOT just re-point the mount above.
+      - "{{ app_data_dir }}/media:/data"
       - "/mnt/ssd/photos:/home/user/photos"
       - "/etc/localtime:/etc/localtime:ro"
     user: "1000:1000"
