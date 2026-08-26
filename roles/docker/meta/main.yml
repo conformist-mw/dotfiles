@@ -27,3 +27,18 @@ dependencies:
       - docker-ce
       - docker-ce-cli
       - containerd.io
+    # Neither host had an /etc/docker/daemon.json at all, so container logs were
+    # never rotated: the json-file driver grows without bound and one chatty
+    # container can fill the disk on its own.
+    docker_daemon_options:
+      log-driver: "json-file"
+      log-opts:
+        # Strings, not numbers — dockerd rejects log-opts that are not strings.
+        max-size: "10m"
+        max-file: "3"
+      # Writing daemon.json fires this role's `restart docker` handler, which
+      # without live-restore takes every container down with the daemon. Note the
+      # asymmetry: this setting only protects restarts from the NEXT one on — the
+      # run that first installs the file still bounces everything, because the
+      # daemon has to be running with it before it applies.
+      live-restore: true

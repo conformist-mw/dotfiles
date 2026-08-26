@@ -12,3 +12,53 @@
     ipam_config:
       - subnet: "{{ docker_subnet }}"
   become: true
+
+# Nothing here ever removed an image, so the VPS was carrying 189 images for 19
+# containers — 16G of the 22G under /var/lib/docker was reclaimable. Three sources
+# feed it: every pull of a moving tag orphans the previous digest, roles/commeilfaut
+# rebuilds ceilings-app on each git change, and images belonging to roles that were
+# deleted long ago (n8n, jupyter, flatnotes, pgadmin, memos, authelia) were still
+# on disk.
+#
+# This runs here, early with the docker role, rather than as a last role in the
+# playbook, so a deploy clears the previous deploy's garbage and the image each
+# running container was started from stays on disk to roll back to.
+#
+# What it does NOT do is run before the daemon restart: geerlingguy.docker flushes
+# its handlers mid-role, so by this point dockerd has already bounced. Every image
+# still referenced by a container that came back on its own is safe; anything that
+# did not come back is not. Hence containers: false below.
+- name: Reclaim docker disk
+  community.docker.docker_prune:
+    # NOT true, and the reason is worth keeping: geerlingguy.docker calls
+    # `meta: flush_handlers` at the end of its own tasks (tasks/main.yml:100), so
+    # writing daemon.json restarts dockerd BEFORE this task runs, not at the end
+    # of the play. Anything without a restart policy is sitting in Exited by the
+    # time the prune happens — `containers: true` then deletes it, and the image
+    # prune below deletes its now-unreferenced image straight after. That is
+    # exactly how ceilings-app lost both its containers and its built image.
+    # Container garbage is ~32MB against 16G of images, so this buys nothing.
+    containers: false
+    images: true
+    # dangling:false is what makes this `image prune -a`: every image no container
+    # references, tagged or not. Safe because a container in ANY state protects its
+    # image, and every role here pulls or builds what it needs on each run. The cost
+    # is that rolling back to a tag older than the running one needs a fresh pull.
+    images_filters:
+      dangling: false
+    builder_cache: true
+    # commeilfaut builds from source; keeping a slice means its next rebuild is
+    # incremental rather than starting from the base image again.
+    builder_cache_keep_storage: "1GB"
+    # Networks are not a disk problem, and pruning them here would be actively
+    # wrong: on a fresh host this task runs just after the task above created
+    # docker_network, before any container is attached to it — so an unused
+    # network is exactly what it would look like, and every app role would then
+    # fail to attach.
+    networks: false
+    # Volumes are deliberately left alone. An anonymous volume is where a compose
+    # file that names no volume keeps its database, and this cannot tell that from
+    # cache. bee's orphans are jellyfin's regenerable cache plus leftovers from
+    # roles that no longer exist; they get cleared by hand, after looking.
+    volumes: false
+  become: true
