@@ -101,3 +101,35 @@
 #     state: present
 #     user: root
 #   become: true
+
+# The rclone scripts above append to {{ logs_dir }} at --log-level=INFO, which is
+# one line per file considered, on every run, with nothing rotating them:
+# keenetic.log had reached 481M and backblaze.log 475M. Rotating rather than
+# dropping to NOTICE keeps the per-file record of what synced. Each backup run is
+# a fresh rclone process that opens the log itself, so there is no long-lived
+# descriptor to signal — plain create-on-rotate is enough.
+- name: Rotate the backup logs
+  ansible.builtin.copy:
+    dest: /etc/logrotate.d/homelab-backup
+    mode: "0644"
+    content: |
+      {{ logs_dir }}/*.log {
+        # logs_dir is group-writable by a group that is not root, which logrotate
+        # treats as insecure and silently SKIPS unless it is told whose privileges
+        # to drop to. Without this line the whole stanza is a no-op.
+        su {{ ansible_user }} {{ ansible_user }}
+        weekly
+        maxsize 20M
+        rotate 4
+        missingok
+        notifempty
+        compress
+        # Not cosmetic: a rotation that lands mid-backup leaves rclone writing into
+        # the renamed .1 (it opened the file at start and does not reopen), so
+        # compressing immediately would archive a file still being appended to.
+        # One cycle's delay costs a week of disk and buys an intact log.
+        delaycompress
+        # 0640, matching what rclone itself creates these with.
+        create 0640 {{ ansible_user }} {{ ansible_user }}
+      }
+  become: true
