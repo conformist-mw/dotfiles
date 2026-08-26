@@ -28,6 +28,39 @@
     state: present
   become: true
 
+- name: Cap the systemd journal
+  block:
+    # Neither host had this directory — the packages ship only journald.conf.
+    - name: Ensure the journald drop-in dir exists
+      ansible.builtin.file:
+        path: /etc/systemd/journald.conf.d
+        state: directory
+        mode: "0755"
+
+    - name: Write the journald size limits
+      # A drop-in, not an edit of journald.conf: the packaged file stays untouched,
+      # so what this repo owns is one file to read and one file to delete.
+      ansible.builtin.copy:
+        dest: /etc/systemd/journald.conf.d/99-homelab.conf
+        mode: "0644"
+        content: |
+          [Journal]
+          SystemMaxUse={{ journal_max_use }}
+          SystemMaxFileSize={{ journal_max_file_size }}
+          MaxRetentionSec={{ journal_max_retention }}
+      notify: Restart journald
+
+    # SystemMaxUse is only enforced when journald next rotates, so on a host that
+    # has been over the limit for months the config change on its own frees
+    # nothing. This also clears the truncated `.journal~` files an unclean
+    # shutdown leaves behind — journald keeps those but never rotates them away
+    # (12 of them, 209M, on bee).
+    - name: Vacuum the journal down to the limit
+      ansible.builtin.command: "journalctl --vacuum-size={{ journal_max_use }}"
+      register: journal_vacuum
+      changed_when: "'Deleted archived journal' in journal_vacuum.stderr"
+  become: true
+
 - name: Install tg-sendmail for notifications
   block:
     - name: Install tg-sendmail deb

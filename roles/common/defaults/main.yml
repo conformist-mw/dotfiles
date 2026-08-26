@@ -2,3 +2,15 @@
 # tg-sendmail: the Telegram-backed /usr/sbin/sendmail both hosts alert through.
 # Pinned like every other version in this repo — a bump is a commit.
 tg_sendmail_version: "0.4.0"
+
+# journald ran unbounded on both hosts: no journald.conf.d drop-in and an empty
+# [Journal] section, which means systemd's built-in default of "up to 10% of the
+# filesystem" — a 3.8G ceiling on the VPS and 46G on bee. Both were holding logs
+# back to January 2025. The budget is a per-host var because bee has the disk to
+# keep more history than a 38G VPS does.
+journal_max_use: "500M"
+# One file per slice rather than one big one, so a vacuum drops the oldest slice
+# instead of the whole history. Left explicit because journald otherwise derives
+# it from the *detected* disk size, not from journal_max_use.
+journal_max_file_size: "64M"
+journal_max_retention: "1month"

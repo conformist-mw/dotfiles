@@ -1,0 +1,8 @@
+---
+# hetzner.yml has no top-level `handlers:` import (beelink.yml does), so this
+# lives with the role rather than in handlers/main.yml.
+- name: Restart journald
+  ansible.builtin.systemd:
+    name: systemd-journald
+    state: restarted
+  become: true

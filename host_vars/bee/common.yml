@@ -1,0 +1,7 @@
+---
+# bee has 350G free against the VPS's 8G, and its journal is the only record of
+# what the QEMU/HA guest and the zigbee coordinators were doing — worth keeping
+# more of than the default 500M.
+journal_max_use: "1G"
+journal_max_file_size: "128M"
+journal_max_retention: "3month"
