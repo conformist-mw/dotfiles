@@ -14,18 +14,20 @@
     update: true
   register: git_checkout
 
-- name: Update compose stack
+# Outside the git-changed guard below: a rotated secret has to reach the host even
+# when the checkout is unchanged, which it previously did not.
+- name: Copy production.env
+  ansible.builtin.template:
+    src: production.env
+    dest: "{{ app_data_dir }}/backend/.env"
+    mode: "0644"
+  vars:
+    secret_key: "{{ commeilfaut_secret_key }}"
+    sentry_dsn: "{{ commeilfaut_sentry_dsn }}"
+
+- name: Build + migrate on a new revision
   when: git_checkout.changed
   block:
-    - name: Copy production.env
-      ansible.builtin.template:
-        src: production.env
-        dest: "{{ app_data_dir }}/backend/.env"
-        mode: "0644"
-      vars:
-        secret_key: "{{ commeilfaut_secret_key }}"
-        sentry_dsn: "{{ commeilfaut_sentry_dsn }}"
-
     - name: Run docker compose build
       ansible.builtin.command: docker compose build
       args:
@@ -36,7 +38,20 @@
       args:
         chdir: "{{ app_data_dir }}/backend"
 
-    - name: Restart services
-      ansible.builtin.command: docker compose up -d
-      args:
-        chdir: "{{ app_data_dir }}/backend"
+# Unconditional, and that is the point: this role could only ever move the stack
+# forward, never bring it back. Everything here used to sit behind
+# `when: git_checkout.changed`, so once the containers were gone a re-deploy was a
+# no-op and the app stayed down — the role reported success over a dead service.
+# `up -d` is a no-op when the running containers already match the compose file,
+# and it builds the image itself if that has gone missing.
+#
+# The deeper cause is upstream: backend/docker-compose.yml in the ceilings repo
+# declares no `restart:` policy, so neither service survives a docker daemon
+# restart. Adding `restart: unless-stopped` there is the actual fix; this task
+# just means ansible can recover from it.
+- name: Ensure the compose stack is up
+  ansible.builtin.command: docker compose up -d
+  args:
+    chdir: "{{ app_data_dir }}/backend"
+  register: compose_up
+  changed_when: "'Started' in compose_up.stderr or 'Created' in compose_up.stderr"
