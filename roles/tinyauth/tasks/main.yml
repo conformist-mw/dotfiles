@@ -8,6 +8,18 @@
     state: directory
     mode: "0755"
 
+# tinyauth's image declares VOLUME /data, where v5 keeps tinyauth.db — active
+# sessions plus its OIDC-provider state (oidc_codes, oidc_tokens, oidc_userinfo).
+# Unmapped, that database lived on an anonymous volume and was thrown away every
+# time the container was recreated, which quietly defeated the 30-day
+# TINYAUTH_AUTH_SESSIONEXPIRY below: everyone re-authenticated after a deploy.
+# Nothing irreplaceable was lost — accounts come from the users file, not the db.
+- name: Ensure tinyauth data dir
+  ansible.builtin.file:
+    path: "{{ server_dir }}/tinyauth/data"
+    state: directory
+    mode: "0755"
+
 - name: Render tinyauth users file
   ansible.builtin.template:
     src: users.j2
@@ -25,6 +37,7 @@
       - name: "{{ docker_network }}"
     volumes:
       - "{{ server_dir }}/tinyauth/users:/users:ro"
+      - "{{ server_dir }}/tinyauth/data:/data"
     env:
       TINYAUTH_APPURL: "https://{{ tinyauth_subdomain }}.{{ ansible_host }}"
       TINYAUTH_SECRET: "{{ tinyauth_secret }}"

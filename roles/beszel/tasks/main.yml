@@ -14,6 +14,11 @@
   loop:
     - "{{ app_data_dir }}/data"
     - "{{ app_data_dir }}/socket"
+    # The agent's image declares VOLUME /var/lib/beszel-agent, where it keeps the
+    # fingerprint the hub binds a system record to. Unmapped, that landed on an
+    # anonymous volume, so the agent came back with a new identity after every
+    # recreate and re-registered against the hub.
+    - "{{ app_data_dir }}/agent"
 
 - name: Include labels generator
   ansible.builtin.include_role:
@@ -54,6 +59,7 @@
       TOKEN: "{{ beszel_agent_token }}"
       KEY: "{{ beszel_agent_key }}"
     volumes:
+      - "{{ app_data_dir }}/agent:/var/lib/beszel-agent"
       - "{{ app_data_dir }}/socket:/beszel_socket"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
 

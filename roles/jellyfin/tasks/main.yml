@@ -17,6 +17,19 @@
   ansible.builtin.set_fact:
     gid_video: "{{ getent_group['video'][1] }}"
 
+# jellyfin's image declares VOLUME /cache and this role mounted nothing there, so
+# docker created a fresh anonymous volume on every container recreate and orphaned
+# the previous one — 177 had piled up, the largest 1.1G. Owned by 1000:1000 because
+# the container runs as that user; left to docker this would be created root-owned
+# and jellyfin could not write it.
+- name: Ensure jellyfin cache directory exists
+  ansible.builtin.file:
+    path: "{{ data_dir }}/jellyfin/cache"
+    state: directory
+    owner: "1000"
+    group: "1000"
+    mode: "0755"
+
 - name: Jellyfin container
   community.docker.docker_container:
     image: jellyfin/jellyfin:10.11.11
@@ -29,6 +42,9 @@
       - "8096:8096"
     volumes:
       - "{{ data_dir }}/jellyfin/config:/config"
+      # Nests under the tmpfs on /cache/transcodes below — docker mounts by path
+      # depth, so the bind lands first and the tmpfs on top of it.
+      - "{{ data_dir }}/jellyfin/cache:/cache"
       - "/mnt/hdd:/media"
     user: "1000:1000"
     groups:
