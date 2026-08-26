@@ -1,0 +1,27 @@
+{# Parser-level whitelist (s02-enrich) for the homepage dashboard's own polling
+   API. The browser tab polls /api/docker/status/<service>/<instance> once per
+   tile, every few seconds, for as long as the dashboard is open.
+
+   Any event that takes every container down at once — a dockerd restart, most
+   notably — leaves traefik running with an empty router table, so it answers
+   404 to each of those polls. One open dashboard then produces a burst of
+   unique 4xx URIs from the viewer's own IP, which is exactly the shape of
+   crowdsecurity/http-probing: 11 events in 4.9s was enough to self-ban, and
+   because the bouncer filters INPUT while docker-published ports bypass it,
+   the ban took out SSH and left the web reachable.
+
+   Deliberately NOT scoped by traefik_router_name the way ha-hls-whitelist is:
+   during the outage that matters here no router matched at all, so the log
+   carries "-" in that field and a router-scoped expression would miss the very
+   events it is meant to cover. /api/docker/ is served by nothing else on this
+   host, and it is not an endpoint worth probing for, so a path-only scope costs
+   no real detection.
+
+   Field name matches ha-hls-whitelist.yaml.j2, verified with
+   `cscli explain --type traefik`. #}
+name: local/homepage-api-whitelist
+description: "Whitelist the homepage dashboard's own polling API (benign 404 bursts while backends are down)"
+whitelist:
+  reason: "homepage dashboard status polling — not http-probing"
+  expression:
+    - evt.Parsed.request startsWith '/api/docker/'

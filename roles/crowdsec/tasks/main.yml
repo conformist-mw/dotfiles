@@ -95,6 +95,17 @@
   become: true
   notify: restart crowdsec
 
+# The homepage dashboard self-bans the viewer whenever every container goes down
+# at once (a dockerd restart): traefik stays up with no routers and 404s each of
+# the tile-status polls the open tab keeps making. See the template header.
+- name: Whitelist — homepage dashboard polling API
+  ansible.builtin.template:
+    src: homepage-api-whitelist.yaml.j2
+    dest: /etc/crowdsec/parsers/s02-enrich/homepage-api-whitelist.yaml
+    mode: "0644"
+  become: true
+  notify: restart crowdsec
+
 # Progressive ban durations (8h → 16h → 24h …) instead of the stock flat 4h.
 # Cuts repeat alerts from persistent scanners so we stay under the CrowdSec
 # Console Community alert quota (500/mo); network-level protection is unchanged.
