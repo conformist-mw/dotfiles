@@ -85,6 +85,12 @@
       # daily/weekly appointment summaries from the ICS feed below, so enabling
       # them here would double-post to the family group. Lesson reminders are a
       # separate ticker and are unaffected.
+      #
+      # The recurring-chore nag is NOT behind that flag and needs its own time.
+      # HA cannot send this one: it reads a calendar and knows nothing about
+      # what was closed. Empty disables the message; the record of what came
+      # due is written regardless, by a ticker that takes no configuration.
+      REMINDER_NAG_TIME: "{{ family_hub_reminder_nag_time }}"
       ICS_TOKEN: "{{ family_hub_ics_token }}"
     volumes:
       - "{{ family_hub_dir }}:/data"

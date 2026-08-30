@@ -17,6 +17,11 @@ family_hub_webhook_host: "{{ family_hub_host }}"
 
 family_hub_gemini_model: "gemini-flash-lite-latest"
 
+# When the bot lists the recurring chores nobody closed today. Evening, because
+# the message means "you forgot" — Home Assistant already says what is due each
+# morning. Empty disables the message but not the record.
+family_hub_reminder_nag_time: "20:00"
+
 # Minutes after a lesson before the bot asks the group whether it happened.
 family_hub_reminder_delay_min: "60"
 
