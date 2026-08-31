@@ -28,7 +28,7 @@
 - name: Traefik container
   community.docker.docker_container:
     name: "{{ app_name }}"
-    image: "traefik:v3.7.10"
+    image: "traefik:v3.7.12"
     restart: true
     restart_policy: "unless-stopped"
     ports:

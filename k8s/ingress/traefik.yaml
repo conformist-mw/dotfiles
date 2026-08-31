@@ -91,7 +91,7 @@ spec:
       serviceAccountName: traefik      # run as the identity defined above
       containers:
         - name: traefik
-          image: traefik:v3.7.8        # pinned; never :latest (see MIGRATION.md)
+          image: traefik:v3.7.12        # pinned; never :latest (see MIGRATION.md)
           args:
             - --entrypoints.web.address=:8000       # public routing entrypoint
             - --entrypoints.traefik.address=:9000   # dashboard/api/ping (internal only)
