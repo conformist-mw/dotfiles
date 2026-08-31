@@ -54,7 +54,7 @@ family_hub_visit_people: ""
 # host_vars/hetzner (email, password, pupil id); these are the non-secret knobs.
 family_hub_school_today_base_url: "https://school-today.com"
 # Weeks of timetable mirrored from the current week forward.
-family_hub_school_today_weeks_ahead: 3
+family_hub_school_today_weeks_ahead: "3"
 # How often the container re-logs in and refreshes the cache (Go duration).
 family_hub_school_sync_interval: "12h"
 # Which portal categories reach /school.ics: lesson,meal,daycare,routine.
