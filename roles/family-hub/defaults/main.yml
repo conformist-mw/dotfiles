@@ -45,3 +45,19 @@ family_hub_cost_prompt_min: "60"
 # Deliberately empty here — this repo is public and those are family names.
 # Set family_hub_visit_people in host_vars/hetzner/secrets.sops.yaml to fill it.
 family_hub_visit_people: ""
+
+# ── School-today timetable mirror ────────────────────────────────────────────
+# The child's academic school day, pulled from the school-today.com parent
+# portal and served as a SECOND ICS feed (/school.ics) for its own HA Remote
+# Calendar — separate from /calendar.ics, which is the family's own courses and
+# appointments. The sync is off until the login secrets below are set in
+# host_vars/hetzner (email, password, pupil id); these are the non-secret knobs.
+family_hub_school_today_base_url: "https://school-today.com"
+# Weeks of timetable mirrored from the current week forward.
+family_hub_school_today_weeks_ahead: 3
+# How often the container re-logs in and refreshes the cache (Go duration).
+family_hub_school_sync_interval: "12h"
+# Which portal categories reach /school.ics: lesson,meal,daycare,routine.
+# Lessons only keeps meals, recess and after-school care out of the feed the
+# evening "tomorrow's lessons" digest reads.
+family_hub_school_ics_include: "lesson"

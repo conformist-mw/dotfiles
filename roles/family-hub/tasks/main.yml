@@ -116,6 +116,18 @@
       # due is written regardless, by a ticker that takes no configuration.
       REMINDER_NAG_TIME: "{{ family_hub_reminder_nag_time }}"
       ICS_TOKEN: "{{ family_hub_ics_token }}"
+      # School-today academic timetable mirror → /school.ics. Off unless the
+      # portal login secrets are set in host_vars/hetzner; the Go app disables
+      # the syncer when EMAIL/PASSWORD/PUPIL_ID are empty, so an unset secret
+      # serves an empty /school.ics rather than failing the deploy.
+      SCHOOL_TODAY_EMAIL: "{{ family_hub_school_today_email | default('') }}"
+      SCHOOL_TODAY_PASSWORD: "{{ family_hub_school_today_password | default('') }}"
+      SCHOOL_TODAY_PUPIL_ID: "{{ family_hub_school_today_pupil_id | default('') }}"
+      SCHOOL_TODAY_BASE_URL: "{{ family_hub_school_today_base_url }}"
+      SCHOOL_TODAY_WEEKS_AHEAD: "{{ family_hub_school_today_weeks_ahead }}"
+      SCHOOL_TODAY_SYNC_INTERVAL: "{{ family_hub_school_sync_interval }}"
+      SCHOOL_ICS_TOKEN: "{{ family_hub_school_ics_token | default('') }}"
+      SCHOOL_ICS_INCLUDE: "{{ family_hub_school_ics_include }}"
     volumes:
       - "{{ family_hub_dir }}:/data"
     labels:
@@ -165,3 +177,13 @@
       traefik.http.routers.family-hub-ics.middlewares: "no-auth-chain@file"
       traefik.http.routers.family-hub-ics.service: "family-hub"
       traefik.http.routers.family-hub-ics.priority: "100"
+      # School timetable ICS feed — same machine-to-machine bypass as
+      # /calendar.ics, guarded by SCHOOL_ICS_TOKEN. Its own router so HA can
+      # subscribe to it as a separate Remote Calendar.
+      traefik.http.routers.family-hub-school-ics.entrypoints: "websecure"
+      traefik.http.routers.family-hub-school-ics.tls: "true"
+      traefik.http.routers.family-hub-school-ics.tls.certresolver: "letsencrypt"
+      traefik.http.routers.family-hub-school-ics.rule: "Host(`{{ family_hub_host }}`) && PathPrefix(`/school.ics`)"
+      traefik.http.routers.family-hub-school-ics.middlewares: "no-auth-chain@file"
+      traefik.http.routers.family-hub-school-ics.service: "family-hub"
+      traefik.http.routers.family-hub-school-ics.priority: "100"
