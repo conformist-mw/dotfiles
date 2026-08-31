@@ -5,6 +5,18 @@ family_hub_image: "olegsmedyuk/family-hub:latest"
 # blank, so a change here is verified by row counts, not by the log.
 family_hub_dir: "{{ data_dir }}/family-hub"
 
+# Where the pre-migration snapshot lands. The nightly backup role mirrors this
+# whole directory offsite, so writing here is what gets the snapshot to
+# Backblaze — on the next nightly run, not immediately. Falls back to the same
+# path the backup role defaults to, so the two agree on a host that has it and
+# this still works on one that does not.
+family_hub_backup_dir: "{{ vps_backup_dir | default(data_dir + '/backups') }}"
+
+# How many pre-migration snapshots to keep. These accumulate per deploy, not
+# per day; the nightly snapshots are the history. What is wanted here is the
+# state immediately before the last few schema changes.
+family_hub_premigrate_keep: 5
+
 # The bot the token in family_hub_bot_token belongs to. Not a secret and not
 # read by the container — it is here so the deployment says which Telegram
 # identity it drives, and so a deep link into the Mini App has a source.

@@ -16,6 +16,30 @@
 # data). A fresh install starts empty; see DEPLOY.md in the family-hub repo for
 # the one-off manual import command.
 
+# A snapshot before the schema is touched, because the two things happen at
+# different times and only one of them is scheduled. The nightly backup covers
+# this database properly, but a migration runs whenever somebody deploys: 0006
+# dropped three columns off regular_slots at 19:53, sixteen hours after the
+# newest snapshot. Nothing was lost because that one was taken by hand — which
+# is not a control, it is a person remembering.
+#
+# It runs unconditionally rather than only for destructive migrations: whether
+# a migration will touch data is not knowable until it has, and a snapshot of
+# an unchanged database costs about twenty kilobytes and a second.
+- name: Snapshot the family-hub database before migrating
+  ansible.builtin.script:
+    cmd: >-
+      premigrate-snapshot.py
+      {{ (family_hub_dir + '/family-hub.db') | quote }}
+      {{ family_hub_backup_dir | quote }}
+      {{ family_hub_premigrate_keep }}
+  register: family_hub_snapshot
+  changed_when: "'nothing to snapshot' not in family_hub_snapshot.stdout"
+
+- name: Report the snapshot
+  ansible.builtin.debug:
+    msg: "{{ family_hub_snapshot.stdout | trim | split('\n') }}"
+
 # Migrate as its own step, before the container is touched. The server also
 # migrates on boot, but a failure there happens inside a container this play
 # has already created: docker reports it started, the play goes green, and the
