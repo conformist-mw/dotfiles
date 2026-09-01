@@ -128,6 +128,13 @@
       SCHOOL_TODAY_SYNC_INTERVAL: "{{ family_hub_school_sync_interval }}"
       SCHOOL_ICS_TOKEN: "{{ family_hub_school_ics_token | default('') }}"
       SCHOOL_ICS_INCLUDE: "{{ family_hub_school_ics_include }}"
+      # Tomorrow's timetable, posted to the family group by the bot rather than
+      # by HA. Not behind NOTIFICATIONS_ENABLED, and for a sharper reason than
+      # the chore nag: HA's calendar API hands a template only
+      # summary/start/end/description, so it cannot tell a lesson from the
+      # after-school block and cannot say when the child is actually free.
+      # Empty disables the message.
+      SCHOOL_DIGEST_TIME: "{{ family_hub_school_digest_time }}"
     volumes:
       - "{{ family_hub_dir }}:/data"
     labels:

@@ -61,3 +61,6 @@ family_hub_school_sync_interval: "12h"
 # Lessons only keeps meals, recess and after-school care out of the feed the
 # evening "tomorrow's lessons" digest reads.
 family_hub_school_ics_include: "lesson"
+# When the bot posts tomorrow's school timetable. The old HA automation fired
+# at 19:30; keeping the time means the message just gets more complete.
+family_hub_school_digest_time: "19:30"
