@@ -4,7 +4,7 @@
 
 - name: Navidrome container
   community.docker.docker_container:
-    image: deluan/navidrome:0.62.0
+    image: deluan/navidrome:0.63.2
     pull: true
     name: "{{ app_name }}"
     restart: true
