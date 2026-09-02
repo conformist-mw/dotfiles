@@ -27,13 +27,6 @@
         container: "family-hub"
         server: "local-docker"
 
-    - Home meters:
-        href: https://meters.{{ ansible_host }}
-        description: "Utility meter readings"
-        icon: "mdi-meter-electric"
-        container: "home-meters"
-        server: "local-docker"
-
     - Subscriptions:
         href: https://subs.{{ ansible_host }}
         description: "Subscriptions & mobile plans"

@@ -20,7 +20,6 @@ dns_subdomains:
   - commeilfaut
   - segments
   - family # family-hub
-  - meters # home-meters
   - school # school-bot + the Mini App
   - subs # subtrackr
   - mealie

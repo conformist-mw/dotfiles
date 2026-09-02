@@ -37,8 +37,9 @@
       }
     - { role: commeilfaut, tags: [apps, commeilfaut] }
     - { role: segments, tags: [apps, segments] }
+    # home-meters is gone: its addresses/tariffs/readings now live in
+    # family-hub's own database, which the nightly snapshot already covers.
     - { role: family-hub, tags: [apps, family-hub, "family_hub"] }
-    - { role: home-meters, tags: [apps, home-meters, "home_meters"] }
     - { role: school-bot, tags: [apps, school-bot, "school_bot"] }
     - { role: subtrackr, tags: [apps, subtrackr] }
     - { role: mealie, tags: [apps, mealie] }

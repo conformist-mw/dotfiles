@@ -33,7 +33,6 @@ gatus_watched_containers:
   - ceilings-scheduler  # role: commeilfaut
   - segments
   - family-hub
-  - home-meters
   - subtrackr
   - mealie
   - homepage
