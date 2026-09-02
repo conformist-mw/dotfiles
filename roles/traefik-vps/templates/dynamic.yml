@@ -1,7 +1,10 @@
 http:
   routers:
+    # www alongside the apex: the name is in host_vars/hetzner/dns.yml and so
+    # resolves, and without a router of its own it answered nothing but a failed
+    # TLS handshake — a dead name that looked like a broken site.
     root-redirect-to-about:
-      rule: "Host(`{{ ansible_host }}`)"
+      rule: "Host(`{{ ansible_host }}`) || Host(`www.{{ ansible_host }}`)"
       entryPoints:
         - web
         - websecure

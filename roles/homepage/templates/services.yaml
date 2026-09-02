@@ -117,7 +117,7 @@
         icon: "traefik"
         siteMonitor: https://traefik.conformist.name
     - Router:
-        href: https://router.conformist.name
+        href: http://router.{{ ansible_host }}
         description: "Keenetic router"
         icon: "keenetic"
     - About:

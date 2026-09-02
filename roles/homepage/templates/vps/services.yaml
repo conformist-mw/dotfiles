@@ -83,20 +83,10 @@
         href: https://ha.conformist.name
         description: "Home automation"
         icon: "home-assistant"
-    - Nextcloud:
-        href: https://files.conformist.name
-        description: "Nextcloud"
-        icon: "nextcloud"
-
     - Navidrome:
         href: https://music.{{ ansible_host }}
         description: "Music server"
         icon: "navidrome"
-
-    - Router:
-        href: https://router.conformist.name
-        description: "Router"
-        icon: "keenetic"
 
 - home:
    - Home:
