@@ -60,7 +60,7 @@
 - name: Immich container
   community.docker.docker_container:
     # Pinned version (watchtower removed; image bumps now go through renovate PRs).
-    image: ghcr.io/immich-app/immich-server:v3.0.1
+    image: ghcr.io/immich-app/immich-server:v3.1.0
     pull: true
     name: "{{ app_name }}"
     restart_policy: "unless-stopped"
@@ -120,7 +120,7 @@
 - name: Immich machine learning container
   community.docker.docker_container:
     # Pinned version (watchtower removed; image bumps now go through renovate PRs).
-    image: ghcr.io/immich-app/immich-machine-learning:v3.0.1
+    image: ghcr.io/immich-app/immich-machine-learning:v3.1.0
     pull: true
     name: "{{ app_name }}_machine_learning"
     restart_policy: "unless-stopped"

@@ -45,7 +45,7 @@ spec:
       enableServiceLinks: false   # see server.yaml — injected *_PORT vars break immich
       containers:
         - name: machine-learning
-          image: ghcr.io/immich-app/immich-machine-learning:v3.0.1
+          image: ghcr.io/immich-app/immich-machine-learning:v3.1.0
           ports:
             - containerPort: 3003
           volumeMounts:
