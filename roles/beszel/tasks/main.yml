@@ -29,7 +29,7 @@
 - name: Beszel hub container
   community.docker.docker_container:
     name: "{{ app_name }}"
-    image: henrygd/beszel:0.18.7
+    image: henrygd/beszel:0.18.8
     pull: true
     restart_policy: "unless-stopped"
     networks:
