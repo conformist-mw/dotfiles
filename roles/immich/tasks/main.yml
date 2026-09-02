@@ -24,11 +24,27 @@
 
 - name: Immich database
   community.docker.docker_container:
-    # VectorChord image (bundles vchord + pgvectors). Migrated off deprecated
-    # pgvecto.rs in v3 — immich v3 auto-reindexes vectors->vchord on first start.
+    # VectorChord image. The pgvectors-carrying tag is gone with pg14: the
+    # pgvecto.rs extension it existed for was dropped from the database first,
+    # so nothing references it and this tag doesn't ship it.
+    #
     # Extension preload + PG tuning are baked into this image, so no `command:`
-    # override (setting shared_preload_libraries here would break vchord loading).
-    image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
+    # override (setting shared_preload_libraries here would break vchord
+    # loading). The image's entrypoint copies its own template over
+    # /etc/postgresql/postgresql.conf on every start — that template, not the
+    # cluster's postgresql.conf, is what carries shared_preload_libraries.
+    #
+    # pg14 goes end-of-life on 2026-11-12, which is what moved this. A major
+    # version is not upgraded in place: the cluster was dumped, this tag
+    # initialised an empty one, and the dump was restored into it.
+    #
+    # Rebuilding the database from a dump loses its per-database settings, and
+    # immich sets one it then never sets again — every vector query fails with
+    # "need 1 probes, but 0 probes provided" until it is put back by hand:
+    #     ALTER DATABASE immich SET vchordrq.probes = 1;
+    # Search looks broken while the app looks healthy, so check it before
+    # believing a restore worked.
+    image: ghcr.io/immich-app/postgres:17-vectorchord0.4.3
     pull: true
     name: "{{ app_name }}_database"
     restart_policy: "unless-stopped"
