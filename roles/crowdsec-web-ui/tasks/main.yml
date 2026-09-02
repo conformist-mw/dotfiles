@@ -66,7 +66,7 @@
 - name: CrowdSec Web UI container
   community.docker.docker_container:
     name: "{{ app_name }}"
-    image: ghcr.io/theduffman85/crowdsec-web-ui:2026.7.4
+    image: ghcr.io/theduffman85/crowdsec-web-ui:2026.8.3
     pull: true
     restart_policy: "unless-stopped"
     networks:
