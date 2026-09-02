@@ -5,7 +5,7 @@ app_port: 8080
 app_data_dir: "{{ data_dir }}/subtrackr"
 
 # Pinned: watchtower is gone, image bumps come through renovate/manual PRs.
-subtrackr_image: "ghcr.io/bscott/subtrackr:0.6.4"
+subtrackr_image: "ghcr.io/bscott/subtrackr:0.6.5"
 
 # The hetzner inventory rule label only references app_name; override it so the
 # hostname is subs.<host> instead of subtrackr.<host>. Same trick as home-meters.
