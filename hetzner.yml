@@ -33,7 +33,15 @@
     - {
         role: homepage,
         tags: [apps, homepage],
-        vars: { hostname_prefix: "dash.", path_prefix: "vps/" },
+        vars:
+          {
+            hostname_prefix: "dash.",
+            path_prefix: "vps/",
+            # CrowdSec runs natively on this host, so the dashboard's widget can
+            # have a LAPI watcher of its own. Absent on bee, where the role
+            # skips provisioning it.
+            homepage_crowdsec_machine: "homepage",
+          },
       }
     - { role: commeilfaut, tags: [apps, commeilfaut] }
     - { role: segments, tags: [apps, segments] }

@@ -1,3 +1,53 @@
+# --- CrowdSec widget credentials ---------------------------------------------
+# Only on a host that runs CrowdSec natively, which is why the machine name is
+# set where the role is invoked rather than defaulted here. The widget gets a
+# watcher of its own instead of borrowing the web UI's, so revoking one does not
+# blind the other. Generated once and kept in the data dir, never in the repo.
+- name: Provision the CrowdSec watcher for the homepage widget
+  when: homepage_crowdsec_machine is defined
+  block:
+    - name: Check for existing CrowdSec watcher credentials
+      ansible.builtin.stat:
+        path: "{{ app_data_dir }}/crowdsec.env"
+      register: homepage_crowdsec_env
+
+    - name: Register the CrowdSec watcher
+      when: not homepage_crowdsec_env.stat.exists
+      block:
+        - name: Generate a watcher password
+          ansible.builtin.command: openssl rand -hex 24
+          register: homepage_crowdsec_pw
+          changed_when: true
+
+        - name: Register the watcher machine in CrowdSec LAPI
+          # --file /dev/null is not optional next to --force: without it cscli
+          # dumps the generated credentials over its default path, which is the
+          # native agent's own /etc/crowdsec/local_api_credentials.yaml, and
+          # silently repoints the agent at this identity on its next restart.
+          ansible.builtin.command: >-
+            cscli machines add {{ homepage_crowdsec_machine }}
+            --password {{ homepage_crowdsec_pw.stdout }} --force
+            --file /dev/null
+          become: true
+
+        - name: Persist the watcher password
+          ansible.builtin.copy:
+            dest: "{{ app_data_dir }}/crowdsec.env"
+            content: "{{ homepage_crowdsec_pw.stdout }}"
+            mode: "0600"
+          become: true
+
+    - name: Read the watcher password back
+      ansible.builtin.slurp:
+        src: "{{ app_data_dir }}/crowdsec.env"
+      register: homepage_crowdsec_slurp
+      become: true
+
+    - name: Hand the password to the config template
+      ansible.builtin.set_fact:
+        homepage_crowdsec_password: "{{ homepage_crowdsec_slurp.content | b64decode | trim }}"
+      no_log: true
+
 - name: Copy homepage services
   ansible.builtin.template:
     src: "{{ path_prefix }}{{ item }}.yaml"
@@ -8,8 +58,6 @@
     - "services"
     - "settings"
     - "widgets"
-  vars:
-    open_weather_api_key: "{{ openweather_api_key }}"
   become: true
 
 - name: Copy favicon

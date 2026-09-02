@@ -36,6 +36,11 @@
 
     - Mealie:
         href: https://mealie.{{ ansible_host }}
+        widget:
+          type: mealie
+          url: "http://mealie:9000"
+          key: "{{ homepage_mealie_api_key }}"
+          version: 2
         description: "Recipes & meal planning"
         icon: "mealie"
         container: "mealie"
@@ -43,6 +48,13 @@
 
     - Pihole:
         href: https://pihole.{{ ansible_host }}/admin
+        # v6 accepts the web password as the API key, so this needs no secret
+        # of its own beyond the one the role already deploys pihole with.
+        widget:
+          type: pihole
+          url: "http://pihole:80"
+          version: 6
+          key: "{{ pihole_web_password }}"
         description: "Network-wide ad blocking"
         icon: "pi-hole"
         container: "pihole"
@@ -65,14 +77,35 @@
         icon: "crowdsec"
         container: "crowdsec-web-ui"
         server: "local-docker"
+        # alerts counts what this engine raised in the last 24h; alerts coming
+        # from the community blocklist are not included.
+        widget:
+          type: crowdsec
+          url: "{{ homepage_crowdsec_lapi_url }}"
+          username: "{{ homepage_crowdsec_machine }}"
+          password: "{{ homepage_crowdsec_password }}"
     - Gatus:
         href: https://gatus.{{ ansible_host }}
+        widget:
+          type: gatus
+          url: "http://gatus:8080"
         description: "Uptime & alerts"
         icon: "gatus"
         container: "gatus"
         server: "local-docker"
     - Beszel:
         href: https://beszel.{{ ansible_host }}
+        # systemId takes the nice name from the Beszel UI, which is what makes
+        # this the single-system view (cpu/memory/disk/network) instead of a
+        # one-line "1 system up" that says nothing on a single-host install.
+        # version 2 is required from Beszel 0.9.0 on.
+        widget:
+          type: beszel
+          url: "http://beszel:8090"
+          username: "{{ homepage_beszel_email }}"
+          password: "{{ homepage_beszel_password }}"
+          systemId: "hetzner"
+          version: 2
         description: "Host & container metrics"
         icon: "beszel"
         container: "beszel"
@@ -83,6 +116,15 @@
         href: https://ha.conformist.name
         description: "Home automation"
         icon: "home-assistant"
+        # The tile links the public name, but the widget talks to the LAN
+        # address over the WireGuard tunnel: going through the public one would
+        # bounce off the auth chain instead of reaching the API. Reuses the
+        # long-lived token roles/ha_config already holds, so rotating it in one
+        # place rotates it for both.
+        widget:
+          type: homeassistant
+          url: "http://192.168.1.223:8123"
+          key: "{{ ha_token }}"
     - Navidrome:
         href: https://music.{{ ansible_host }}
         description: "Music server"

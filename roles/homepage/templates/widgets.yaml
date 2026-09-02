@@ -17,9 +17,12 @@
     provider: google
     target: _blank
 
-- openweathermap:
+# openmeteo needs no API key at all, which is the whole reason it is here
+# instead of openweathermap — one less secret and one less account to keep.
+- openmeteo:
     label: "Dnipro"
     latitude: 48.45
     longitude: 34.9833
+    timezone: Europe/Kyiv
     units: metric
-    provider: openweathermap
+    cache: 5

@@ -96,11 +96,6 @@
         description: "Lessons tracker + family appointments"
         icon: "mdi-school"
         siteMonitor: https://family.conformist.name
-    - Home meters:
-        href: https://meters.conformist.name
-        description: "Utility meter readings"
-        icon: "mdi-meter-electric"
-        siteMonitor: https://meters.conformist.name
     - Commeilfaut:
         href: https://commeilfaut.conformist.name/admin/
         description: "Ceilings shop admin"

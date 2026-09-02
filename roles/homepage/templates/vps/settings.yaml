@@ -15,5 +15,3 @@ quicklaunch:
   hideVisitURL: true
   provider: google
 
-providers:
-  openweathermap: "{{ open_weather_api_key }}"

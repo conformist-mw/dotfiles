@@ -4,3 +4,9 @@ app_port: 3000
 app_data_dir: "{{ data_dir }}/homepage"
 path_prefix: ""
 hostname_prefix: ""
+
+# CrowdSec's LAPI, which listens on 127.0.0.1 and is reachable from the
+# container network only because roles/crowdsec-web-ui DNATs it there. Stated
+# explicitly rather than borrowed from that role's defaults, so this one breaks
+# visibly if the rule ever moves instead of rendering a URL nothing answers.
+homepage_crowdsec_lapi_url: "http://{{ docker_gateway }}:8080"
