@@ -45,14 +45,18 @@
       TINYAUTH_AUTH_SECURECOOKIE: "true"
       # stay logged in ~30 days (default is 86400 = 1 day)
       TINYAUTH_AUTH_SESSIONEXPIRY: "2592000"
+      # Deny by default (v5.1.0+). An app id with no allow list below is
+      # refused rather than waved through, so the failure mode of adding an app
+      # and forgetting its ACL becomes a denied request instead of silence.
+      TINYAUTH_AUTH_ACLS_POLICY: "deny"
+
       # --- per-app access control (app id = request subdomain) ---
       # EVERY app behind auth-chain needs a line here. tinyauth's default policy
       # is permissive: an app with no allow list of its own is open to every
       # user in the users file, which is how family-hub, subtrackr, beszel and
       # gatus were readable by the egor group despite the note below. The
-      # deny-by-default switch (TINYAUTH_AUTH_ACLS_POLICY) lands in v5.1.0 and
-      # this host runs v5.0.7 — setting it here crash-loops the container with
-      # "field not found, node: acls", taking every protected app down with it.
+      # policy above only turns that into a visible failure — it does not
+      # excuse leaving one out.
       # groups are defined in host_vars/hetzner/secrets.sops.yaml (usernames stay out of git)
       #
       # egor (school-bot owner) gets read-only observability + his dash. Kept in a
