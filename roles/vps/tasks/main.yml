@@ -62,6 +62,58 @@
     label: "{{ item.name }}"
   become: true
 
+# --- sshd ---------------------------------------------------------------------
+# Deliberately after the authorized_key tasks above: this run installs the keys
+# and only then takes passwords away, so a new user in vps_users can never be
+# locked out by the same play that creates them.
+#
+# Passwords were on (the image default) with one account carrying a usable one,
+# and that account is in the docker group, which is root by another name. The
+# journal shows 413 publickey logins and 0 password logins in 30 days, so
+# nothing actually used this. Recovery if a key is ever lost is the Hetzner
+# web console, which is not sshd and is unaffected by any of it.
+#
+# A drop-in rather than an edit of sshd_config: the packaged file stays
+# untouched and this repo owns one file to read and one file to delete.
+- name: Harden sshd
+  block:
+    - name: Write the sshd hardening drop-in
+      ansible.builtin.copy:
+        dest: /etc/ssh/sshd_config.d/99-hardening.conf
+        mode: "0644"
+        content: |
+          # Managed by Ansible (roles/vps)
+          PasswordAuthentication no
+          KbdInteractiveAuthentication no
+          PermitRootLogin prohibit-password
+          MaxAuthTries 3
+      register: sshd_dropin
+
+    # sshd -t parses the whole tree, Include and all. Validating here rather
+    # than with copy's `validate` because that hands sshd the drop-in alone,
+    # which is not a complete config and tells us nothing.
+    - name: Validate the sshd config
+      ansible.builtin.command: /usr/sbin/sshd -t
+      changed_when: false
+
+    - name: Reload sshd
+      ansible.builtin.systemd:
+        name: ssh
+        state: reloaded
+      when: sshd_dropin is changed
+  rescue:
+    # A bad config must not survive the run: leave the host reachable and fail
+    # loudly instead of reloading sshd into something that will not start.
+    - name: Remove the drop-in after a failed validation
+      ansible.builtin.file:
+        path: /etc/ssh/sshd_config.d/99-hardening.conf
+        state: absent
+
+    - name: Fail with the validation error
+      ansible.builtin.fail:
+        msg: "sshd -t rejected the hardening drop-in; it has been removed and sshd left untouched."
+  become: true
+
 # wg interface sysctls (route_localnet) are owned by the wireguard role now.
 
 - name: Install crowdsec
