@@ -83,6 +83,12 @@
     restart: true
     networks:
       - name: "{{ docker_network }}"
+    # Published so hetzner can reach it over the wireguard tunnel the same way
+    # it reaches jellyfin and navidrome — a host:port, not a second traefik hop.
+    # Without this immich answers only inside the docker network, on the Host
+    # rule bee's own traefik matches, and the VPS router 502s.
+    ports:
+      - "{{ app_port }}:2283"
     volumes:
       - "/mnt/ssd/photos-upload:/usr/src/app/upload"
       # A safety net, not a migration. The image declares VOLUME /data, which is

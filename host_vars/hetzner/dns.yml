@@ -25,3 +25,4 @@ dns_subdomains:
   - mealie
   - beszel
   - gatus
+  - photo # immich on bee, proxied over wireguard (same name as on the LAN)

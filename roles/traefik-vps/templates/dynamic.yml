@@ -116,6 +116,37 @@ http:
       tls:
         certResolver: letsencrypt
 
+    # --- immich --------------------------------------------------------------
+    # The mobile app owns its login and cannot pass tinyauth's browser flow, and
+    # immich itself has no 2FA (upstream declined to add it), so the whole app
+    # would otherwise face the internet behind one password. The router only
+    # matches when the request carries the shared secret, set once per phone in
+    # Settings -> Advanced -> Custom proxy headers; everything else matches no
+    # router and gets a 404 without ever reaching the login form.
+    #
+    # This is also why the web UI is not usable from a laptop over this name:
+    # that goes to photo.bee.home on the LAN, or over WireGuard from outside.
+    immich:
+      rule: "Host(`photo.{{ ansible_host }}`) && Header(`X-Immich-Key`, `{{ immich_proxy_key }}`)"
+      entryPoints:
+        - websecure
+      middlewares:
+        - immich-chain
+      service: immich
+      tls:
+        certResolver: letsencrypt
+
+    immich-login:
+      rule: "Host(`photo.{{ ansible_host }}`) && Header(`X-Immich-Key`, `{{ immich_proxy_key }}`) && PathPrefix(`/api/auth/login`)"
+      priority: 1000
+      entryPoints:
+        - websecure
+      middlewares:
+        - login-chain
+      service: immich
+      tls:
+        certResolver: letsencrypt
+
   middlewares:
     auth-chain:
       chain:
@@ -141,6 +172,15 @@ http:
           - auth-headers
           - rate-limit
           - compression
+
+    # secure-no-auth minus compression: this one proxies photo and video bytes,
+    # which are already compressed — gzipping them again is VPS CPU spent to
+    # make the payload marginally bigger.
+    immich-chain:
+      chain:
+        middlewares:
+          - auth-headers
+          - rate-limit
 
     # For the login routers above. Same headers as secure-no-auth, but the
     # general rate-limit swapped for one sized to a human typing a password.
@@ -215,6 +255,10 @@ http:
       loadBalancer:
         servers:
           - url: http://192.168.1.223:8123
+    immich:
+      loadBalancer:
+        servers:
+          - url: http://192.168.1.222:2283
 
 # https://ssl-config.mozilla.org/#server=traefik&version=3.3.3&config=modern&guideline=5.7
 tls:
