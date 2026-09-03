@@ -4,3 +4,14 @@
     name: crowdsec
     state: restarted
   become: true
+
+- name: restart crowdsec-firewall-bouncer
+  ansible.builtin.service:
+    name: crowdsec-firewall-bouncer
+    state: restarted
+  become: true
+
+- name: reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+  become: true

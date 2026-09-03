@@ -4,3 +4,20 @@
 # `cscli machines list` is readable and host rebuilds reuse one identity instead
 # of accumulating stale machines.
 crowdsec_agent_machine: "{{ inventory_hostname }}-agent"
+
+# Chains the firewall bouncer drops banned traffic in. The package default is
+# INPUT alone, which never sees anything docker publishes: 443 reaches traefik
+# via nat PREROUTING → DOCKER → FORWARD. Every HTTP ban was therefore recorded
+# and enforced nowhere. DOCKER-USER is the chain docker leaves for exactly this
+# and re-creates on every restart, so rules land ahead of its own.
+crowdsec_bouncer_chains:
+  - INPUT
+  - DOCKER-USER
+
+# Sources that must never be banned, whatever a scenario decides — the escape
+# hatch for the self-bans this host keeps producing. Fill in a static home or
+# office address if there is one; leaving it empty is fine, it just means a
+# self-ban has to be waited out or lifted from the Hetzner console.
+# Values may be single IPs or CIDR ranges.
+crowdsec_allowlist_name: "homelab"
+crowdsec_allowlist_ips: []
