@@ -69,5 +69,5 @@ family_hub_school_digest_time: "19:30"
 # portal's lesson pages directly, so it is off without the SCHOOL_TODAY_*
 # credentials no matter what these say. 0=Sun..6=Sat; unset disables.
 # 19:45 rather than 19:30 so the two school messages do not arrive together.
-family_hub_school_week_review_dow: 5
+family_hub_school_week_review_dow: "5"
 family_hub_school_week_review_time: "19:45"
