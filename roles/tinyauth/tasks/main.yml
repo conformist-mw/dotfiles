@@ -46,19 +46,28 @@
       # stay logged in ~30 days (default is 86400 = 1 day)
       TINYAUTH_AUTH_SESSIONEXPIRY: "2592000"
       # --- per-app access control (app id = request subdomain) ---
+      # EVERY app behind auth-chain needs a line here. tinyauth's default policy
+      # is permissive: an app with no allow list of its own is open to every
+      # user in the users file, which is how family-hub, subtrackr, beszel and
+      # gatus were readable by the egor group despite the note below. The
+      # deny-by-default switch (TINYAUTH_AUTH_ACLS_POLICY) lands in v5.1.0 and
+      # this host runs v5.0.7 — setting it here crash-loops the container with
+      # "field not found, node: acls", taking every protected app down with it.
       # groups are defined in host_vars/hetzner/secrets.sops.yaml (usernames stay out of git)
-      TINYAUTH_APPS_LESSONS_USERS_ALLOW: "{{ tinyauth_group_parents }}"
-      TINYAUTH_APPS_METERS_USERS_ALLOW: "{{ tinyauth_group_parents }}"
-      TINYAUTH_APPS_RSSTT_USERS_ALLOW: "{{ tinyauth_group_admin }}"
+      #
       # egor (school-bot owner) gets read-only observability + his dash. Kept in a
       # dedicated group so he does NOT inherit pihole/movies admin access.
       TINYAUTH_APPS_DASH_USERS_ALLOW: "{{ tinyauth_group_admin }},{{ tinyauth_group_egor }}"
       TINYAUTH_APPS_DOZZLE_USERS_ALLOW: "{{ tinyauth_group_admin }},{{ tinyauth_group_egor }}"
       TINYAUTH_APPS_TRAEFIK_USERS_ALLOW: "{{ tinyauth_group_admin }},{{ tinyauth_group_egor }}"
       TINYAUTH_APPS_GLANCES_USERS_ALLOW: "{{ tinyauth_group_admin }},{{ tinyauth_group_egor }}"
+      TINYAUTH_APPS_BESZEL_USERS_ALLOW: "{{ tinyauth_group_admin }},{{ tinyauth_group_egor }}"
+      TINYAUTH_APPS_GATUS_USERS_ALLOW: "{{ tinyauth_group_admin }},{{ tinyauth_group_egor }}"
+      TINYAUTH_APPS_CROWDSEC_USERS_ALLOW: "{{ tinyauth_group_admin }},{{ tinyauth_group_egor }}"
       TINYAUTH_APPS_PIHOLE_USERS_ALLOW: "{{ tinyauth_group_admin }}"
       TINYAUTH_APPS_MOVIES_USERS_ALLOW: "{{ tinyauth_group_admin }}"
-      TINYAUTH_APPS_CROWDSEC_USERS_ALLOW: "{{ tinyauth_group_admin }},{{ tinyauth_group_egor }}"
+      TINYAUTH_APPS_SUBS_USERS_ALLOW: "{{ tinyauth_group_admin }}"
+      TINYAUTH_APPS_FAMILY_USERS_ALLOW: "{{ tinyauth_group_parents }}"
     labels:
       traefik.enable: "true"
       traefik.http.routers.tinyauth.entrypoints: "websecure"
