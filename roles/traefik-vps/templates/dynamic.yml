@@ -51,7 +51,68 @@ http:
         certResolver: letsencrypt
     commeilfaut-django:
       rule: "Host(`commeilfaut.{{ ansible_host }}`)"
+      middlewares:
+        - secure-no-auth
       service: commeilfaut-django
+      tls:
+        certResolver: letsencrypt
+
+    # --- login endpoints -----------------------------------------------------
+    # Every form that faces the internet gets its own router so the strict
+    # limit lands on the credential check and nothing else: the general
+    # rate-limit below is 100 req/s, which is no limit at all for a password
+    # guess. Higher priority than the app's main router, which would otherwise
+    # win on rule length. Paths are the real ones, taken from traefik's access
+    # log / each app's API, not guessed.
+    #
+    # priority 1000, not 100: traefik's default priority is the LENGTH of the
+    # rule, so a login router only wins if its number beats the app router's
+    # rule length. immich's rule carries a 48-character key and measures ~107,
+    # which quietly outranked a priority of 100 and swallowed /api/auth/login.
+    tinyauth-login:
+      rule: "Host(`{{ tinyauth_subdomain }}.{{ ansible_host }}`) && PathPrefix(`/api/auth/signin`)"
+      priority: 1000
+      entryPoints:
+        - websecure
+      middlewares:
+        - login-chain
+      service: tinyauth@docker
+      tls:
+        certResolver: letsencrypt
+
+    mealie-login:
+      rule: "Host(`mealie.{{ ansible_host }}`) && PathPrefix(`/api/auth/token`)"
+      priority: 1000
+      entryPoints:
+        - websecure
+      middlewares:
+        - login-chain
+      service: mealie@docker
+      tls:
+        certResolver: letsencrypt
+
+    commeilfaut-login:
+      rule: "Host(`commeilfaut.{{ ansible_host }}`) && PathPrefix(`/admin/login`)"
+      priority: 1000
+      entryPoints:
+        - websecure
+      middlewares:
+        - login-chain
+      service: commeilfaut-django
+      tls:
+        certResolver: letsencrypt
+
+    homeassistant-login:
+      # /auth/login_flow is where the password is actually checked. Deliberately
+      # not /auth/token: that is the refresh-token endpoint every companion app
+      # and the tablet hit on a schedule, and it carries no password to guess.
+      rule: "Host(`ha.{{ ansible_host }}`) && PathPrefix(`/auth/login_flow`)"
+      priority: 1000
+      entryPoints:
+        - websecure
+      middlewares:
+        - login-chain
+      service: homeassistant
       tls:
         certResolver: letsencrypt
 
@@ -81,10 +142,28 @@ http:
           - rate-limit
           - compression
 
+    # For the login routers above. Same headers as secure-no-auth, but the
+    # general rate-limit swapped for one sized to a human typing a password.
+    login-chain:
+      chain:
+        middlewares:
+          - auth-headers
+          - login-rate-limit
+
     rate-limit:
       rateLimit:
         average: 100
         burst: 50
+
+    # 6/minute per source IP, 3 back-to-back. A person mistyping a password
+    # never notices; an unattended guesser gets ~8600 tries a day instead of
+    # ~8.6M. sourceCriterion is left at its default (the remote address), which
+    # is the real client here — traefik is the edge, nothing sits in front of it.
+    login-rate-limit:
+      rateLimit:
+        average: 6
+        period: 1m
+        burst: 3
 
     compression:
       compress: {}
