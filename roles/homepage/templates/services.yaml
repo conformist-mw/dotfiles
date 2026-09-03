@@ -52,6 +52,14 @@
         href: http://192.168.1.223:8123
         description: "Home automation (QEMU VM)"
         icon: "home-assistant"
+        # Same widget as the VPS dashboard's, on the same shared token. Here the
+        # LAN address is simply the local one; the tile in the vps group below
+        # stays a plain link, since that one is about the VPS's proxy rather
+        # than about Home Assistant itself.
+        widget:
+          type: homeassistant
+          url: "http://192.168.1.223:8123"
+          key: "{{ ha_token }}"
 
 - tools:
     - Dozzle:
