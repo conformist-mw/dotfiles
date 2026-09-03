@@ -4,7 +4,11 @@ OnFailure=systemd-notify@%n.service
 After=network.target
 
 [Service]
-ExecStart={{ app_data_dir }}/.venv/bin/glances --webserver --bind=127.0.0.1
+# --disable-autodiscover: zeroconf is a separate listener from --webserver and
+# ignores --bind — it binds UDP 5353 on every interface, the public one included.
+# Nothing here discovers glances over mDNS; the container network reaches it
+# through the expose_local_port DNAT instead.
+ExecStart={{ app_data_dir }}/.venv/bin/glances --webserver --bind=127.0.0.1 --disable-autodiscover
 Restart=always
 RemainAfterExit=no
 

@@ -14,12 +14,16 @@
     src: glances.service
     dest: /etc/systemd/system/glances.service
   become: true
+  register: glances_unit
 
+# state: started on an already-running unit is a no-op, so an edited ExecStart
+# used to land on disk and never reach the process — the unit said one thing
+# and the running glances another until something else restarted it.
 - name: Enable glances
   ansible.builtin.systemd:
     name: glances.service
     enabled: yes
-    state: started
+    state: "{{ 'restarted' if glances_unit.changed else 'started' }}"
     daemon_reload: yes
   become: true
 

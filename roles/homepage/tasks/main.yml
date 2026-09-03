@@ -96,5 +96,5 @@
     volumes:
       - "{{ app_data_dir }}/config:/app/config"
       - "{{ app_data_dir }}/images:/app/public/images"
-      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
     labels: "{{ labels }}"
