@@ -135,6 +135,12 @@
       # after-school block and cannot say when the child is actually free.
       # Empty disables the message.
       SCHOOL_DIGEST_TIME: "{{ family_hub_school_digest_time }}"
+      # The Friday week review. Exempt from NOTIFICATIONS_ENABLED for the same
+      # reason, and needs the portal login as well as these two: it collects
+      # what happened at each lesson from the portal itself, which is the only
+      # place topics, homework and marks are published.
+      SCHOOL_WEEK_REVIEW_DOW: "{{ family_hub_school_week_review_dow }}"
+      SCHOOL_WEEK_REVIEW_TIME: "{{ family_hub_school_week_review_time }}"
     volumes:
       - "{{ family_hub_dir }}:/data"
     labels:

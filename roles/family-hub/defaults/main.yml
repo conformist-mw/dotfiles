@@ -64,3 +64,10 @@ family_hub_school_ics_include: "lesson"
 # When the bot posts tomorrow's school timetable. The old HA automation fired
 # at 19:30; keeping the time means the message just gets more complete.
 family_hub_school_digest_time: "19:30"
+# The Friday review of the school week just gone: per subject, topics, the
+# teacher's notes, homework and marks. Unlike the digest above it reads the
+# portal's lesson pages directly, so it is off without the SCHOOL_TODAY_*
+# credentials no matter what these say. 0=Sun..6=Sat; unset disables.
+# 19:45 rather than 19:30 so the two school messages do not arrive together.
+family_hub_school_week_review_dow: 5
+family_hub_school_week_review_time: "19:45"
