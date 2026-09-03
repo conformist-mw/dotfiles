@@ -1,0 +1,52 @@
+#!/bin/bash
+# Managed by Ansible (roles/vps) — do not edit on the host.
+#
+# Day-to-day container operations for users who are NOT in the docker group.
+# The whole security boundary is this file: sudoers grants this script and
+# nothing else, so every value that reaches docker originates here and never
+# from the caller. Adding a flag that takes caller input gives away the host.
+set -euo pipefail
+
+# user -> containers they may operate, from vps_users[].apps in host_vars.
+declare -A ALLOWED=(
+{% for u in vps_users | default([]) | selectattr('apps', 'defined') %}
+  ["{{ u.name }}"]="{{ u.apps | join(' ') }}"
+{% endfor %}
+)
+
+usage() {
+  echo "usage: sudo appctl {status|logs|follow|restart|start|stop|shell} <container>" >&2
+  exit 64
+}
+
+# sudo sets SUDO_USER itself and env_reset drops any the caller tried to plant.
+caller="${SUDO_USER:-}"
+[[ -n "$caller" ]] || { echo "appctl: must be run through sudo" >&2; exit 1; }
+
+allowed="${ALLOWED[$caller]:-}"
+[[ -n "$allowed" ]] || { echo "appctl: $caller owns no containers here" >&2; exit 1; }
+
+[[ $# -eq 2 ]] || usage
+verb="$1"
+container="$2"
+
+# Exact match against the list. No globs, no prefixes: 'school' must not reach
+# 'school-bot', and nothing must reach 'traefik'.
+ok=no
+for c in $allowed; do
+  [[ "$c" == "$container" ]] && ok=yes
+done
+[[ "$ok" == yes ]] || { echo "appctl: $caller may not operate '$container'" >&2; exit 1; }
+
+case "$verb" in
+  status)  exec docker ps -a --filter "name=^${container}$" ;;
+  logs)    exec docker logs --tail 200 "$container" ;;
+  follow)  exec docker logs --tail 200 --follow "$container" ;;
+  restart) exec docker restart "$container" ;;
+  start)   exec docker start "$container" ;;
+  stop)    exec docker stop "$container" ;;
+  # Root inside the container, not on the host: these run unprivileged, share
+  # no host namespace and bind only the caller's own data directory.
+  shell)   exec docker exec -it "$container" /bin/sh ;;
+  *)       usage ;;
+esac

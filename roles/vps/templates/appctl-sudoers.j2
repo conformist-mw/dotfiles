@@ -1,0 +1,6 @@
+# Managed by Ansible (roles/vps)
+# One command, no arguments to match on: appctl validates its own input, and
+# a wildcard here would hand over the argv it is built to constrain.
+{% for u in vps_users | default([]) | selectattr('apps', 'defined') %}
+{{ u.name }} ALL=(root) NOPASSWD: /usr/local/bin/appctl
+{% endfor %}

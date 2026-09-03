@@ -32,7 +32,10 @@
     uid: "{{ item.uid }}"
     group: "{{ item.name }}"
     groups: "{{ item.groups | default([]) }}"
-    append: true
+    # Desired state, not additive: with append the docker group could be listed
+    # here, removed, and stay on the account forever, because ansible would
+    # only ever add. The primary group is untouched either way.
+    append: false
     shell: "{{ item.shell | default('/bin/bash') }}"
     create_home: true
   loop: "{{ vps_users | default([]) }}"
@@ -61,6 +64,34 @@
   loop_control:
     label: "{{ item.name }}"
   become: true
+
+# --- container operations without the docker group ------------------------------
+# Being in `docker` is being root: the socket will start a container that binds
+# / and runs anything. Users who only need to look at their own service's logs
+# and bounce it get this wrapper instead, whitelisted in sudoers as one command
+# with no argument pattern to slip past.
+- name: Install the appctl container wrapper
+  ansible.builtin.template:
+    src: appctl.j2
+    dest: /usr/local/bin/appctl
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+  when: vps_users | default([]) | selectattr('apps', 'defined') | list | length > 0
+
+- name: Grant appctl in sudoers
+  ansible.builtin.template:
+    src: appctl-sudoers.j2
+    dest: /etc/sudoers.d/50-appctl
+    owner: root
+    group: root
+    mode: "0440"
+    # A malformed sudoers file locks everyone out of sudo, so it is never
+    # written unless visudo has already accepted it.
+    validate: "visudo -cf %s"
+  become: true
+  when: vps_users | default([]) | selectattr('apps', 'defined') | list | length > 0
 
 # --- sshd ---------------------------------------------------------------------
 # Deliberately after the authorized_key tasks above: this run installs the keys

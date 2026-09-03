@@ -11,7 +11,13 @@ vps_users:
   - name: egor
     uid: 1010
     gid: 1010
-    groups: [docker]   # lets him `docker logs/exec/stop` his own bot over SSH
+    # No docker group. Membership in it is root on the host by another name —
+    # `docker run -v /:/host … chroot /host` needs nothing else — which made it
+    # a strange thing to hand someone whose tinyauth ACL is deliberately capped
+    # at read-only observability. He gets `appctl` instead (roles/vps), which
+    # is the same day-to-day operations over exactly the containers below.
+    groups: []
+    apps: [school-bot, school-web]
     shell: /bin/bash
     ssh_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG1VUoSlBSKHPsxayEQOk1a5sgUal9/ecHylyMib6wQK"
     data_dir: "{{ egor_data_dir }}"   # created + chowned to him by the vps role
