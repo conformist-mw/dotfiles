@@ -1,4 +1,6 @@
 ---
 tinyauth_subdomain: "tinyauth"
-# pin to an exact release before going public (https://github.com/steveiliop56/tinyauth/releases)
-tinyauth_image: "ghcr.io/steveiliop56/tinyauth:v5.0.7"
+# pin to an exact release before going public (https://github.com/tinyauthapp/tinyauth/releases)
+# v5.1.0 moved the project to its own org, so the image path changed with it —
+# ghcr.io/steveiliop56/tinyauth simply has no tag past v5.0.x.
+tinyauth_image: "ghcr.io/tinyauthapp/tinyauth:v5.1.3"
