@@ -1,9 +1,35 @@
-{# Progressive (exponential-backoff) ban duration.
-   Replaces the stock flat 4h ban. Each repeat offence from the same value
-   extends the ban: 1st = 8h, 2nd = 16h, 3rd = 24h, ... — persistent scanners
-   get parked for days and stop generating fresh alerts (keeps us under the
-   CrowdSec Console Community alert quota). Protection is unaffected: bans are
-   still enforced at the network level by the iptables firewall-bouncer.
+{# Progressive ban duration, base one week, capped at four.
+   Replaces the stock flat 4h: 1st = 7d, 2nd = 14d, 3rd = 21d, then 28d for
+   every repeat after that.
+
+   The cap is written as a ternary on the count rather than min() around the
+   product: nothing in the hub content or the binary confirms min() is in this
+   expr build, and a duration_expr that fails evaluates to nothing and falls
+   back to the `duration:` below — silently, at the moment an alert fires,
+   which is not where you want to discover a typo.
+
+   The value is double-quoted because the ternary contains ": ", which YAML
+   reads as a mapping separator inside an unquoted scalar and rejects outright
+   — and a profiles.yaml that does not parse takes cscli down with it, not
+   just the agent.
+
+   Long bans are free here in a way they are not under fail2ban, which writes
+   one iptables rule per address and walks them linearly per packet. The
+   bouncer keeps a single `-m set --match-set` rule and puts the addresses in
+   an ipset, which is a hash lookup: duration changes the number of entries,
+   never the cost of matching one. An entry is ~37 bytes, the set holds
+   maxelem 131072, and the CAPI community blocklist already parks ~24000 of
+   them there against ~1000 of our own.
+
+   Sized from this host: 2454 local alerts over 7 days from only 518 distinct
+   addresses — the same scanners returning ~5 times each, which a week-long
+   ban collapses into one entry apiece. Not 30 days as the base, because the
+   worst offenders are cloud ranges (GCE, DigitalOcean) that get recycled to
+   somebody else within weeks, and a stale ban then lands on whoever is next.
+
+   The cap matters more than it looks: an uncapped (n+1) * 7d grows without
+   limit, so a repeatedly self-banned address would eventually be parked for
+   months.
 
    duration_expr is a profile-level key (overrides the decision's duration,
    which stays as a fallback); it must NOT be nested under decisions:. #}
@@ -13,8 +39,8 @@ filters:
  - Alert.Remediation == true && Alert.GetScope() == "Ip"
 decisions:
  - type: ban
-   duration: 8h
-duration_expr: Sprintf('%dh', (GetDecisionsCount(Alert.GetValue()) + 1) * 8)
+   duration: 168h
+duration_expr: "Sprintf('%dh', (GetDecisionsCount(Alert.GetValue()) > 3 ? 3 : GetDecisionsCount(Alert.GetValue())) * 168 + 168)"
 on_success: break
 ---
 name: default_range_remediation
@@ -23,6 +49,6 @@ filters:
  - Alert.Remediation == true && Alert.GetScope() == "Range"
 decisions:
  - type: ban
-   duration: 8h
-duration_expr: Sprintf('%dh', (GetDecisionsCount(Alert.GetValue()) + 1) * 8)
+   duration: 168h
+duration_expr: "Sprintf('%dh', (GetDecisionsCount(Alert.GetValue()) > 3 ? 3 : GetDecisionsCount(Alert.GetValue())) * 168 + 168)"
 on_success: break
