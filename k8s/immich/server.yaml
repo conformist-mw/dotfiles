@@ -75,7 +75,7 @@ spec:
       securityContext: { runAsUser: 1000, runAsGroup: 1000 }
       containers:
         - name: immich
-          image: ghcr.io/immich-app/immich-server:v3.0.1
+          image: ghcr.io/immich-app/immich-server:v3.1.0
           env:
             - { name: DB_HOSTNAME, value: "immich-database" }   # k8s Service name (was immich_database)
             - { name: DB_USERNAME, value: "immich" }
