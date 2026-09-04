@@ -5,7 +5,7 @@
 - name: Dozzle container
   community.docker.docker_container:
     name: "{{ app_name }}"
-    image: amir20/dozzle:v10.9.0
+    image: amir20/dozzle:v10.9.2
     pull: true
     restart_policy: "unless-stopped"
     networks:
