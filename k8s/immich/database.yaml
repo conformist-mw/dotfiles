@@ -56,7 +56,7 @@ spec:
         # ⚠️ This makes these manifests adoption-only. To bootstrap an EMPTY data dir
         # (fresh rehearsal box), drop this initContainer for the first start.
         - name: assert-pgdata
-          image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
+          image: ghcr.io/immich-app/postgres:16-vectorchord0.4.3-pgvectors0.2.0
           command:
             - sh
             - -c
@@ -70,7 +70,7 @@ spec:
             - { name: pgdata, mountPath: /var/lib/postgresql/data }
       containers:
         - name: postgres
-          image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
+          image: ghcr.io/immich-app/postgres:16-vectorchord0.4.3-pgvectors0.2.0
           env:
             - { name: POSTGRES_PASSWORD, value: "immich" }
             - { name: POSTGRES_USER, value: "immich" }
