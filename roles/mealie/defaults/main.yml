@@ -7,7 +7,7 @@ app_port: 9000
 app_data_dir: "{{ data_dir }}/mealie"
 
 # Pinned: watchtower is gone, image bumps come through renovate/manual PRs.
-mealie_image: "ghcr.io/mealie-recipes/mealie:v3.22.0"
+mealie_image: "ghcr.io/mealie-recipes/mealie:v3.25.1"
 
 # Unlike every other app here, mealie's login can't be turned off — recipes,
 # shopping lists and meal plans all hang off a user — so putting it behind
