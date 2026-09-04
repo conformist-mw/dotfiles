@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: whoami
-          image: traefik/whoami:v1.10.3   # pinned, never :latest (see MIGRATION.md)
+          image: traefik/whoami:v1.12.0   # pinned, never :latest (see MIGRATION.md)
           ports:
             - containerPort: 80
           resources:
