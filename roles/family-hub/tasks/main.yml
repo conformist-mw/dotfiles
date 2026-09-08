@@ -115,6 +115,17 @@
       # what was closed. Empty disables the message; the record of what came
       # due is written regardless, by a ticker that takes no configuration.
       REMINDER_NAG_TIME: "{{ family_hub_reminder_nag_time }}"
+      # Which request headers name the signed-in user, in priority order. They
+      # are the byline on every group message the web surface sends, and what
+      # "Я" in a person field resolves to.
+      #
+      # Paired with authResponseHeaders on the tinyauth forward-auth middleware
+      # (roles/tinyauth/tasks/main.yml): Traefik overwrites exactly the names
+      # listed there and passes every other client header straight through, so
+      # a name here that is missing there is one the browser gets to choose.
+      # Set explicitly rather than left to the app's default so that swapping
+      # the auth proxy is one change, in one place, next to the other half.
+      WEB_IDENTITY_HEADERS: "Remote-Name,Remote-User,Remote-Email"
       ICS_TOKEN: "{{ family_hub_ics_token }}"
       # School-today academic timetable mirror → /school.ics. Off unless the
       # portal login secrets are set in host_vars/hetzner; the Go app disables
