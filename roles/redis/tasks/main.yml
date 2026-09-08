@@ -1,7 +1,7 @@
 - name: Redis
   community.docker.docker_container:
     name: redis
-    image: docker.io/library/redis:7
+    image: docker.io/library/redis:8
     pull: true
     restart_policy: "unless-stopped"
     networks:

@@ -21,7 +21,7 @@ spec:
       securityContext: { runAsUser: 999, runAsGroup: 999, fsGroup: 999 }  # redis user; make emptyDir writable
       containers:
         - name: redis
-          image: docker.io/library/redis:7
+          image: docker.io/library/redis:8
           ports:
             - containerPort: 6379
           volumeMounts:
