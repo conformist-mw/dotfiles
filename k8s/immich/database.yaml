@@ -4,6 +4,12 @@
 # no `user:` override). Same image + same immich version => no schema migration, no
 # vector reindex.
 #
+# The tag here MUST equal the one in roles/immich/tasks/main.yml — "same image" is the
+# whole premise of the swap. Renovate keeps them in step only while they are already
+# equal: it groups by tag, so the moment the two drift it treats them as two separate
+# deps and offers to bump the stale one on its own (PR #29 offered 16 on this file
+# while the live container had been moved to 17 by hand).
+#
 # ⚠️ SINGLE WRITER: the docker `immich_database` container MUST be stopped before this
 # pod starts. Two postgres on one data dir = corruption.
 ---
@@ -56,7 +62,7 @@ spec:
         # ⚠️ This makes these manifests adoption-only. To bootstrap an EMPTY data dir
         # (fresh rehearsal box), drop this initContainer for the first start.
         - name: assert-pgdata
-          image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
+          image: ghcr.io/immich-app/postgres:17-vectorchord0.4.3
           command:
             - sh
             - -c
@@ -70,7 +76,7 @@ spec:
             - { name: pgdata, mountPath: /var/lib/postgresql/data }
       containers:
         - name: postgres
-          image: ghcr.io/immich-app/postgres:14-vectorchord0.4.3-pgvectors0.2.0
+          image: ghcr.io/immich-app/postgres:17-vectorchord0.4.3
           env:
             - { name: POSTGRES_PASSWORD, value: "immich" }
             - { name: POSTGRES_USER, value: "immich" }
