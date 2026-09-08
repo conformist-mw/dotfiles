@@ -180,7 +180,7 @@ http:
       chain:
         middlewares:
           - auth-headers
-          - rate-limit
+          - immich-rate-limit
 
     # For the login routers above. Same headers as secure-no-auth, but the
     # general rate-limit swapped for one sized to a human typing a password.
@@ -204,6 +204,19 @@ http:
         average: 6
         period: 1m
         burst: 3
+
+    # The mobile app opens one HTTP/2 connection and fires the whole visible
+    # screen down it at once — a timeline scroll is 60+ thumbnails in the same
+    # millisecond, and a backup run is the same shape. The shared rate-limit's
+    # burst of 50 rejected every one of them with a 429, which the app shows as
+    # "cannot reach server". Nothing is gained by keeping it tight here: the
+    # header gate above already means only a key holder ever reaches this
+    # middleware, so this cap exists to bound a runaway client, not to guard
+    # the door.
+    immich-rate-limit:
+      rateLimit:
+        average: 250
+        burst: 600
 
     compression:
       compress: {}
