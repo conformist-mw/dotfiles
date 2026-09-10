@@ -29,6 +29,26 @@ family_hub_webhook_host: "{{ family_hub_host }}"
 
 family_hub_gemini_model: "gemini-flash-lite-latest"
 
+# ── Cooking log ──────────────────────────────────────────────────────────────
+# Where the bot writes down what was cooked. The API address is the container
+# name on the shared docker network: both containers sit on it, so the bot's
+# half-dozen calls per photo skip traefik entirely — no TLS, no rate limit, and
+# nothing for CrowdSec to read. The public one exists only to link a recorded
+# meal back to its recipe from a Telegram message.
+family_hub_mealie_url: "http://mealie:9000"
+family_hub_mealie_public_url: "https://mealie.{{ ansible_host }}"
+
+# The model that looks at the photograph, OpenAI chat-completions protocol.
+# Measured against fourteen dishes before choosing: the cheap Gemini tier read
+# a plate of deruny with eggs and salad as "англійський сніданок" three times
+# out of three — it is not that it cannot see, it answers with the whole plate
+# instead of the main dish. gpt-5.6-luna and gemini-flash-latest both get it
+# right. Gemini speaks this protocol too, so switching is these two values:
+#   family_hub_ai_base_url: "https://generativelanguage.googleapis.com/v1beta/openai/"
+#   family_hub_ai_model: "gemini-flash-latest"
+family_hub_ai_base_url: "https://api.openai.com/v1"
+family_hub_ai_model: "gpt-5.6-luna"
+
 # When the bot lists the recurring chores nobody closed today. Evening, because
 # the message means "you forgot" — Home Assistant already says what is due each
 # morning. Empty disables the message but not the record.

@@ -105,6 +105,21 @@
       GEMINI_MODEL: "{{ family_hub_gemini_model }}"
       VISIT_PEOPLE: "{{ family_hub_visit_people }}"
       APPOINTMENT_COST_PROMPT_MIN: "{{ family_hub_cost_prompt_min }}"
+      # The cooking log: a photo of a plate becomes an entry in Mealie. The
+      # API is reached container-to-container on the shared docker network,
+      # so this traffic never touches traefik, CrowdSec or the rate limiter;
+      # the public address is separate because it is only used to build a
+      # link a phone can open.
+      MEALIE_URL: "{{ family_hub_mealie_url }}"
+      MEALIE_PUBLIC_URL: "{{ family_hub_mealie_public_url }}"
+      MEALIE_TOKEN: "{{ family_hub_mealie_token }}"
+      # Which model looks at the photograph. Kept apart from GEMINI_* above:
+      # that one parses text and the cheap tier is fine for it, while reading
+      # a plate needs a model that answers with the main dish instead of
+      # describing the whole plate.
+      AI_BASE_URL: "{{ family_hub_ai_base_url }}"
+      AI_MODEL: "{{ family_hub_ai_model }}"
+      AI_API_KEY: "{{ family_hub_ai_api_key }}"
       # NOTIFICATIONS_ENABLED is deliberately unset: Home Assistant sends the
       # daily/weekly appointment summaries from the ICS feed below, so enabling
       # them here would double-post to the family group. Lesson reminders are a
