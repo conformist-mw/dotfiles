@@ -49,6 +49,25 @@ family_hub_mealie_public_url: "https://mealie.{{ ansible_host }}"
 family_hub_ai_base_url: "https://api.openai.com/v1"
 family_hub_ai_model: "gpt-5.6-luna"
 
+# ── Meal plan ────────────────────────────────────────────────────────────────
+# When the empty slots of the coming week get filled. 05:30 because Home
+# Assistant sends tomorrow's menu at 07:00 and a plan written after that is a
+# plan nobody was told about. Empty disables the filling entirely.
+family_hub_mealplan_fill_time: "05:30"
+
+# Two meals a day, no breakfast — the household eats омлет at lunch. The
+# `side` entry type stays out on purpose: Mealie hangs a side off the day and
+# not off a meal, so it cannot say whether it belongs to lunch or dinner.
+family_hub_mealplan_slots: "lunch,dinner"
+
+# How far ahead to keep filled, and how long a dish rests before it may be
+# planned again. The rest window is applied by narrowing the household's own
+# rule with a lastMade clause computed at each pass: Mealie's filter language
+# takes only literal dates, so a window stored in the rule itself would rot
+# the day after it was written.
+family_hub_mealplan_horizon_days: "7"
+family_hub_mealplan_rest_days: "14"
+
 # When the bot lists the recurring chores nobody closed today. Evening, because
 # the message means "you forgot" — Home Assistant already says what is due each
 # morning. Empty disables the message but not the record.

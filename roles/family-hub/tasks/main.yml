@@ -126,6 +126,14 @@
       AI_BASE_URL: "{{ family_hub_ai_base_url }}"
       AI_MODEL: "{{ family_hub_ai_model }}"
       AI_API_KEY: "{{ family_hub_ai_api_key }}"
+      # Filling the meal plan. Runs before the morning menu message so that
+      # message always has something to announce; empty time disables it.
+      # Only the two meals this family eats, and only slots that are still
+      # empty — a plan somebody set by hand is never overwritten.
+      MEALPLAN_FILL_TIME: "{{ family_hub_mealplan_fill_time }}"
+      MEALPLAN_SLOTS: "{{ family_hub_mealplan_slots }}"
+      MEALPLAN_HORIZON_DAYS: "{{ family_hub_mealplan_horizon_days }}"
+      MEALPLAN_REST_DAYS: "{{ family_hub_mealplan_rest_days }}"
       # NOTIFICATIONS_ENABLED is deliberately unset: Home Assistant sends the
       # daily/weekly appointment summaries from the ICS feed below, so enabling
       # them here would double-post to the family group. Lesson reminders are a
