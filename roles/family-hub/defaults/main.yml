@@ -61,6 +61,11 @@ family_hub_reminder_delay_min: "60"
 # what it cost; the answer is a reply to that message. "-1" disables it.
 family_hub_cost_prompt_min: "60"
 
+# Who the family is, by Telegram user id. Deliberately empty here for the same
+# reason as the roster below: this repo is public and those are real names
+# against real ids. Set family_hub_people in host_vars/hetzner/secrets.sops.yaml.
+family_hub_people: ""
+
 # Optional roster used to normalize the "who" of a captured appointment.
 # Deliberately empty here — this repo is public and those are family names.
 # Set family_hub_visit_people in host_vars/hetzner/secrets.sops.yaml to fill it.
