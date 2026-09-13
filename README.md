@@ -46,9 +46,9 @@ just list-tags-hetzner
 ### Beelink
 | Category | Tags |
 |----------|------|
-| Base | `base`, `beelink`, `docker`, `vim` |
-| Infra | `infra`, `traefik`, `cockpit` |
-| Apps | `apps`, `jellyfin`, `navidrome`, `homepage`, `dozzle`, `glances`, `portainer`, `gitea`, `pgadmin`, `filebrowser`, `immich`, `samba`, `torrent`, `sponsorblock`, `redis`, `backup` |
+| Base | `base`, `beelink`, `docker`, `vim`, `vim-root`, `speedtest` |
+| Infra | `infra`, `k3s`, `traefik`, `cockpit` |
+| Apps | `apps`, `samba`, `jellyfin`, `navidrome`, `dozzle`, `torrent`, `sponsorblock`, `glances`, `homeassistant`, `homepage`, `immich`, `backup` |
 
 ### Hetzner
 | Category | Tags |
