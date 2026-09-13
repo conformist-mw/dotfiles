@@ -70,38 +70,6 @@
   loop: "{{ backup_jobs }}"
   become: true
 
-# - name: Install borg
-#   ansible.builtin.apt:
-#     name:
-#       - borgbackup
-#       - borgmatic
-#   become: true
-
-# - name: Copy borgmatic config
-#   ansible.builtin.template:
-#     dest: /etc/borgmatic/config.yaml
-#     src: borgmatic.yaml.j2
-#   become: true
-
-# - name: Extend crontab path
-#   ansible.builtin.cron:
-#     name: PATH
-#     env: yes
-#     job: /usr/local/bin:$PATH
-#     user: root
-#     state: present
-#   become: true
-
-# - name: Run borgmatic by cron
-#   ansible.builtin.cron:
-#     name: "borgmatic"
-#     minute: "0"
-#     hour: "3"
-#     job: "/usr/local/bin/borgmatic"
-#     state: present
-#     user: root
-#   become: true
-
 # The rclone scripts above append to {{ logs_dir }} at --log-level=INFO, which is
 # one line per file considered, on every run, with nothing rotating them:
 # keenetic.log had reached 481M and backblaze.log 475M. Rotating rather than
