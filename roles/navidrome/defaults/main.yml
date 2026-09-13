@@ -2,3 +2,26 @@ app_name: "navidrome"
 app_subdomain: "navidrome"
 app_port: 4533
 app_data_dir: "{{ data_dir }}/navidrome"
+
+# ── Database backup ──────────────────────────────────────────────────────────
+# navidrome.db had no backup at all: borgmatic was the only thing that ever
+# covered this kind of data and it has been dead for a long time (not installed,
+# no config, no repo). Rather than reviving it, the app backs itself up —
+# navidrome holds an open WAL, so a file copy of a running instance is not
+# necessarily consistent, while its own job snapshots correctly from inside.
+#
+# The target is the same directory the immich dump lands in, because the two
+# offsite jobs (db_backblaze_backup, db_keenetic_backup) mirror that whole
+# directory: writing here is what gets these copies to Backblaze and the router
+# disk, with no new unit to schedule. 02:00 for the same reason — it has to be
+# finished before those two run at 02:45 and 02:50, or a snapshot waits a full
+# day before it leaves the host.
+#
+# All three must be set: navidrome disables the job entirely if the path is
+# empty, the schedule is empty, or the count is zero.
+navidrome_backup_dir: "{{ db_backup_dir | default(data_dir + '/db-backup') }}"
+navidrome_backup_schedule: "0 2 * * *"
+# A week of history. These are plain uncompressed SQLite files (~41M each), and
+# navidrome prunes its own: the rotation in db_backup.sh only ever touches
+# immich-*.sql.gz.
+navidrome_backup_count: "7"

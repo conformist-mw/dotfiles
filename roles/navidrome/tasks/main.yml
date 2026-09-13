@@ -2,6 +2,17 @@
   ansible.builtin.include_role:
     name: labels_generator
 
+# The backup target belongs to the backup role, which runs later in the play;
+# navidrome writes its first snapshot before that, so create it here too rather
+# than leave the container to fail on a missing bind mount.
+- name: Ensure the navidrome backup directory exists
+  ansible.builtin.file:
+    path: "{{ navidrome_backup_dir }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0750"
+
 - name: Navidrome container
   community.docker.docker_container:
     image: deluan/navidrome:0.64.0
@@ -16,6 +27,7 @@
     volumes:
       - "{{ app_data_dir }}:/data"
       - "/mnt/hdd/music:/music:ro"
+      - "{{ navidrome_backup_dir }}:/backup"
     user: "1000:1000"
     env:
       ND_SCANSCHEDULE: "1h"
@@ -23,6 +35,12 @@
       ND_SESSIONTIMEOUT: "24h"
       ND_BASEURL: "http://navidrome.{{ ansible_host }}"
       ND_ENABLESHARING: "true"
+      # See the backup notes in defaults/main.yml. The path is the bind mount
+      # above, not a directory inside /data: the point is to land in the tree
+      # the offsite jobs already mirror.
+      ND_BACKUP_PATH: "/backup"
+      ND_BACKUP_SCHEDULE: "{{ navidrome_backup_schedule }}"
+      ND_BACKUP_COUNT: "{{ navidrome_backup_count }}"
     labels: "{{ labels }}"
 
 - name: Copy autoremove script
