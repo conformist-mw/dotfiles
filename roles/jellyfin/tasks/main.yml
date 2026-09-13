@@ -56,5 +56,20 @@
       LIBVA_DRIVER_NAME: "iHD"
       QSV_DEVICE: "/dev/dri/renderD128"
     shm_size: "2g"
+    # 4g is only enough while jellyfin's own two brakes are on, and both ship
+    # off. Playback settings, not container settings, so they live in
+    # config/encoding.xml where jellyfin owns them — named here because the
+    # size below is what makes them load-bearing:
+    #
+    #   EnableThrottling       ffmpeg otherwise runs flat out (speed=31.8x was
+    #                          measured), so a whole episode lands in RAM
+    #                          within two minutes of pressing play.
+    #   EnableSegmentDeletion  otherwise nothing is dropped as playback moves
+    #                          on; every segment stays for the whole session.
+    #
+    # With both off, one 1h episode wrote 3.95G of HLS segments into these 4g
+    # and the next thing to play got the 359M that were left: five seconds,
+    # then a stall. It reads as a jellyfin glitch cured by a restart, because
+    # this mount is recreated empty with the container.
     tmpfs:
       - "/cache/transcodes:size=4g,mode=1777"
