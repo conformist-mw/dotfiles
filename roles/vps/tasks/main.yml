@@ -8,6 +8,58 @@
     update_cache: yes
   become: true
 
+- name: Provide swap
+  block:
+    # fallocate, not dd: the file only has to exist at the right size, and a
+    # hole-punched file is what mkswap wants anyway. Guarded on the file rather
+    # than made idempotent by mkswap — re-running mkswap on a swapfile that is
+    # currently in use corrupts it.
+    - name: Check whether the swap file exists
+      ansible.builtin.stat:
+        path: "{{ vps_swap_path }}"
+      register: vps_swapfile
+
+    - name: Allocate the swap file
+      ansible.builtin.command: "fallocate -l {{ vps_swap_size_mb }}M {{ vps_swap_path }}"
+      when: not vps_swapfile.stat.exists
+
+    # 0600 before mkswap, or the kernel refuses it as insecure.
+    - name: Restrict the swap file
+      ansible.builtin.file:
+        path: "{{ vps_swap_path }}"
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Format the swap file
+      ansible.builtin.command: "mkswap {{ vps_swap_path }}"
+      when: not vps_swapfile.stat.exists
+
+    # fstab first, then swapon: an entry that survives a reboot is the point,
+    # and enabling it without the entry produces swap that quietly disappears
+    # the next time the host restarts.
+    - name: Record the swap file in fstab
+      ansible.posix.mount:
+        path: none
+        src: "{{ vps_swap_path }}"
+        fstype: swap
+        opts: sw
+        state: present
+
+    - name: Enable the swap file
+      ansible.builtin.command: "swapon {{ vps_swap_path }}"
+      register: vps_swapon
+      changed_when: vps_swapon.rc == 0
+      failed_when: vps_swapon.rc != 0 and 'already active' not in vps_swapon.stderr
+
+    - name: Set swappiness
+      ansible.posix.sysctl:
+        name: vm.swappiness
+        value: "{{ vps_swappiness }}"
+        sysctl_file: /etc/sysctl.d/99-homelab-swap.conf
+        reload: true
+  become: true
+
 - name: Create server dir
   ansible.builtin.file:
     path: "{{ server_dir }}"

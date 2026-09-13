@@ -78,6 +78,18 @@
       PERMISSION_READ_ONLY: "true"
       AUTH_ENABLED: "false"
       TZ: "{{ tz }}"
+    # The node process grows and does not give it back. Two weeks after a
+    # deploy it held 1.1G of anonymous memory — 30% of this host's RAM, for a
+    # read-only dashboard — and a fresh start does the same work in under 400M.
+    # The cap turns that from pressure on every other container into a restart
+    # of the one container that is leaking.
+    memory: "{{ crowdsec_webui_memory }}"
+    # Equal to `memory`, which denies this container swap entirely. Deliberate:
+    # the host now has a swap file, and letting a leak spill into it only buys
+    # the leak more time while every other container waits on the disk. Also
+    # required — docker refuses to raise a memory limit on a running container
+    # without memoryswap being set in the same call.
+    memory_swap: "{{ crowdsec_webui_memory }}"
     volumes:
       - "{{ app_data_dir }}/data:/app/data"
     labels: "{{ labels }}"

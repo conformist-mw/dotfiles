@@ -1,0 +1,15 @@
+---
+# ── Swap ─────────────────────────────────────────────────────────────────────
+# This host shipped with no swap at all: 3.7G of RAM, seventeen containers and
+# nowhere to go when something spikes. It had been holding — no OOM kill in the
+# journal — but only 591M was available while the CrowdSec dashboard sat on
+# 1.1G of anonymous memory it had accumulated over two weeks.
+#
+# A file rather than a partition because the disk is already laid out and a
+# file can be resized or dropped without touching it.
+vps_swap_size_mb: 2048
+vps_swap_path: /swapfile
+# 10, not the default 60: this is a cushion for a spike, not a tier the kernel
+# should reach for during normal work. Anonymous pages stay in RAM until real
+# pressure arrives.
+vps_swappiness: 10

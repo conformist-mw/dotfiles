@@ -20,3 +20,8 @@ crowdsec_webui_machine: "crowdsec-web-ui"
 crowdsec_webui_lapi_url: "http://{{ docker_gateway }}:8080"
 # Full metrics path — the app fetches this URL as-is (does not append /metrics).
 crowdsec_webui_prometheus_url: "http://{{ docker_gateway }}:6060/metrics"
+
+# Headroom over the ~400M a freshly started instance uses, so an ordinary busy
+# moment is not mistaken for the leak. Reaching this cap means the process has
+# roughly doubled its working set, which is the condition worth killing on.
+crowdsec_webui_memory: "768m"
