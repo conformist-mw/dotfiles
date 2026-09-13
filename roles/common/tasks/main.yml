@@ -61,6 +61,66 @@
       changed_when: "'Deleted archived journal' in journal_vacuum.stderr"
   become: true
 
+- name: Apply security updates unattended
+  block:
+    - name: Install unattended-upgrades
+      ansible.builtin.apt:
+        name:
+          - unattended-upgrades
+        state: present
+
+    # Two files because the package splits the job: 20auto-upgrades decides
+    # whether the timers do anything at all, 50unattended-upgrades decides what
+    # they are allowed to install. Neither is edited — the package keeps its own
+    # copies and this repo owns one drop-in that sorts last and wins.
+    - name: Enable the periodic apt timers
+      ansible.builtin.copy:
+        dest: /etc/apt/apt.conf.d/20auto-upgrades
+        mode: "0644"
+        content: |
+          APT::Periodic::Update-Package-Lists "1";
+          APT::Periodic::Unattended-Upgrade "1";
+          APT::Periodic::AutocleanInterval "7";
+
+    - name: Write the unattended-upgrades policy
+      ansible.builtin.copy:
+        dest: /etc/apt/apt.conf.d/99-homelab-unattended
+        mode: "0644"
+        content: |
+          // Managed by ansible (roles/common). Sorts after 50unattended-upgrades.
+          //
+          // #clear first: an apt.conf list block APPENDS, so without this the
+          // package's own origins stay in force and this file stops describing
+          // what is actually allowed. Verified — the release pocket was still
+          // listed until the clear was added.
+          #clear Unattended-Upgrade::Allowed-Origins;
+          Unattended-Upgrade::Allowed-Origins {
+                  "${distro_id}:${distro_codename}-security";
+                  "${distro_id}ESMApps:${distro_codename}-apps-security";
+                  "${distro_id}ESM:${distro_codename}-infra-security";
+          {% if not unattended_security_only %}
+                  "${distro_id}:${distro_codename}-updates";
+          {% endif %}
+          };
+          Unattended-Upgrade::Automatic-Reboot "{{ unattended_automatic_reboot | ternary('true', 'false') }}";
+          Unattended-Upgrade::Mail "{{ unattended_mail }}";
+          Unattended-Upgrade::MailReport "{{ unattended_mail_report }}";
+          // /boot is small and four kernels were already installed on bee.
+          Unattended-Upgrade::Remove-Unused-Kernel-Packages "true";
+          Unattended-Upgrade::Remove-Unused-Dependencies "true";
+          // Keep going if a package is mid-download when the run is cut short.
+          Unattended-Upgrade::MinimalSteps "true";
+
+    # The policy is only worth what a dry run says it is: this prints the
+    # packages that WOULD be taken, so a wrong origin shows up here rather than
+    # as a surprise a week later. Never installs anything.
+    - name: Verify the policy resolves
+      ansible.builtin.command: unattended-upgrade --dry-run --debug
+      register: unattended_check
+      changed_when: false
+      failed_when: unattended_check.rc != 0
+  become: true
+
 - name: Install tg-sendmail for notifications
   block:
     - name: Install tg-sendmail deb

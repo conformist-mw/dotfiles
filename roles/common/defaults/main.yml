@@ -14,3 +14,24 @@ journal_max_use: "500M"
 # it from the *detected* disk size, not from journal_max_use.
 journal_max_file_size: "64M"
 journal_max_retention: "1month"
+
+# ── Unattended security upgrades ─────────────────────────────────────────────
+# Neither host had unattended-upgrades and neither was being upgraded by hand:
+# bee had accumulated 361 pending packages, 268 of them security, over 148 days
+# of uptime. That is the failure this closes.
+#
+# Security pockets only. The regular -updates pocket carries feature changes,
+# and a box that runs the house should not take those while nobody is looking —
+# those stay a deliberate `apt full-upgrade` under supervision.
+unattended_security_only: true
+# Reboots stay manual, always. bee runs Home Assistant inside a QEMU guest, and
+# an unattended reboot would take the host down without the graceful `virsh
+# shutdown` the guest needs — exactly the save/restore hazard avoided by hand
+# when qemu was last upgraded. The host still reports that a reboot is due.
+unattended_automatic_reboot: false
+# Where the report goes. Both hosts already have tg-sendmail as
+# /usr/sbin/sendmail, so this arrives as a Telegram message; the address is
+# only what appears in the From/To line. "on-change" rather than "only-on-error"
+# because a security upgrade landing unattended is itself worth reading.
+unattended_mail: "root"
+unattended_mail_report: "on-change"
