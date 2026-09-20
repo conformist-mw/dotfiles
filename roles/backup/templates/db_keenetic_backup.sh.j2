@@ -4,8 +4,16 @@
 # away whenever its USB disk unmounts. Managed by Ansible (roles/backup).
 set -euo pipefail
 
-# --delete-during: mirror the rotated local set so pruned dumps drop remotely too.
+# sync, not copy: the rotated local set is the desired state, so dumps pruned by
+# db_backup.sh drop remotely too instead of piling up forever.
 # --exclude *.tmp: never ship a dump the db_backup job is still writing.
-/usr/bin/rclone copy "{{ db_backup_dir }}" keenetic:/backup/db \
-  --delete-during --exclude "*.tmp" \
+# The emptiness check comes first because sync reads an empty source as "delete
+# everything" and would take the whole offsite set with it.
+[ -n "$(ls -A "{{ db_backup_dir }}" 2>/dev/null)" ] || {
+  echo "$(date -Is) {{ db_backup_dir }} is empty or missing, refusing to sync" >&2
+  exit 1
+}
+
+/usr/bin/rclone sync "{{ db_backup_dir }}" keenetic:/backup/db \
+  --exclude "*.tmp" \
   --log-file="{{ logs_dir }}/db_keenetic.log" --log-level=INFO

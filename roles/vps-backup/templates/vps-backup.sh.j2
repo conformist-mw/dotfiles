@@ -108,9 +108,16 @@ archive {{ d.name | quote }} {{ d.path | quote }}{% for e in d.exclude | default
 
 {% endfor %}
 
-# Mirror rather than copy, so a snapshot pruned here is pruned there and the
-# remote keeps the same $KEEP-deep window instead of growing without limit.
-/usr/bin/rclone copy "$BACKUP_DIR" "backblaze:{{ vps_b2_bucket }}" \
-  --delete-during --log-level=INFO
+# sync rather than copy, so a snapshot pruned here is pruned there and the remote
+# keeps the same $KEEP-deep window instead of growing without limit. --b2-hard-delete
+# because otherwise a pruned snapshot only becomes a hidden version and keeps costing.
+# The emptiness check comes first: sync reads an empty source as "delete everything".
+[ -n "$(ls -A "$BACKUP_DIR")" ] || {
+  echo "$(date -Is) $BACKUP_DIR is empty, refusing to sync" >&2
+  exit 1
+}
+
+/usr/bin/rclone sync "$BACKUP_DIR" "backblaze:{{ vps_b2_bucket }}" \
+  --b2-hard-delete --log-level=INFO
 
 echo "$(date -Is) offsite mirror OK -> backblaze:{{ vps_b2_bucket }}"

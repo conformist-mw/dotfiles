@@ -21,8 +21,8 @@ OUT="$BACKUP_DIR/immich-$TS.sql.gz"
 gzip -t "$OUT.tmp"
 mv "$OUT.tmp" "$OUT"
 
-# Rotation: keep the newest $KEEP dumps, delete older ones. The offsite jobs mirror this
-# directory with --delete-during, so pruning here propagates to both remotes.
+# Rotation: keep the newest $KEEP dumps, delete older ones. The offsite jobs rclone sync
+# this directory, so pruning here propagates to both remotes.
 ls -1t "$BACKUP_DIR"/immich-*.sql.gz | tail -n +$((KEEP + 1)) | xargs -r rm -f
 
 echo "$(date -Is) local dump OK: $OUT ($(du -h "$OUT" | cut -f1)); kept newest $KEEP" | tee -a "$LOG"
