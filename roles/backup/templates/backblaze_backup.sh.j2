@@ -1,5 +1,8 @@
 #!/bin/bash
+# Deliberately `copy`, not `sync`: an accidental delete on the host must never reach the
+# offsite copy. The remote therefore keeps files removed here — prune it by hand when it
+# grows too big. Managed by Ansible (roles/backup).
 set -e
 
-/usr/bin/rclone copy /mnt/ssd/photos backblaze:xxxxx-photos --delete-during --log-file={{ logs_dir }}/backblaze.log --log-level=INFO --transfers=8 --size-only
-/usr/bin/rclone copy /mnt/ssd/photos-upload/library backblaze:xxxxx-library --delete-during --log-file={{ logs_dir }}/backblaze-library.log --log-level=INFO --transfers=8 --size-only 
+/usr/bin/rclone copy /mnt/ssd/photos backblaze:xxxxx-photos --log-file={{ logs_dir }}/backblaze.log --log-level=INFO --transfers=8 --size-only
+/usr/bin/rclone copy /mnt/ssd/photos-upload/library backblaze:xxxxx-library --log-file={{ logs_dir }}/backblaze-library.log --log-level=INFO --transfers=8 --size-only
