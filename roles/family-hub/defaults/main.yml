@@ -43,11 +43,13 @@ family_hub_mealie_public_url: "https://mealie.{{ ansible_host }}"
 # a plate of deruny with eggs and salad as "англійський сніданок" three times
 # out of three — it is not that it cannot see, it answers with the whole plate
 # instead of the main dish. gpt-5.6-luna and gemini-flash-latest both get it
-# right. Gemini speaks this protocol too, so switching is these two values:
+# right. gpt-6-luna is the default on price (half of 5.6 Luna) and has not
+# been through that plate yet.
+# Gemini speaks this protocol too, so switching is these two values:
 #   family_hub_ai_base_url: "https://generativelanguage.googleapis.com/v1beta/openai/"
 #   family_hub_ai_model: "gemini-flash-latest"
 family_hub_ai_base_url: "https://api.openai.com/v1"
-family_hub_ai_model: "gpt-5.6-luna"
+family_hub_ai_model: "gpt-6-luna"
 
 # ── Meal plan ────────────────────────────────────────────────────────────────
 # When the empty slots of the coming week get filled. 05:30 because Home
