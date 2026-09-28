@@ -30,14 +30,6 @@ family_hub_webhook_host: "{{ family_hub_host }}"
 family_hub_gemini_model: "gemini-flash-lite-latest"
 
 # ── Cooking log ──────────────────────────────────────────────────────────────
-# Where the bot writes down what was cooked. The API address is the container
-# name on the shared docker network: both containers sit on it, so the bot's
-# half-dozen calls per photo skip traefik entirely — no TLS, no rate limit, and
-# nothing for CrowdSec to read. The public one exists only to link a recorded
-# meal back to its recipe from a Telegram message.
-family_hub_mealie_url: "http://mealie:9000"
-family_hub_mealie_public_url: "https://mealie.{{ ansible_host }}"
-
 # The model that looks at the photograph, OpenAI chat-completions protocol.
 # Measured against fourteen dishes before choosing: the cheap Gemini tier read
 # a plate of deruny with eggs and salad as "англійський сніданок" three times
@@ -50,25 +42,6 @@ family_hub_mealie_public_url: "https://mealie.{{ ansible_host }}"
 #   family_hub_ai_model: "gemini-flash-latest"
 family_hub_ai_base_url: "https://api.openai.com/v1"
 family_hub_ai_model: "gpt-6-luna"
-
-# ── Meal plan ────────────────────────────────────────────────────────────────
-# When the empty slots of the coming week get filled. 05:30 because Home
-# Assistant sends tomorrow's menu at 07:00 and a plan written after that is a
-# plan nobody was told about. Empty disables the filling entirely.
-family_hub_mealplan_fill_time: "05:30"
-
-# Two meals a day, no breakfast — the household eats омлет at lunch. The
-# `side` entry type stays out on purpose: Mealie hangs a side off the day and
-# not off a meal, so it cannot say whether it belongs to lunch or dinner.
-family_hub_mealplan_slots: "lunch,dinner"
-
-# How far ahead to keep filled, and how long a dish rests before it may be
-# planned again. The rest window is applied by narrowing the household's own
-# rule with a lastMade clause computed at each pass: Mealie's filter language
-# takes only literal dates, so a window stored in the rule itself would rot
-# the day after it was written.
-family_hub_mealplan_horizon_days: "7"
-family_hub_mealplan_rest_days: "14"
 
 # When the bot lists the recurring chores nobody closed today. Evening, because
 # the message means "you forgot" — Home Assistant already says what is due each
@@ -117,3 +90,15 @@ family_hub_school_digest_time: "19:30"
 # 19:45 rather than 19:30 so the two school messages do not arrive together.
 family_hub_school_week_review_dow: "5"
 family_hub_school_week_review_time: "19:45"
+
+# ── Menu ─────────────────────────────────────────────────────────────────────
+# The morning "what to cook today": for today, not tomorrow — nobody here plans
+# a day ahead, they cook and shop the same day. Empty disables it.
+family_hub_menu_time: "07:00"
+# The evening "what did you eat", asked only about meals nobody confirmed.
+# 20:15 rather than 20:00 so it does not land on top of the chore nag.
+family_hub_menu_evening_time: "20:15"
+# Three new dishes to try, Saturday morning. 0=Sun..6=Sat; unset disables.
+# Needs AI_API_KEY as well.
+family_hub_dish_suggest_dow: "6"
+family_hub_dish_suggest_time: "10:00"

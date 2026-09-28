@@ -50,7 +50,6 @@
     - { role: family-hub, tags: [apps, family-hub, "family_hub"] }
     - { role: school-bot, tags: [apps, school-bot, "school_bot"] }
     - { role: subtrackr, tags: [apps, subtrackr] }
-    - { role: mealie, tags: [apps, mealie] }
 
     # Snapshots whatever host_vars/hetzner/backup.yml lists, so it runs after
     # the apps that write those files.

@@ -34,18 +34,6 @@
         container: "subtrackr"
         server: "local-docker"
 
-    - Mealie:
-        href: https://mealie.{{ ansible_host }}
-        widget:
-          type: mealie
-          url: "http://mealie:9000"
-          key: "{{ homepage_mealie_api_key }}"
-          version: 2
-        description: "Recipes & meal planning"
-        icon: "mealie"
-        container: "mealie"
-        server: "local-docker"
-
     - Pihole:
         href: https://pihole.{{ ansible_host }}/admin
         # v6 accepts the web password as the API key, so this needs no secret

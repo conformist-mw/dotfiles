@@ -111,14 +111,6 @@
       # whatever Telegram currently says.
       TELEGRAM_PEOPLE: "{{ family_hub_people }}"
       APPOINTMENT_COST_PROMPT_MIN: "{{ family_hub_cost_prompt_min }}"
-      # The cooking log: a photo of a plate becomes an entry in Mealie. The
-      # API is reached container-to-container on the shared docker network,
-      # so this traffic never touches traefik, CrowdSec or the rate limiter;
-      # the public address is separate because it is only used to build a
-      # link a phone can open.
-      MEALIE_URL: "{{ family_hub_mealie_url }}"
-      MEALIE_PUBLIC_URL: "{{ family_hub_mealie_public_url }}"
-      MEALIE_TOKEN: "{{ family_hub_mealie_token }}"
       # Which model looks at the photograph. Kept apart from GEMINI_* above:
       # that one parses text and the cheap tier is fine for it, while reading
       # a plate needs a model that answers with the main dish instead of
@@ -126,14 +118,6 @@
       AI_BASE_URL: "{{ family_hub_ai_base_url }}"
       AI_MODEL: "{{ family_hub_ai_model }}"
       AI_API_KEY: "{{ family_hub_ai_api_key }}"
-      # Filling the meal plan. Runs before the morning menu message so that
-      # message always has something to announce; empty time disables it.
-      # Only the two meals this family eats, and only slots that are still
-      # empty — a plan somebody set by hand is never overwritten.
-      MEALPLAN_FILL_TIME: "{{ family_hub_mealplan_fill_time }}"
-      MEALPLAN_SLOTS: "{{ family_hub_mealplan_slots }}"
-      MEALPLAN_HORIZON_DAYS: "{{ family_hub_mealplan_horizon_days }}"
-      MEALPLAN_REST_DAYS: "{{ family_hub_mealplan_rest_days }}"
       # NOTIFICATIONS_ENABLED is deliberately unset: Home Assistant sends the
       # daily/weekly appointment summaries from the ICS feed below, so enabling
       # them here would double-post to the family group. Lesson reminders are a
@@ -181,6 +165,12 @@
       # place topics, homework and marks are published.
       SCHOOL_WEEK_REVIEW_DOW: "{{ family_hub_school_week_review_dow }}"
       SCHOOL_WEEK_REVIEW_TIME: "{{ family_hub_school_week_review_time }}"
+      # The menu: morning picks, the evening check, the weekly suggestions.
+      # Not behind NOTIFICATIONS_ENABLED: HA has no part in them any more.
+      MENU_TIME: "{{ family_hub_menu_time }}"
+      MENU_EVENING_TIME: "{{ family_hub_menu_evening_time }}"
+      DISH_SUGGEST_DOW: "{{ family_hub_dish_suggest_dow }}"
+      DISH_SUGGEST_TIME: "{{ family_hub_dish_suggest_time }}"
     volumes:
       - "{{ family_hub_dir }}:/data"
     labels:

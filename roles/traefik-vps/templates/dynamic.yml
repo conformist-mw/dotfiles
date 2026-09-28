@@ -80,17 +80,6 @@ http:
       tls:
         certResolver: letsencrypt
 
-    mealie-login:
-      rule: "Host(`mealie.{{ ansible_host }}`) && PathPrefix(`/api/auth/token`)"
-      priority: 1000
-      entryPoints:
-        - websecure
-      middlewares:
-        - login-chain
-      service: mealie@docker
-      tls:
-        certResolver: letsencrypt
-
     commeilfaut-login:
       rule: "Host(`commeilfaut.{{ ansible_host }}`) && PathPrefix(`/admin/login`)"
       priority: 1000
