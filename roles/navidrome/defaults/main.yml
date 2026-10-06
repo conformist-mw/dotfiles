@@ -25,3 +25,26 @@ navidrome_backup_schedule: "0 2 * * *"
 # navidrome prunes its own: the rotation in db_backup.sh only ever touches
 # immich-*.sql.gz.
 navidrome_backup_count: "7"
+
+# ── Reaper ───────────────────────────────────────────────────────────────────
+# A star marks a track for deletion. That is the long-standing habit this whole
+# mechanism was built around, and it is the gesture the hand reaches for, so it
+# is what the reaper watches. A rating of 1 is honoured as well, for anyone who
+# would rather keep the star for favourites.
+navidrome_reap_rating: 1
+# Low enough that a track vanishes while it is still playing, cheap enough to
+# ignore: the poll is one indexed query against a local sqlite file.
+navidrome_reap_poll_seconds: 5
+# Delay between marking a track and deleting it. Sized from a real session: the
+# player came back asking for already-deleted tracks a median of 37 seconds
+# after they went, so a shorter delay leaves the gaps it is meant to close.
+navidrome_reap_mark_grace_seconds: 60
+# One mis-aimed bulk rating must not be able to empty the library. Above this
+# the sweep refuses and says so instead of deleting.
+navidrome_reap_max_per_sweep: 25
+
+nd_env_filepath: "/etc/nd.env"
+nd_music_dir: "/mnt/hdd/music"
+nd_db_path: "{{ app_data_dir }}/navidrome.db"
+nd_python: "{{ app_data_dir }}/.venv/bin/python"
+nd_reaper_path: "{{ app_data_dir }}/nd_reaper.py"

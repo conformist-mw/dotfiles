@@ -1,0 +1,6 @@
+- name: Restart nd_reaper
+  ansible.builtin.systemd:
+    name: nd_reaper.service
+    state: restarted
+    daemon_reload: true
+  become: true

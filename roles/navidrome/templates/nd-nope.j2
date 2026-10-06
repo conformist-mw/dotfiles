@@ -1,0 +1,17 @@
+#!/bin/sh
+# Delete whatever navidrome is playing right now.
+#
+# Needs no marker and no client support beyond the "now playing" report every
+# Subsonic client already sends, so it behaves the same whether the track is
+# coming from the web UI or a phone. Pass --dry-run to see what it would take.
+#
+# No sudo: {{ nd_env_filepath }} is owned by the user this runs as, which is
+# also the user that owns the library.
+set -eu
+set -a
+. {{ nd_env_filepath }}
+set +a
+REAPER_MUSIC_DIR={{ nd_music_dir }}
+REAPER_DB_PATH={{ nd_db_path }}
+export REAPER_MUSIC_DIR REAPER_DB_PATH
+exec {{ nd_python }} {{ nd_reaper_path }} nope "$@"

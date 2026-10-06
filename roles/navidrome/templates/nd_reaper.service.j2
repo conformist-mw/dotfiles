@@ -1,0 +1,29 @@
+[Unit]
+Description=Navidrome reaper: delete tracks marked for removal
+OnFailure=systemd-notify@%n.service
+After=network.target docker.service
+
+[Service]
+# A daemon rather than a timer. The point of the whole mechanism is that a
+# track you dislike disappears while you are still listening, and a timer
+# cannot do that: the previous hourly one left up to an hour of lag, long
+# enough that you stopped trusting it and stopped using it.
+Type=simple
+User={{ ansible_user }}
+EnvironmentFile={{ nd_env_filepath }}
+Environment=REAPER_MUSIC_DIR={{ nd_music_dir }}
+Environment=REAPER_DB_PATH={{ nd_db_path }}
+Environment=REAPER_RATING={{ navidrome_reap_rating }}
+Environment=REAPER_POLL_SECONDS={{ navidrome_reap_poll_seconds }}
+Environment=REAPER_MARK_GRACE_SECONDS={{ navidrome_reap_mark_grace_seconds }}
+Environment=REAPER_MAX_PER_SWEEP={{ navidrome_reap_max_per_sweep }}
+ExecStart={{ nd_python }} {{ nd_reaper_path }} daemon
+Restart=always
+RestartSec=10
+# Journald only. The shell version wrote its own log file and never rotated it,
+# which is how it reached 7.5 MB of almost entirely repeated lines.
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

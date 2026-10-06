@@ -43,46 +43,50 @@
       ND_BACKUP_COUNT: "{{ navidrome_backup_count }}"
     labels: "{{ labels }}"
 
-- name: Copy autoremove script
-  ansible.builtin.template:
-    src: nd_autoremove_starred.sh
-    dest: "/usr/local/bin/nd_autoremove_starred.sh"
-    mode: "0755"
-    owner: "1000"
-    group: "1000"
-  vars:
-    DATABASE_PATH: "{{ app_data_dir }}/navidrome.db"
-    MUSIC_DIR: "/mnt/hdd/music"
-    AUTOREMOVE_LOG_FILE: "{{ app_data_dir }}/autoremove.log"
-  become: true
-
-- name: Copy systemd service
-  ansible.builtin.copy:
-    src: nd_autoremove.service
-    dest: "/etc/systemd/system/nd_autoremove.service"
-    mode: "0644"
-  become: true
-
-- name: Copy systemd timer
-  ansible.builtin.copy:
-    src: nd_autoremove.timer
-    dest: "/etc/systemd/system/nd_autoremove.timer"
-    mode: "0644"
-  become: true
-
-- name: Start and enable autoremove timer
-  ansible.builtin.systemd:
-    name: nd_autoremove.timer
-    enabled: true
-    state: started
-    daemon_reload: true
-  become: true
-
-- name: setup nd remove missing files job
+# ── Reaper ───────────────────────────────────────────────────────────────────
+# Replaces two separate jobs: the hourly nd_autoremove timer that deleted
+# starred files, and the nd_remove_missing timer that purged the rows they left
+# behind. One daemon now does both, in order, within seconds.
+#
+# Why the old pair went: nd_autoremove never cleared the marker it acted on, so
+# every hour it re-read rows whose files it had already deleted and logged
+# "File not found" again. That is 49605 of the 54477 lines in its log against
+# 2172 real deletions. And because the purge lived in a different timer on a
+# different schedule, a deleted track stayed visible in the UI for up to two
+# hours.
+- name: Remove the superseded autoremove and remove-missing jobs
   block:
-    - name: Create nd remove missing files environment file
-      copy:
-        dest: /etc/nd.env
+    - name: Stop and disable the old units
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        state: stopped
+        enabled: false
+      failed_when: false
+      loop:
+        - nd_autoremove.timer
+        - nd_autoremove.service
+        - nd_remove_missing.timer
+        - nd_remove_missing.service
+
+    - name: Delete the old unit and script files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/systemd/system/nd_autoremove.timer
+        - /etc/systemd/system/nd_autoremove.service
+        - /etc/systemd/system/nd_remove_missing.timer
+        - /etc/systemd/system/nd_remove_missing.service
+        - /usr/local/bin/nd_autoremove_starred.sh
+        - "{{ app_data_dir }}/nd_remove_missing.py"
+        - "{{ app_data_dir }}/autoremove.log"
+  become: true
+
+- name: Setup the reaper
+  block:
+    - name: Create the navidrome credentials environment file
+      ansible.builtin.copy:
+        dest: "{{ nd_env_filepath }}"
         content: |
           ND_USERNAME={{ navidrome_admin_user }}
           ND_PASSWORD={{ navidrome_admin_password }}
@@ -92,38 +96,43 @@
         mode: "0600"
       become: true
 
-    - name: Install httpx
+    - name: Install httpx into the navidrome venv
       ansible.builtin.pip:
         name: "httpx"
         state: present
         virtualenv: "{{ app_data_dir }}/.venv"
 
-    - name: copy remove missing script
-      ansible.builtin.copy:
-        src: "nd_remove_missing.py"
-        dest: "{{ app_data_dir }}/nd_remove_missing.py"
-        mode: "0755"
-
-    - name: copy remove missing systemd service
+    - name: Copy the reaper script
       ansible.builtin.template:
-        src: "nd_remove_missing.service"
-        dest: "/etc/systemd/system/nd_remove_missing.service"
+        src: nd_reaper.py
+        dest: "{{ nd_reaper_path }}"
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: "0755"
       vars:
-        nd_env_filepath: "/etc/nd.env"
-        nd_exec_path: "{{ app_data_dir }}/.venv/bin/python {{ app_data_dir }}/nd_remove_missing.py"
-        nd_work_dir: "{{ app_data_dir }}"
+        MUSIC_DIR: "{{ nd_music_dir }}"
+        DATABASE_PATH: "{{ nd_db_path }}"
+      notify: Restart nd_reaper
+
+    - name: Install the nd-nope helper
+      ansible.builtin.template:
+        src: nd-nope.j2
+        dest: /usr/local/bin/nd-nope
+        mode: "0755"
       become: true
 
-    - name: copy nc remove missing systemd timer
-      ansible.builtin.copy:
-        src: "nd_remove_missing.timer"
-        dest: "/etc/systemd/system/nd_remove_missing.timer"
+    - name: Copy the reaper systemd service
+      ansible.builtin.template:
+        src: nd_reaper.service.j2
+        dest: /etc/systemd/system/nd_reaper.service
+        mode: "0644"
       become: true
+      notify: Restart nd_reaper
 
-    - name: enable nd remove missing timer
+    - name: Start and enable the reaper
       ansible.builtin.systemd:
-        name: nd_remove_missing.timer
-        enabled: yes
+        name: nd_reaper.service
+        enabled: true
         state: started
-        daemon_reload: yes
+        daemon_reload: true
       become: true
