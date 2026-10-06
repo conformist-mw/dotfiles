@@ -46,11 +46,18 @@
         opts: sw
         state: present
 
+    # Asked of the kernel rather than inferred from swapon's error text: on an
+    # active file it says "already active" or "Device or resource busy"
+    # depending on the util-linux version, and only the first was ever matched.
+    - name: Read the active swaps
+      ansible.builtin.command: cat /proc/swaps
+      register: vps_active_swaps
+      changed_when: false
+      check_mode: false
+
     - name: Enable the swap file
       ansible.builtin.command: "swapon {{ vps_swap_path }}"
-      register: vps_swapon
-      changed_when: vps_swapon.rc == 0
-      failed_when: vps_swapon.rc != 0 and 'already active' not in vps_swapon.stderr
+      when: vps_swap_path not in vps_active_swaps.stdout
 
     - name: Set swappiness
       ansible.posix.sysctl:
