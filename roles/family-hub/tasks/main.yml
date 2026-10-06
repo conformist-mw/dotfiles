@@ -66,6 +66,9 @@
   # in `status`, not in container.State: cleanup removes the container before
   # the module can inspect it.
   failed_when: (family_hub_migrate.status | default(1)) != 0
+  # Same for "changed": it is true on every run. goose says so when it has
+  # nothing to apply.
+  changed_when: "'no migrations to run' not in (family_hub_migrate.container.Output | default(''))"
 
 - name: Report the schema version
   ansible.builtin.debug:
