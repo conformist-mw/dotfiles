@@ -60,6 +60,13 @@
           type: homeassistant
           url: "http://192.168.1.223:8123"
           key: "{{ ha_token }}"
+    - Grist:
+        href: http://grist.{{ ansible_host }}
+        description: "Finance spreadsheets"
+        icon: "grist"
+        server: "local-docker"
+        container: "grist"
+        showStats: true
 
 - tools:
     - Dozzle:

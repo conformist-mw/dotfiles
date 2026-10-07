@@ -1,0 +1,20 @@
+app_name: "grist"
+app_subdomain: "grist"
+app_port: 8484
+app_data_dir: "{{ data_dir }}/grist"
+
+# The owner of the Finance document. Grist runs without a login system here: on
+# the LAN every visitor is this user, which is what makes the existing document
+# and its API key keep working after the move from the Mac.
+grist_default_email: "oleg.smedyuk@gmail.com"
+
+# ── Backup ───────────────────────────────────────────────────────────────────
+# A .grist document is a SQLite file Grist keeps open, so a plain copy of a
+# running instance is not necessarily consistent. The dump goes through SQLite's
+# backup API from inside the container (the image ships python3), into the
+# directory the immich dump uses: the two offsite jobs mirror that whole
+# directory, so landing here is what gets the copies to Backblaze and the router
+# disk. 02:00 so it is done before those run at 02:45 and 02:50.
+grist_backup_dir: "{{ db_backup_dir | default(data_dir + '/db-backup') }}/grist"
+grist_backup_time: "*-*-* 02:00:00"
+grist_backup_keep: 14

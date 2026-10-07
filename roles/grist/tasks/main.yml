@@ -1,0 +1,63 @@
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+
+- name: Ensure the grist directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0750"
+  loop:
+    - "{{ app_data_dir }}"
+    - "{{ grist_backup_dir }}"
+
+- name: Grist container
+  community.docker.docker_container:
+    image: gristlabs/grist:1.7.20
+    pull: true
+    name: "{{ app_name }}"
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    volumes:
+      - "{{ app_data_dir }}:/persist"
+      - "{{ grist_backup_dir }}:/backup"
+    # Same uid as the host user, so the documents stay readable by the ETL and
+    # the backup without a chown dance. The image's entrypoint only drops to its
+    # own grist user when started as root.
+    user: "1000:1000"
+    env:
+      APP_HOME_URL: "http://{{ app_subdomain }}.{{ ansible_host }}"
+      GRIST_DEFAULT_EMAIL: "{{ grist_default_email }}"
+      GRIST_SESSION_SECRET: "{{ grist_session_secret }}"
+      GRIST_BOOT_KEY: "{{ grist_boot_key }}"
+      GRIST_TELEMETRY_LEVEL: "off"
+      GRIST_ALLOW_AUTOMATIC_VERSION_CHECKING: "false"
+    labels: "{{ labels }}"
+
+- name: Setup the backup
+  block:
+    - name: Copy the backup script
+      ansible.builtin.template:
+        src: grist_backup.sh.j2
+        dest: /usr/local/bin/grist_backup.sh
+        mode: "0755"
+
+    - name: Copy the backup units
+      ansible.builtin.template:
+        src: "{{ item }}.j2"
+        dest: "/etc/systemd/system/{{ item }}"
+        mode: "0644"
+      loop:
+        - grist_backup.service
+        - grist_backup.timer
+
+    - name: Start and enable the backup timer
+      ansible.builtin.systemd:
+        name: grist_backup.timer
+        enabled: true
+        state: started
+        daemon_reload: true
+  become: true

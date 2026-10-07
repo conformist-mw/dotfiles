@@ -1,0 +1,9 @@
+[Unit]
+Description=Grist documents backup
+OnFailure=systemd-notify@%n.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User={{ ansible_user }}
+ExecStart=/usr/local/bin/grist_backup.sh

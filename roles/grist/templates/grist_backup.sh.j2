@@ -1,0 +1,40 @@
+#!/bin/bash
+# Grist documents and home DB, snapshotted with SQLite's backup API from inside
+# the running container, then gzipped with rotation. Local only — the offsite
+# jobs mirror {{ grist_backup_dir | dirname }}.
+# Managed by Ansible (roles/grist).
+set -euo pipefail
+shopt -s nullglob
+
+BACKUP_DIR="{{ grist_backup_dir }}"
+KEEP={{ grist_backup_keep }}
+TS=$(date +%Y%m%d-%H%M%S)
+
+# Drop any half-written snapshot left behind by a previously interrupted run.
+rm -f "$BACKUP_DIR"/*.tmp
+
+/usr/bin/docker exec -i {{ app_name }} python3 - "$TS" <<'EOF'
+import glob, os, sqlite3, sys
+ts = sys.argv[1]
+for src in glob.glob("/persist/docs/*.grist") + ["/persist/home.sqlite3"]:
+    name = os.path.basename(src).rsplit(".", 1)[0]
+    dst = f"/backup/{name}-{ts}.sqlite.tmp"
+    s, d = sqlite3.connect(src), sqlite3.connect(dst)
+    s.backup(d)
+    d.close()
+    s.close()
+EOF
+
+for f in "$BACKUP_DIR"/*-"$TS".sqlite.tmp; do
+  gzip -c "$f" > "${f%.sqlite.tmp}.sqlite.gz.tmp"
+  gzip -t "${f%.sqlite.tmp}.sqlite.gz.tmp"
+  mv "${f%.sqlite.tmp}.sqlite.gz.tmp" "${f%.sqlite.tmp}.sqlite.gz"
+  rm -f "$f"
+done
+
+# Rotation per source file: keep the newest $KEEP of each.
+for prefix in $(ls -1 "$BACKUP_DIR"/*.sqlite.gz | sed -E 's/-[0-9]{8}-[0-9]{6}\.sqlite\.gz$//' | sort -u); do
+  ls -1t "$prefix"-*.sqlite.gz | tail -n +$((KEEP + 1)) | xargs -r rm -f
+done
+
+echo "$(date -Is) grist backup OK: $(ls -1 "$BACKUP_DIR"/*-"$TS".sqlite.gz | xargs -n1 basename | tr '\n' ' ')"

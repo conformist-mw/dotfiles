@@ -1,0 +1,9 @@
+[Unit]
+Description=Grist documents backup
+
+[Timer]
+OnCalendar={{ grist_backup_time }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target
