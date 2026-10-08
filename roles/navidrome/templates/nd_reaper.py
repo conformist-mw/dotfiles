@@ -315,11 +315,32 @@ def cmd_sweep(args):
         return 0
 
 
+def log_new_marks(seen):
+    """Log each mark once, when first seen, with the time the client set it.
+
+    navidrome does not log star/setRating calls, and the delete line comes a
+    grace period later, so without this there is no record of when the client
+    actually sent the mark.
+    """
+    marks = marked_tracks(grace=0)
+    for t in marks:
+        if t["id"] in seen:
+            continue
+        kind = "star" if t["starred"] else f"rating={t['rating']}"
+        age = _age_seconds(t["marked_at"])
+        when = (dt.datetime.now() - dt.timedelta(seconds=age)).strftime("%H:%M:%S") \
+            if age is not None else "?"
+        log(f'marked [{kind}] at {when} {t["artist"] or "?"} - {t["title"]}')
+    return {t["id"] for t in marks}
+
+
 def cmd_daemon(args):
     log(f"reaper watching stars and rating={REAP_RATING} every {POLL_SECONDS}s, "
         f"acting {MARK_GRACE_SECONDS}s after a mark")
+    seen = set()
     while True:
         try:
+            seen = log_new_marks(seen)
             cmd_sweep(args)
         except Exception as e:
             log(f"sweep failed: {e}")
