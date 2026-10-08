@@ -1,0 +1,8 @@
+[Unit]
+Description=Finance statements backup
+OnFailure=systemd-notify@%n.service
+
+[Service]
+Type=oneshot
+User={{ ansible_user }}
+ExecStart=/usr/local/bin/grist_etl_backup.sh

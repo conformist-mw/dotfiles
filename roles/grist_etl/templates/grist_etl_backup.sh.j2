@@ -1,0 +1,19 @@
+#!/bin/bash
+# Raw bank statements and the worker's state, tarred with rotation. Local only —
+# the offsite jobs mirror {{ grist_etl_backup_dir | dirname }}. out/ is left out:
+# it is rebuilt from the rest.
+# Managed by Ansible (roles/grist_etl).
+set -euo pipefail
+shopt -s nullglob
+
+BACKUP_DIR="{{ grist_etl_backup_dir }}"
+KEEP={{ grist_etl_backup_keep }}
+OUT="$BACKUP_DIR/finance-$(date +%Y%m%d-%H%M%S).tar.gz"
+
+rm -f "$BACKUP_DIR"/*.tmp
+tar -C "{{ grist_etl_data_dir }}" --exclude=./out -czf "$OUT.tmp" .
+gzip -t "$OUT.tmp"
+mv "$OUT.tmp" "$OUT"
+ls -1t "$BACKUP_DIR"/finance-*.tar.gz | tail -n +$((KEEP + 1)) | xargs -r rm -f
+
+echo "$(date -Is) finance backup OK: $(basename "$OUT") ($(du -h "$OUT" | cut -f1))"

@@ -1,0 +1,33 @@
+app_name: "grist-etl"
+
+# The finance worker (github.com/conformist-mw/grist-etl, private): the
+# Telegram bot that takes bank statements in, and the daily run that syncs
+# Monobank and loads everything into the Grist "Finance" document.
+#
+# The image is built on bee from the control node's checkout: the role takes
+# a git archive of grist_etl_ref, so bee needs no access to the private repo
+# and no Go toolchain — the build stage brings its own. Deploying a new
+# version is bumping the ref here.
+grist_etl_src: "{{ playbook_dir }}/../grist-etl"
+grist_etl_ref: "105ef701b4b0"
+grist_etl_build_dir: "{{ data_dir }}/grist-etl-build"
+
+# Statements, accounts.json, Monobank files, build output. The source of
+# truth for everything in Grist except the manual tags and rules.
+grist_etl_data_dir: "{{ data_dir }}/finance"
+
+# Same docker network as the grist container, so the API is reached
+# directly rather than through traefik.
+grist_etl_doc_url: "http://grist:8484/api/docs/iwUvebsNk4z7dRabQYE8Pn"
+# Grist tells its organisation by the Host header and refuses the container
+# name, so requests carry the public one.
+grist_etl_grist_host: "grist.{{ ansible_host }}"
+grist_etl_run_at: "06:00"
+
+# ── Backup ───────────────────────────────────────────────────────────────────
+# The raw statements are what Grist is rebuilt from, so they go to the same
+# directory the offsite jobs mirror. Small (tens of MB), a plain tarball.
+# 02:05: after the grist dump, before the offsite jobs at 02:45 and 02:50.
+grist_etl_backup_dir: "{{ db_backup_dir | default(data_dir + '/db-backup') }}/finance"
+grist_etl_backup_time: "*-*-* 02:05:00"
+grist_etl_backup_keep: 14

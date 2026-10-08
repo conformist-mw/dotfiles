@@ -1,0 +1,9 @@
+[Unit]
+Description=Finance statements backup
+
+[Timer]
+OnCalendar={{ grist_etl_backup_time }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target

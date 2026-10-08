@@ -33,6 +33,7 @@
     - { role: glances, tags: [apps, glances] }
     - { role: homeassistant, tags: [apps, homeassistant] }
     - { role: grist, tags: [apps, grist] }
+    - { role: grist_etl, tags: [apps, grist_etl] }
     - { role: homepage, tags: [apps, homepage] }
     # immich pulls in redis via its meta dependency (roles/immich/meta/main.yml)
     - { role: immich, tags: [apps, immich] }

@@ -1,0 +1,100 @@
+- name: Resolve the grist-etl commit to deploy
+  delegate_to: localhost
+  become: false
+  ansible.builtin.command: git -C {{ grist_etl_src }} rev-parse --verify {{ grist_etl_ref }}^{commit}
+  register: grist_etl_commit
+  changed_when: false
+
+- name: Set the image tag
+  ansible.builtin.set_fact:
+    grist_etl_sha: "{{ grist_etl_commit.stdout[:12] }}"
+
+- name: Archive that commit on the control node
+  delegate_to: localhost
+  become: false
+  ansible.builtin.command: >-
+    git -C {{ grist_etl_src }} archive --format=tar.gz
+    -o /tmp/grist-etl-{{ grist_etl_sha }}.tar.gz {{ grist_etl_sha }}
+  args:
+    creates: /tmp/grist-etl-{{ grist_etl_sha }}.tar.gz
+
+- name: Ensure the grist-etl directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0750"
+  loop:
+    - "{{ grist_etl_data_dir }}"
+    - "{{ grist_etl_build_dir }}/{{ grist_etl_sha }}"
+    - "{{ grist_etl_backup_dir }}"
+
+- name: Unpack the source
+  ansible.builtin.unarchive:
+    src: /tmp/grist-etl-{{ grist_etl_sha }}.tar.gz
+    dest: "{{ grist_etl_build_dir }}/{{ grist_etl_sha }}"
+    creates: "{{ grist_etl_build_dir }}/{{ grist_etl_sha }}/Dockerfile"
+
+# The build stage runs the tests: a commit that fails them never becomes an
+# image, and the running container stays on the previous one.
+- name: Build the image
+  community.docker.docker_image:
+    name: grist-etl
+    tag: "{{ grist_etl_sha }}"
+    source: build
+    build:
+      path: "{{ grist_etl_build_dir }}/{{ grist_etl_sha }}"
+
+- name: grist-etl container
+  community.docker.docker_container:
+    name: "{{ app_name }}"
+    image: "grist-etl:{{ grist_etl_sha }}"
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    volumes:
+      - "{{ grist_etl_data_dir }}:/data"
+    user: "1000:1000"
+    env:
+      TZ: "Europe/Kyiv"
+      RUN_AT: "{{ grist_etl_run_at }}"
+      GRIST_DOC_URL: "{{ grist_etl_doc_url }}"
+      GRIST_HOST: "{{ grist_etl_grist_host }}"
+      GRIST_API_KEY: "{{ grist_etl_grist_api_key }}"
+      MONOBANK_API_TOKEN: "{{ grist_etl_monobank_token }}"
+      TELEGRAM_BOT_TOKEN: "{{ grist_etl_telegram_token }}"
+      TELEGRAM_ALLOWED_CHAT_ID: "{{ grist_etl_telegram_chat_id | string }}"
+      AI_API_KEY: "{{ grist_etl_ai_api_key }}"
+  # The env holds every token; --diff would print them.
+  no_log: true
+
+- name: Keep only the current source tree
+  ansible.builtin.shell: >-
+    find {{ grist_etl_build_dir }} -mindepth 1 -maxdepth 1 -type d ! -name {{ grist_etl_sha }} -exec rm -rf {} +
+  changed_when: false
+
+- name: Setup the backup
+  block:
+    - name: Copy the backup script
+      ansible.builtin.template:
+        src: grist_etl_backup.sh.j2
+        dest: /usr/local/bin/grist_etl_backup.sh
+        mode: "0755"
+
+    - name: Copy the backup units
+      ansible.builtin.template:
+        src: "{{ item }}.j2"
+        dest: "/etc/systemd/system/{{ item }}"
+        mode: "0644"
+      loop:
+        - grist_etl_backup.service
+        - grist_etl_backup.timer
+
+    - name: Start and enable the backup timer
+      ansible.builtin.systemd:
+        name: grist_etl_backup.timer
+        enabled: true
+        state: started
+        daemon_reload: true
+  become: true
