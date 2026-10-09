@@ -9,7 +9,7 @@ app_name: "grist-etl"
 # and no Go toolchain — the build stage brings its own. Deploying a new
 # version is bumping the ref here.
 grist_etl_src: "{{ playbook_dir }}/../grist-etl"
-grist_etl_ref: "dda0dd6d5a65"
+grist_etl_ref: "b7f241b41070"
 grist_etl_build_dir: "{{ data_dir }}/grist-etl-build"
 
 # Statements, accounts.json, Monobank files, build output. The source of
