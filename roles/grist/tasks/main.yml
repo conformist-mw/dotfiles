@@ -15,7 +15,7 @@
 
 - name: Grist container
   community.docker.docker_container:
-    image: gristlabs/grist:1.7.20
+    image: gristlabs/grist:1.7.21
     pull: true
     name: "{{ app_name }}"
     restart_policy: "unless-stopped"
