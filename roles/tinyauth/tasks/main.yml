@@ -71,6 +71,7 @@
       TINYAUTH_APPS_PIHOLE_USERS_ALLOW: "{{ tinyauth_group_admin }}"
       TINYAUTH_APPS_MOVIES_USERS_ALLOW: "{{ tinyauth_group_admin }}"
       TINYAUTH_APPS_SUBS_USERS_ALLOW: "{{ tinyauth_group_admin }}"
+      TINYAUTH_APPS_GYM_USERS_ALLOW: "{{ tinyauth_group_admin }}"
       TINYAUTH_APPS_FAMILY_USERS_ALLOW: "{{ tinyauth_group_parents }}"
     labels:
       traefik.enable: "true"

@@ -22,6 +22,7 @@ dns_subdomains:
   - family # family-hub
   - school # school-bot + the Mini App
   - subs # subtrackr
+  - gym # opengym
   - beszel
   - gatus
   - photo # immich on bee, proxied over wireguard (same name as on the LAN)

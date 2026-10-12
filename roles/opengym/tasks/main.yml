@@ -1,0 +1,84 @@
+---
+# openGym (DuarteSantos8/openGym): workout tracker, two containers. web is
+# nginx serving the frontend and proxying /api to api; api is Node keeping
+# users, passkeys and history as files under /data. No database, no secrets to
+# hand it: the session secret is generated into /data/secret on first start.
+#
+# Two logins, on purpose: tinyauth at the edge (default auth-chain@file from
+# the shared traefik_labels) and openGym's own passkeys inside, which it cannot
+# take from a proxy header.
+
+- name: Ensure opengym data directory
+  ansible.builtin.file:
+    path: "{{ app_data_dir }}"
+    state: directory
+    owner: "{{ puid }}"
+    group: "{{ pgid }}"
+    mode: "0750"
+
+- name: Include labels generator
+  ansible.builtin.include_role:
+    name: labels_generator
+  vars:
+    additional_labels: "{{ opengym_extra_labels }}"
+
+- name: openGym api container
+  community.docker.docker_container:
+    name: "{{ app_name }}-api"
+    image: "{{ opengym_api_image }}"
+    pull: true
+    restart_policy: "unless-stopped"
+    # The image runs as root by default; it only ever writes /data.
+    user: "{{ puid }}:{{ pgid }}"
+    networks:
+      - name: "{{ docker_network }}"
+    env:
+      TZ: "{{ tz }}"
+      PORT: "3000"
+      DATA_DIR: "/data"
+      RP_ID: "{{ opengym_host }}"
+      ORIGIN: "https://{{ opengym_host }}"
+      RP_NAME: "openGym"
+      # Only reachable through the web container, which overwrites
+      # X-Forwarded-For with its peer, so the header is safe to trust.
+      TRUST_PROXY: "1"
+      FIRST_USER_ADMIN: "1"
+      INVITE_ONLY: "{{ '1' if opengym_invite_only else '0' }}"
+      ALLOW_GUEST: "0"
+      DEFAULT_LANG: "ru"
+    volumes:
+      - "{{ app_data_dir }}:/data"
+    # The image probes every 5m with no start period, and Traefik ignores a
+    # container until its first probe passes, so every redeploy took the app
+    # off the air for five minutes. Same probe, fast while starting.
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1:3000/api/health || exit 1"]
+      interval: 5m
+      timeout: 5s
+      retries: 3
+      start_period: 1m
+      start_interval: 2s
+
+- name: openGym web container
+  community.docker.docker_container:
+    name: "{{ app_name }}-web"
+    image: "{{ opengym_web_image }}"
+    pull: true
+    restart_policy: "unless-stopped"
+    networks:
+      - name: "{{ docker_network }}"
+    env:
+      NGINX_PORT: "{{ app_port | string }}"
+      # Not the compose default `api`: on the shared network that name is
+      # nobody's in particular.
+      BACKEND: "{{ app_name }}-api"
+      PORT: "3000"
+    # See the api container: same probe as the image, fast while starting.
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://127.0.0.1:{{ app_port }}/ || exit 1"]
+      interval: 5m
+      timeout: 5s
+      retries: 3
+      start_period: 1m
+      start_interval: 2s
+    labels: "{{ labels }}"

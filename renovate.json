@@ -50,6 +50,13 @@
       "enabled": false
     },
     {
+      "description": "openGym api and web ship from one release tag and only work as a pair",
+      "matchPackageNames": [
+        "ghcr.io/duartesantos8/opengym-*"
+      ],
+      "groupName": "opengym"
+    },
+    {
       "description": "every tg-sendmail release is flagged pre-release on GitHub; without this renovate would never offer one",
       "matchDepNames": [
         "conformist-mw/sendmail"

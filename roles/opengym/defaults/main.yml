@@ -1,0 +1,49 @@
+---
+app_name: "opengym"
+app_subdomain: "gym"
+# nginx inside the web container. It runs as uid 101 and can bind 80 only
+# because Docker sets ip_unprivileged_port_start=0; the image's EXPOSE 8080 is
+# the base image's metadata, not what it listens on.
+app_port: 80
+app_data_dir: "{{ data_dir }}/opengym"
+
+# Both halves are published from the same release tag and only work as a pair:
+# web proxies /api to the api of its own release. Renovate bumps them together
+# (the opengym group in renovate.json).
+opengym_api_image: "ghcr.io/duartesantos8/opengym-api:1.4.1"
+opengym_web_image: "ghcr.io/duartesantos8/opengym-web:1.4.1"
+
+# Passkeys are bound to this exact hostname. Changing it later invalidates
+# every passkey registered against the old one.
+opengym_host: "{{ app_subdomain }}.{{ ansible_host }}"
+
+# Off until the first profile exists: invite-only has no bootstrap exception,
+# so with no profile there is no admin to mint the first code. Register, then
+# flip to true and redeploy. tinyauth gates the host either way.
+opengym_invite_only: false
+
+# The hetzner inventory rule label only references app_name; override it so the
+# hostname is gym.<host> instead of opengym.<host>. Same trick as subtrackr.
+#
+# The second router lets the Home Screen icon and the manifest through without
+# a login: iOS fetches them outside the page, without the tinyauth cookie, and
+# a gated icon comes back as the login page and turns into a letter tile.
+opengym_extra_labels:
+  - key: "traefik.http.routers.{{ app_name }}.rule"
+    value: "Host(`{{ opengym_host }}`)"
+  - key: "traefik.http.routers.{{ app_name }}.service"
+    value: "{{ app_name }}"
+  - key: "traefik.http.routers.{{ app_name }}-public.rule"
+    value: "Host(`{{ opengym_host }}`) && (Path(`/icon-180.png`) || Path(`/icon-512.png`) || Path(`/manifest.json`))"
+  - key: "traefik.http.routers.{{ app_name }}-public.priority"
+    value: "1000"
+  - key: "traefik.http.routers.{{ app_name }}-public.entrypoints"
+    value: "websecure"
+  - key: "traefik.http.routers.{{ app_name }}-public.tls"
+    value: "true"
+  - key: "traefik.http.routers.{{ app_name }}-public.tls.certresolver"
+    value: "letsencrypt"
+  - key: "traefik.http.routers.{{ app_name }}-public.middlewares"
+    value: "secure-no-auth@file"
+  - key: "traefik.http.routers.{{ app_name }}-public.service"
+    value: "{{ app_name }}"

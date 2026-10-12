@@ -34,6 +34,8 @@ gatus_watched_containers:
   - segments
   - family-hub
   - subtrackr
+  - opengym-api
+  - opengym-web
   - homepage
   - dozzle
   - crowdsec-web-ui
