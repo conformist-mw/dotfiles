@@ -1,0 +1,13 @@
+{
+  "all": [
+    { "isNot": { "genre": "DJ Mix" } },
+    { "notContains": { "filePath": "ext_music" } },
+    { "notContains": { "filePath": "egor/" } },
+    { "notContains": { "filePath": "spotify/" } },
+    { "notContains": { "filePath": "Neuropunk Records" } },
+    { "notContains": { "filePath": "Total Advance" } },
+    { "lt": { "duration": 900 } }
+  ],
+  "sort": "random",
+  "limit": 500
+}

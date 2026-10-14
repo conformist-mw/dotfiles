@@ -13,6 +13,26 @@
     group: "{{ ansible_user }}"
     mode: "0750"
 
+# Created here so docker does not create it as root on first start.
+- name: Ensure the library directories exist
+  ansible.builtin.file:
+    path: "{{ item.value.host }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0775"
+  loop: "{{ nd_libraries | dict2items }}"
+  loop_control:
+    label: "{{ item.value.host }}"
+
+- name: Navidrome config file
+  ansible.builtin.template:
+    src: navidrome.toml.j2
+    dest: "{{ app_data_dir }}/navidrome.toml"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0644"
+
 - name: Navidrome container
   community.docker.docker_container:
     image: deluan/navidrome:0.64.2
@@ -26,7 +46,8 @@
       - "4533:4533"
     volumes:
       - "{{ app_data_dir }}:/data"
-      - "/mnt/hdd/music:/music:ro"
+      - "{{ nd_music_dir }}:/music:ro"
+      - "{{ nd_mixes_dir }}:/mixes:ro"
       - "{{ navidrome_backup_dir }}:/backup"
     user: "1000:1000"
     env:
@@ -41,7 +62,67 @@
       ND_BACKUP_PATH: "/backup"
       ND_BACKUP_SCHEDULE: "{{ navidrome_backup_schedule }}"
       ND_BACKUP_COUNT: "{{ navidrome_backup_count }}"
+      ND_CONFIGFILE: "/data/navidrome.toml"
     labels: "{{ labels }}"
+
+# navidrome only creates the library for its music folder; the rest exist only
+# in its database and are added through the native API, which is what the
+# Settings → Libraries page calls.
+- name: Create the extra navidrome libraries
+  block:
+    - name: Log in to the navidrome API
+      ansible.builtin.uri:
+        url: "http://localhost:4533/auth/login"
+        method: POST
+        body_format: json
+        body:
+          username: "{{ navidrome_admin_user }}"
+          password: "{{ navidrome_admin_password }}"
+      register: nd_login
+      # The container was just (re)started.
+      retries: 30
+      delay: 2
+      until: nd_login.status == 200
+      no_log: true
+      # Read-only, and the two tasks after it need the token even in --check.
+      check_mode: false
+
+    - name: List the navidrome libraries
+      ansible.builtin.uri:
+        url: "http://localhost:4533/api/library"
+        headers:
+          x-nd-authorization: "Bearer {{ nd_login.json.token }}"
+      register: nd_existing_libraries
+      check_mode: false
+
+    - name: Add the missing libraries
+      ansible.builtin.uri:
+        url: "http://localhost:4533/api/library"
+        method: POST
+        body_format: json
+        headers:
+          x-nd-authorization: "Bearer {{ nd_login.json.token }}"
+        body:
+          name: "{{ item.value.name }}"
+          path: "{{ item.key }}"
+        status_code: [200, 201]
+      changed_when: true
+      loop: >-
+        {{ nd_libraries | dict2items
+           | rejectattr('key', 'in', nd_existing_libraries.json | map(attribute='path') | list)
+           | list }}
+      loop_control:
+        label: "{{ item.key }}"
+
+# The smart playlists live in the repo; navidrome imports .nsp files it finds
+# in the library and re-reads them when they change.
+- name: Install the smart playlists
+  ansible.builtin.copy:
+    src: playlists/
+    dest: "{{ nd_music_dir }}/"
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: "0644"
 
 # ── Reaper ───────────────────────────────────────────────────────────────────
 # Replaces two separate jobs: the hourly nd_autoremove timer that deleted
@@ -110,7 +191,6 @@
         group: "{{ ansible_user }}"
         mode: "0755"
       vars:
-        MUSIC_DIR: "{{ nd_music_dir }}"
         DATABASE_PATH: "{{ nd_db_path }}"
       notify: Restart nd_reaper
 
@@ -135,4 +215,46 @@
         enabled: true
         state: started
         daemon_reload: true
+      become: true
+
+# ── beets ────────────────────────────────────────────────────────────────────
+# The distro package was 1.6.0, never configured and with an empty library.
+- name: Remove the distro beets package
+  ansible.builtin.apt:
+    name: beets
+    state: absent
+  become: true
+
+- name: Install beets
+  block:
+    - name: Ensure the beets directory exists
+      ansible.builtin.file:
+        path: "{{ nd_beets_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Install beets into its own venv
+      ansible.builtin.pip:
+        name: "beets[lastgenre]=={{ nd_beets_version }}"
+        virtualenv: "{{ nd_beets_venv }}"
+        virtualenv_command: python3 -m venv
+
+    - name: Ensure the beets config directory exists
+      ansible.builtin.file:
+        path: "{{ ansible_env.HOME }}/.config/beets"
+        state: directory
+        mode: "0755"
+
+    # The default location, so a bare `beet` finds it.
+    - name: Copy the beets config
+      ansible.builtin.template:
+        src: beets.yaml.j2
+        dest: "{{ ansible_env.HOME }}/.config/beets/config.yaml"
+        mode: "0644"
+
+    - name: Link beet onto the PATH
+      ansible.builtin.file:
+        src: "{{ nd_beets_venv }}/bin/beet"
+        dest: /usr/local/bin/beet
+        state: link
       become: true

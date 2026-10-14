@@ -1,0 +1,12 @@
+{
+  "all": [
+    { "gt": { "playCount": 0 } },
+    { "notInTheLast": { "lastPlayed": 365 } },
+    { "isNot": { "genre": "DJ Mix" } },
+    { "notContains": { "filePath": "ext_music" } },
+    { "notContains": { "filePath": "egor/" } },
+    { "lt": { "duration": 900 } }
+  ],
+  "sort": "random",
+  "limit": 300
+}

@@ -1,0 +1,19 @@
+{
+  "any": [
+    { "lt": { "bitRate": 128 } },
+    { "is": { "filetype": "wma" } },
+    { "lt": { "duration": 15 } },
+    { "all": [
+        { "lt": { "duration": 60 } },
+        { "any": [
+            { "startsWith": { "filePath": "ext_music/" } },
+            { "startsWith": { "filePath": "spotify/" } },
+            { "startsWith": { "filePath": "various artists/" } },
+            { "startsWith": { "filePath": "egor/" } }
+        ] }
+    ] }
+  ],
+  "sort": "filePath",
+  "order": "asc",
+  "limit": 500
+}

@@ -1,0 +1,6 @@
+{
+  "all": [ { "is": { "album": "Neuropunk Special: The Headshot" } } ],
+  "sort": "title",
+  "order": "asc",
+  "limit": 50
+}

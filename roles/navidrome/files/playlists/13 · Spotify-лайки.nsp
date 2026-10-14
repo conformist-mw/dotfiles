@@ -1,0 +1,5 @@
+{
+  "all": [ { "startsWith": { "filePath": "spotify/" } } ],
+  "sort": "random",
+  "limit": 700
+}

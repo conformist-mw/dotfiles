@@ -1,0 +1,8 @@
+{
+  "any": [
+    { "startsWith": { "filePath": "Neuropunk Records" } },
+    { "startsWith": { "filePath": "Total Advance" } }
+  ],
+  "sort": "random",
+  "limit": 700
+}

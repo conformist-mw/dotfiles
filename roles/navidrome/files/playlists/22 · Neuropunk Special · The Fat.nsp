@@ -1,0 +1,6 @@
+{
+  "all": [ { "is": { "album": "Neuropunk Special: The Fat" } } ],
+  "sort": "title",
+  "order": "asc",
+  "limit": 50
+}

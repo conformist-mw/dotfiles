@@ -11,7 +11,7 @@ set -eu
 set -a
 . {{ nd_env_filepath }}
 set +a
-REAPER_MUSIC_DIR={{ nd_music_dir }}
+REAPER_LIBRARIES="{{ nd_reaper_libraries }}"
 REAPER_DB_PATH={{ nd_db_path }}
-export REAPER_MUSIC_DIR REAPER_DB_PATH
+export REAPER_LIBRARIES REAPER_DB_PATH
 exec {{ nd_python }} {{ nd_reaper_path }} nope "$@"

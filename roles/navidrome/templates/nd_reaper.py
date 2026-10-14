@@ -24,8 +24,8 @@ Three things the previous shell version got wrong, all fixed here:
     2172 real deletes);
   - it left the row in navidrome, so the track kept showing up until an
     unrelated timer happened to purge it;
-  - it joined MUSIC_DIR to a DB path with no check that the result stayed
-    inside MUSIC_DIR.
+  - it joined the music dir to a DB path with no check that the result stayed
+    inside it.
 
 The database is only ever opened read-only. Every write goes through the API,
 because navidrome holds the sqlite file open with a WAL and a second writer can
@@ -36,7 +36,10 @@ import sqlite3, string, sys, time
 import urllib.parse
 import httpx
 
-MUSIC_DIR = os.environ.get("REAPER_MUSIC_DIR", "{{ MUSIC_DIR }}")
+# navidrome stores a path relative to its library, and the library by the path
+# it has inside the container. "container=host" pairs, space separated.
+LIBRARIES = dict(pair.split("=", 1)
+                 for pair in os.environ.get("REAPER_LIBRARIES", "").split())
 DB_PATH   = os.environ.get("REAPER_DB_PATH",   "{{ DATABASE_PATH }}")
 BASE_URL  = os.environ.get("ND_BASE_URL",      "http://localhost:4533").rstrip("/")
 USERNAME  = os.environ.get("ND_USERNAME", "")
@@ -115,10 +118,11 @@ def marked_tracks(grace=None):
     grace = MARK_GRACE_SECONDS if grace is None else grace
     con = db(); con.row_factory = sqlite3.Row
     rows = con.execute(
-        """select m.id, m.path, m.title, m.artist,
+        """select m.id, m.path, m.title, m.artist, l.path library,
                   a.starred, a.rating,
                   max(coalesce(a.starred_at, ''), coalesce(a.rated_at, '')) marked_at
              from annotation a join media_file m on m.id = a.item_id
+             join library l on l.id = m.library_id
             where a.item_type = 'media_file'
               and (a.starred = 1 or a.rating = ?)
             order by marked_at asc""", (REAP_RATING,)).fetchall()
@@ -136,24 +140,32 @@ def marked_tracks(grace=None):
 
 def track_by_id(track_id):
     con = db(); con.row_factory = sqlite3.Row
-    r = con.execute("select id, path, title, artist from media_file where id = ?",
-                    (track_id,)).fetchone()
+    r = con.execute("""select m.id, m.path, m.title, m.artist, l.path library
+                           from media_file m join library l on l.id = m.library_id
+                          where m.id = ?""", (track_id,)).fetchone()
     con.close()
     return dict(r) if r else None
 
 
-def safe_full_path(rel):
+def library_root(library):
+    """Host directory of a navidrome library, by its path in the container."""
+    if library not in LIBRARIES:
+        raise ValueError(f"unknown library {library!r}, not in REAPER_LIBRARIES")
+    return os.path.realpath(LIBRARIES[library])
+
+
+def safe_full_path(library, rel):
     """Join and prove the result is still inside the library."""
-    root = os.path.realpath(MUSIC_DIR)
+    root = library_root(library)
     full = os.path.realpath(os.path.join(root, rel))
     if full != root and not full.startswith(root + os.sep):
         raise ValueError(f"path escapes library: {rel!r}")
     return full
 
 
-def prune_empty_parents(path):
+def prune_empty_parents(library, path):
     """Walk up from a deleted file, removing directories that it emptied."""
-    root = os.path.realpath(MUSIC_DIR)
+    root = library_root(library)
     d = os.path.dirname(os.path.realpath(path))
     while d.startswith(root + os.sep):
         try:
@@ -244,7 +256,7 @@ def reap(client, tracks, reason):
     gone = []
     for t in tracks:
         try:
-            full = safe_full_path(t["path"])
+            full = safe_full_path(t["library"], t["path"])
         except ValueError as e:
             log(f"REFUSED {e}")
             continue
@@ -252,7 +264,7 @@ def reap(client, tracks, reason):
         if os.path.exists(full):
             try:
                 os.remove(full)
-                prune_empty_parents(full)
+                prune_empty_parents(t["library"], full)
                 gone.append(t["id"])
                 log(f"deleted [{reason}] {label}  <- {t['path']}")
             except OSError as e:
@@ -361,6 +373,8 @@ def main():
     args = ap.parse_args()
     if not (USERNAME and PASSWORD):
         log("ND_USERNAME / ND_PASSWORD are not set"); return 2
+    if not LIBRARIES:
+        log("REAPER_LIBRARIES is not set"); return 2
     return {"daemon": cmd_daemon, "sweep": cmd_sweep, "nope": cmd_nope}[args.cmd](args)
 
 

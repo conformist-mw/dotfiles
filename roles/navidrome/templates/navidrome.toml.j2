@@ -1,0 +1,8 @@
+# Managed by ansible (roles/navidrome). Everything that fits an ND_* variable
+# stays in the container env; this file holds only what does not.
+
+# The defaults are ";", "/" and ",". " | " is added because a whole box set
+# (Король и Шут) carries its genres as one "Rock | Punk | Punk Rock | ..."
+# string, which otherwise shows up as a single made-up genre.
+# A change here needs a full scan to take effect, a quick one keeps old values.
+Tags.Genre.Split = [";", "/", ",", "|"]

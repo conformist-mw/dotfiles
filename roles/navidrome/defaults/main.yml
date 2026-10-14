@@ -45,6 +45,31 @@ navidrome_reap_max_per_sweep: 25
 
 nd_env_filepath: "/etc/nd.env"
 nd_music_dir: "/mnt/hdd/music"
+
+# ── Libraries ────────────────────────────────────────────────────────────────
+# Mixes and podcasts (one track = one to two hours) live in their own library.
+# They are only ever listened to on their own, and inside the main library they
+# leak into random play and every "all songs" view.
+#
+# Container path → host path. /music is the library navidrome creates itself
+# from the music folder; every other entry is mounted and created through the
+# API below. The reaper reads the same map to turn a DB path into a file.
+nd_mixes_dir: "/mnt/hdd/mixes"
+nd_libraries:
+  /music: { name: "Music Library", host: "{{ nd_music_dir }}" }
+  /mixes: { name: "Миксы", host: "{{ nd_mixes_dir }}" }
+# The same map as "/music=/mnt/hdd/music /mixes=/mnt/hdd/mixes" for the reaper.
+nd_reaper_libraries: "{% for path, lib in nd_libraries.items() %}{{ path }}={{ lib.host }}{{ ' ' if not loop.last }}{% endfor %}"
+
+# ── beets ────────────────────────────────────────────────────────────────────
+# Tags loose tracks (spotify/, ext_music/, various artists/) from MusicBrainz.
+# Files are retagged where they lie and never moved: navidrome keys a track to
+# its path, so a retag in place keeps play counts, while a retag plus a move in
+# the same scan loses them. The path prefixes are also what the smart playlists
+# filter on.
+nd_beets_version: "2.14.1"
+nd_beets_venv: "{{ app_data_dir }}/.beets-venv"
+nd_beets_dir: "{{ app_data_dir }}/beets"
 nd_db_path: "{{ app_data_dir }}/navidrome.db"
 nd_python: "{{ app_data_dir }}/.venv/bin/python"
 nd_reaper_path: "{{ app_data_dir }}/nd_reaper.py"

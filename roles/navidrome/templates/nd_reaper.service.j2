@@ -11,7 +11,7 @@ After=network.target docker.service
 Type=simple
 User={{ ansible_user }}
 EnvironmentFile={{ nd_env_filepath }}
-Environment=REAPER_MUSIC_DIR={{ nd_music_dir }}
+Environment="REAPER_LIBRARIES={{ nd_reaper_libraries }}"
 Environment=REAPER_DB_PATH={{ nd_db_path }}
 Environment=REAPER_RATING={{ navidrome_reap_rating }}
 Environment=REAPER_POLL_SECONDS={{ navidrome_reap_poll_seconds }}

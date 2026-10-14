@@ -1,0 +1,39 @@
+# Managed by ansible (roles/navidrome). See the beets notes in defaults/main.yml.
+directory: {{ nd_music_dir }}
+library: {{ nd_beets_dir }}/library.db
+
+# musicbrainz has to be listed: since 2.4 it is a plugin like any other, and an
+# explicit plugin list without it means no metadata source at all.
+# fromfilename fills title/artist from names like "Artist - Title.mp3" when the
+# tags are empty, so those files get a lookup instead of an instant skip.
+plugins: musicbrainz fromfilename lastgenre
+
+import:
+  # In place, always. Moving a file in the same scan as its retag is the one
+  # thing that makes navidrome lose the play count.
+  copy: no
+  move: no
+  write: yes
+  # Unattended runs (-q) take only strong matches and leave everything else
+  # untouched rather than applying a guess. What was skipped is in the log.
+  quiet_fallback: skip
+  incremental: yes
+  # On by default, and it rewrites files at read time even with -W and no
+  # copy/move. In 2.14.1 an MP3-in-WAV file already named .mp3 is written to
+  # its own path and then deleted: that is how "Ляпис Трубецкой - Яблони" was
+  # lost. .MP3 ones survive, renamed to .mp3.
+  remux_mp3_in_wav: no
+  log: {{ nd_beets_dir }}/import.log
+
+lastgenre:
+  # Per-track Last.fm tags are noisy (ATB's "Ecstasy" came back as Ambient);
+  # the artist's tags are steadier and keep one artist under one genre.
+  source: artist
+  count: 2
+  # The existing genre tags on loose tracks are mostly "Other"/"Unknown" or
+  # duplicates in a different spelling: replace them, do not merge.
+  force: yes
+  keep_existing: no
+
+ui:
+  color: no

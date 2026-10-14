@@ -1,0 +1,16 @@
+{
+  "all": [
+    { "is": { "playCount": 0 } },
+    { "lt": { "duration": 900 } },
+    { "gt": { "bitRate": 191 } },
+    { "any": [
+        { "startsWith": { "filePath": "Neuropunk Records" } },
+        { "startsWith": { "filePath": "Total Advance" } },
+        { "startsWith": { "filePath": "ext_music_sorted/" } },
+        { "startsWith": { "filePath": "ext_music/" } },
+        { "startsWith": { "filePath": "various artists/" } }
+    ] }
+  ],
+  "sort": "random",
+  "limit": 500
+}

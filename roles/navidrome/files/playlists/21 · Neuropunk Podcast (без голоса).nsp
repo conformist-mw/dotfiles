@@ -1,0 +1,6 @@
+{
+  "all": [ { "is": { "album": "Neuropunk Podcast (voiceless)" } } ],
+  "sort": "title",
+  "order": "asc",
+  "limit": 100
+}
