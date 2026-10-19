@@ -56,28 +56,12 @@
         - { "path": "hdd", "partuuid": "d5dcdc68-01", "opts": "defaults,nofail" }
   become: true
 
-- name: copy custom pg_hba.conf
-  ansible.builtin.template:
-    src: pg_hba.conf
-    dest: "{{ data_dir }}/postgres/data/pg_hba.conf"
-  register: pg_hba
-  become: true
-
-- name: Database container
+# Postgres only ever served HA's recorder, which now lives in HA's own SQLite.
+# Drop this task once applied; the data dir is removed by hand.
+- name: Remove the retired Postgres container
   community.docker.docker_container:
     name: postgres
-    image: postgres:16-alpine
-    restart: "{{ pg_hba.changed | default(false) }}"
-    restart_policy: "always"
-    networks:
-      - name: "{{ docker_network }}"
-    ports:
-      - "5432:5432"
-    volumes:
-      - "{{ data_dir }}/postgres/data:/var/lib/postgresql/data"
-      - "/var/run/postgresql:/var/run/postgresql"
-    env:
-      POSTGRES_PASSWORD: "postgres"
+    state: absent
 
 - name: Add cloudflare repo
   block:

@@ -8,7 +8,7 @@ HA writes into `/config` itself — the automation and script editors, HACS,
 blueprint imports. So the role syncs each half of the tree in the direction its
 owner works, rather than deploying over the top of live edits:
 
-1. Renders `/config/secrets.yaml` from sops (`ha_recorder_db_url`).
+1. Renders `/config/secrets.yaml` from sops (currently no keys).
 2. **Pushes the git-owned layer** — `configuration.yaml`, `packages/` — from
    `~/dev/ha-config`. This is the only place `!secret` may be referenced.
 3. **Snapshots the HA-owned layer back into the repo** — `automations.yaml`,
