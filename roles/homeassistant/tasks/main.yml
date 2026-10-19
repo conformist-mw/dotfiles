@@ -97,28 +97,3 @@
     name: "{{ ha_vm_name }}"
     state: running
   become: true
-
-# The recorder moved from the shared Postgres into HA's own SQLite, which HA's
-# backups cover. Tear down the old daily pg_dump; drop these tasks once applied.
-- name: Remove the retired HA recorder DB backup
-  become: true
-  block:
-    - name: Stop and disable the HA DB backup timer
-      ansible.builtin.command: systemctl disable --now ha_db_backup.timer
-      args:
-        removes: /etc/systemd/system/ha_db_backup.timer
-
-    - name: Remove the HA DB backup units and script
-      ansible.builtin.file:
-        path: "{{ item }}"
-        state: absent
-      loop:
-        - /etc/systemd/system/ha_db_backup.timer
-        - /etc/systemd/system/ha_db_backup.service
-        - /usr/local/bin/ha_db_backup.sh
-      register: ha_db_backup_removed
-
-    - name: Reload systemd after removing the HA DB backup units
-      ansible.builtin.systemd:
-        daemon_reload: true
-      when: ha_db_backup_removed.changed

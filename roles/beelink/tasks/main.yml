@@ -56,13 +56,6 @@
         - { "path": "hdd", "partuuid": "d5dcdc68-01", "opts": "defaults,nofail" }
   become: true
 
-# Postgres only ever served HA's recorder, which now lives in HA's own SQLite.
-# Drop this task once applied; the data dir is removed by hand.
-- name: Remove the retired Postgres container
-  community.docker.docker_container:
-    name: postgres
-    state: absent
-
 - name: Add cloudflare repo
   block:
     - name: add apt-key
