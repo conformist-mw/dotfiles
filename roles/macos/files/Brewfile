@@ -135,6 +135,7 @@ cask "codex"
 cask "copilot-cli"
 # Browser for SQLite databases
 cask "db-browser-for-sqlite"
+# Fira Code font patched with Nerd Font glyphs
 cask "font-fira-code-nerd-font"
 # Disk partitioning tool
 cask "gdisk"
@@ -144,8 +145,6 @@ cask "handy"
 cask "iina"
 # Tool for multi-language users
 cask "input-source-pro"
-# GPU-based terminal emulator
-cask "kitty"
 # Free, cross-platform media player (lightweight, plays everything)
 cask "mpv"
 # Replacement for Docker Desktop
@@ -164,7 +163,9 @@ cask "sublime-merge"
 cask "telegram-desktop"
 # Web browser with built-in email client focusing on customization and control
 cask "vivaldi"
-# Multimedia player
+# Automatic time tracking for programmers
 cask "wakatime"
-# Simple menu bar app to download YouTube movies
+# GPU-accelerated cross-platform terminal emulator and multiplexer
+cask "wezterm"
+# Multiplayer code editor
 cask "zed", args: { no_quarantine: true }
