@@ -11,12 +11,8 @@ tap "umputun/apps", trusted: true  # Homebrew 6.0 tap-trust; covers all casks fr
 
 # Simple, modern, secure file encryption
 brew "age"
-# Improved shell history for zsh, bash, fish and nushell
-brew "atuin"
 # Automatic configure script builder
 brew "autoconf"
-# Shell extension to jump to frequently used directories
-brew "autojump"
 # Official Amazon AWS command-line interface
 brew "awscli"
 # Clone of cat(1) with syntax highlighting and Git integration
@@ -29,8 +25,6 @@ brew "cmake"
 brew "csvlens"
 # ios development requrement
 brew "cocoapods"
-# Load/unload environment variables based on $PWD
-brew "direnv"
 # Tool for exploring each layer in a docker image
 brew "dive"
 # Simple, fast and user-friendly alternative to find
@@ -55,8 +49,6 @@ brew "hugo"
 brew "imagemagick"
 # Update of iperf: measures TCP, UDP, and SCTP bandwidth
 brew "iperf3"
-# Interactive computing in Python
-brew "ipython"
 # Lightweight and flexible command-line JSON processor
 brew "jq"
 # Feature-rich interactive Jira CLI
@@ -90,8 +82,6 @@ brew "rmlint"
 brew "ruff"
 # 7-Zip is a file archiver with a high compression ratio
 brew "sevenzip"
-# Fuzzy Finder in rust!
-brew "sk"
 # Editor of encrypted files
 brew "sops"
 # Cross-shell prompt for astronauts

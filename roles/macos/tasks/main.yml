@@ -5,7 +5,6 @@
   loop:
     - config/git
     - config/zed
-    - config/atuin
     - config/agterm
     - config/revdiff
     - config/just
@@ -26,7 +25,6 @@
     - config/zed/keymap.json
     - config/zed/settings.json
     - config/zed/tasks.json
-    - config/atuin/config.toml
     - config/agterm/ghostty.conf
     - config/agterm/keymap.conf
     - config/agterm/restore-denylist.conf

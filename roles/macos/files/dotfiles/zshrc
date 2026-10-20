@@ -1,13 +1,19 @@
 export LANG="en_US.UTF-8"
 
 # history
-export HISTIGNORE="&:ls:[bf]g:exit"
-export HISTSIZE=40000
-export HISTFILESIZE=1000000
+HISTFILE=~/.zsh_history
+HISTSIZE=100000
+SAVEHIST=100000
 unsetopt share_history # don't share history between sessions
 
-setopt inc_append_history_time # save the time stamp when the command was entered
+setopt extended_history # save the time stamp and duration of each command
+setopt inc_append_history_time # write each command to the file once it finishes
+setopt hist_ignore_dups # don't record a command repeated right after itself
+setopt hist_ignore_space # don't record commands that start with a space
 setopt interactivecomments # allow comments in interactive shell
+
+# colored ls (BSD ls on macOS only colors when this is set)
+export CLICOLOR=1
 
 # completions (brew site-functions + zsh-completions)
 fpath=(/opt/homebrew/share/zsh/site-functions /opt/homebrew/share/zsh-completions $fpath)
@@ -29,12 +35,6 @@ function chpwd_ls {
     ls
 }
 add-zsh-hook chpwd chpwd_ls
-
-# autojump
-if (( $+commands[brew] )); then
-  file=$HOMEBREW_PREFIX/etc/profile.d/autojump.sh
-  [[ -f "$file" ]] && source "$file"
-fi
 
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="/opt/homebrew/opt/libpq/bin:$PATH"
@@ -75,10 +75,19 @@ compdef _gjust gjust
 
 eval "$(starship init zsh)"
 eval "$(zoxide init zsh)"
-eval "$(atuin init zsh)"
+# fzf: ctrl+r searches history, ctrl+t inserts a file path, alt+c cd's into a dir
+source <(fzf --zsh)
 
-# shell plugins from homebrew — zsh-syntax-highlighting MUST be sourced last
+# shell plugins from homebrew — zsh-syntax-highlighting goes after everything
+# except history-substring-search, which must be loaded after it
 source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-source /opt/homebrew/share/zsh-history-substring-search/zsh-history-substring-search.zsh
 source /opt/homebrew/share/zsh-you-should-use/you-should-use.plugin.zsh
 source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+source /opt/homebrew/share/zsh-history-substring-search/zsh-history-substring-search.zsh
+
+# up/down: walk through history entries that contain what's typed so far
+# (both escape forms — the terminal switches between them)
+bindkey '^[[A' history-substring-search-up
+bindkey '^[OA' history-substring-search-up
+bindkey '^[[B' history-substring-search-down
+bindkey '^[OB' history-substring-search-down
