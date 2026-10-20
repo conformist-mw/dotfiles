@@ -5,10 +5,7 @@
     { "gt": { "bitRate": 191 } },
     { "any": [
         { "startsWith": { "filePath": "Neuropunk Records" } },
-        { "startsWith": { "filePath": "Total Advance" } },
-        { "startsWith": { "filePath": "ext_music_sorted/" } },
-        { "startsWith": { "filePath": "ext_music/" } },
-        { "startsWith": { "filePath": "various artists/" } }
+        { "startsWith": { "filePath": "Total Advance" } }
     ] }
   ],
   "sort": "random",

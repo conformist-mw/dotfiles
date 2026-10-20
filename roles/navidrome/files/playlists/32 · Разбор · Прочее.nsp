@@ -1,0 +1,21 @@
+{
+  "all": [
+    { "any": [
+        { "is": { "playCount": 0 } },
+        { "before": { "lastPlayed": "2026-09-01" } }
+    ] },
+    { "lt": { "duration": 900 } },
+    { "any": [
+        { "all": [
+            { "startsWith": { "filePath": "ext_music/" } },
+            { "notContains": { "filePath": "ext_music/Колбаса/" } },
+            { "notContains": { "filePath": "ext_music/Попса/" } },
+            { "notContains": { "filePath": "ext_music/europa plus/" } },
+            { "notContains": { "filePath": "ext_music/Pop Ballads/" } }
+        ] },
+        { "startsWith": { "filePath": "various artists/" } }
+    ] }
+  ],
+  "sort": "random",
+  "limit": 500
+}

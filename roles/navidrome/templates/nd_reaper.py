@@ -7,7 +7,8 @@ Two entry points share one delete path:
           remove them; this is what makes "mark it on the phone" work.
   nope    remove whatever is playing right now, no marker needed.
 
-Either marker works: a star, or a rating of 1.
+Either marker works: a star, or a rating of 1. On an album or an artist it
+deletes their tracks in the unsorted dumps only (REAPER_BULK_SCOPE).
 
 The star is the one that matters. It is the gesture this workflow was built on
 long before this script existed, it is one tap in every Subsonic client, and it
@@ -58,6 +59,13 @@ POLL_SECONDS = int(os.environ.get("REAPER_POLL_SECONDS", "5"))
 MARK_GRACE_SECONDS = int(os.environ.get("REAPER_MARK_GRACE_SECONDS", "60"))
 # One mistaken bulk-rating must not be able to empty the library.
 MAX_PER_SWEEP = int(os.environ.get("REAPER_MAX_PER_SWEEP", "25"))
+# A mark on an album or an artist deletes its tracks, but only those under these
+# path prefixes: the unsorted dumps, where dropping a whole artist unheard is the
+# point. An artist row is shared with the discographies (the loose Korn and the
+# Korn discography are one artist), so without this a single star would reach
+# folders that automation must never touch. "|"-separated.
+BULK_SCOPE = tuple(p for p in os.environ.get("REAPER_BULK_SCOPE", "").split("|") if p)
+MAX_PER_BULK = int(os.environ.get("REAPER_MAX_PER_BULK", "100"))
 # How long to wait for navidrome's watcher to flag a deleted file as missing.
 PURGE_TIMEOUT = int(os.environ.get("REAPER_PURGE_TIMEOUT", "120"))
 
@@ -138,6 +146,48 @@ def marked_tracks(grace=None):
     return ready
 
 
+def marked_groups(grace=None):
+    """Albums and artists flagged by either marker, with their in-scope tracks.
+
+    Same markers and grace period as tracks. `tracks` holds only what lies under
+    BULK_SCOPE; `kept` counts the rest, which is left alone.
+    """
+    grace = MARK_GRACE_SECONDS if grace is None else grace
+    con = db(); con.row_factory = sqlite3.Row
+    marks = con.execute(
+        """select a.item_id id, a.item_type kind, a.starred, a.rating,
+                  coalesce(al.name, ar.name) name,
+                  max(coalesce(a.starred_at, ''), coalesce(a.rated_at, '')) marked_at
+             from annotation a
+             left join album al on a.item_type = 'album' and al.id = a.item_id
+             left join artist ar on a.item_type = 'artist' and ar.id = a.item_id
+            where a.item_type in ('album', 'artist')
+              and (a.starred = 1 or a.rating = ?)
+            order by marked_at asc""", (REAP_RATING,)).fetchall()
+    ready = []
+    for m in marks:
+        g = dict(m)
+        age = _age_seconds(g.get("marked_at"))
+        if age is not None and age < grace:
+            continue
+        if g["kind"] == "album":
+            q = """select m.id, m.path, m.title, m.artist, l.path library
+                     from media_file m join library l on l.id = m.library_id
+                    where m.album_id = ?"""
+        else:
+            q = """select distinct m.id, m.path, m.title, m.artist, l.path library
+                     from media_file_artists fa
+                     join media_file m on m.id = fa.media_file_id
+                     join library l on l.id = m.library_id
+                    where fa.artist_id = ? and fa.role in ('artist', 'albumartist')"""
+        tracks = [dict(r) for r in con.execute(q, (g["id"],))]
+        g["tracks"] = [t for t in tracks if BULK_SCOPE and t["path"].startswith(BULK_SCOPE)]
+        g["kept"] = len(tracks) - len(g["tracks"])
+        ready.append(g)
+    con.close()
+    return ready
+
+
 def track_by_id(track_id):
     con = db(); con.row_factory = sqlite3.Row
     r = con.execute("""select m.id, m.path, m.title, m.artist, l.path library
@@ -184,12 +234,16 @@ def clear_marker(client, track_id):
     about to stop existing anyway, and leaving half of it set is exactly the
     loop the shell version got stuck in.
     """
-    for call, kwargs in (("unstar", {"id": track_id}),
-                         ("setRating", {"id": track_id, "rating": 0})):
+    clear_marks(client, {"id": track_id}, track_id)
+
+
+def clear_marks(client, star_args, item_id):
+    for call, kwargs in (("unstar", star_args),
+                         ("setRating", {"id": item_id, "rating": 0})):
         try:
             subsonic(client, call, **kwargs)
         except Exception as e:
-            log(f"ERROR clearing {call} for {track_id}: {e}")
+            log(f"ERROR clearing {call} for {item_id}: {e}")
 
 
 def ids_present(ids):
@@ -214,6 +268,10 @@ def purge_missing(client, wait_for=(), timeout=PURGE_TIMEOUT):
     Waiting on the specific ids matters: counting purged rows instead would let
     an unrelated leftover satisfy the wait and return before our own delete had
     even been noticed.
+
+    Only our own rows are purged. Every other missing row is left alone: a
+    folder replaced by a fresh download shows up as missing rows that still
+    hold its play counts, and purging those wiped the history of 282 tracks.
     """
     token = native_token(client)
     headers = {"x-nd-authorization": f"Bearer {token}"}
@@ -222,10 +280,18 @@ def purge_missing(client, wait_for=(), timeout=PURGE_TIMEOUT):
     backoff = 1.0
     deadline = time.monotonic() + timeout
     while True:
-        r = client.get(f"{BASE_URL}/api/missing",
-                       params={"_start": 0, "_end": 100}, headers=headers, timeout=30)
-        r.raise_for_status()
-        items = r.json()
+        items, start = [], 0
+        while True:
+            r = client.get(f"{BASE_URL}/api/missing",
+                           params={"_start": start, "_end": start + 500},
+                           headers=headers, timeout=30)
+            r.raise_for_status()
+            page = r.json()
+            items += [i for i in page if i["id"] in wait_for]
+            if len(page) < 500:
+                break
+            start += 500
+        items = items[:100]
         if items:
             qs = "&".join("id=" + urllib.parse.quote(i["id"]) for i in items)
             resp = client.request("DELETE", f"{BASE_URL}/api/missing?{qs}",
@@ -310,9 +376,10 @@ def cmd_nope(args):
 
 def cmd_sweep(args):
     with httpx.Client() as client:
+        rc = sweep_groups(client, args)
         tracks = marked_tracks()
         if not tracks:
-            return 0
+            return rc
         if len(tracks) > MAX_PER_SWEEP and not args.force:
             log(f"REFUSED: {len(tracks)} tracks marked, cap is {MAX_PER_SWEEP}. "
                 f"Re-run with --force if that is really intended.")
@@ -320,11 +387,42 @@ def cmd_sweep(args):
         if args.dry_run:
             for t in tracks:
                 log(f'would delete {t["artist"]} - {t["title"]}  <- {t["path"]}')
-            return 0
+            return rc
         gone = reap(client, tracks, "marked")
         if gone:
             purge_missing(client, wait_for=gone)
-        return 0
+        return rc
+
+
+# Groups refused for size, so the daemon says so once rather than every poll.
+_refused_groups = set()
+
+
+def sweep_groups(client, args):
+    rc = 0
+    for g in marked_groups():
+        label = f'{g["kind"]} "{g["name"] or g["id"]}"'
+        n = len(g["tracks"])
+        if n > MAX_PER_BULK and not args.force:
+            if g["id"] not in _refused_groups:
+                log(f"REFUSED: {label} has {n} tracks in the dumps, cap is {MAX_PER_BULK}. "
+                    f"Re-run sweep with --force if that is really intended.")
+                _refused_groups.add(g["id"])
+            rc = 1
+            continue
+        if args.dry_run:
+            log(f"would delete {n} tracks of {label}, keep {g['kept']} outside the dumps")
+            for t in g["tracks"]:
+                log(f'    {t["path"]}')
+            continue
+        gone = reap(client, g["tracks"], g["kind"])
+        log(f"{label}: deleted {len(gone)}, kept {g['kept']} outside the dumps")
+        kind_arg = "albumId" if g["kind"] == "album" else "artistId"
+        clear_marks(client, {kind_arg: g["id"]}, g["id"])
+        _refused_groups.discard(g["id"])
+        if gone:
+            purge_missing(client, wait_for=gone)
+    return rc
 
 
 def log_new_marks(seen):
@@ -335,15 +433,20 @@ def log_new_marks(seen):
     actually sent the mark.
     """
     marks = marked_tracks(grace=0)
-    for t in marks:
+    groups = marked_groups(grace=0)
+    for t in marks + groups:
         if t["id"] in seen:
             continue
         kind = "star" if t["starred"] else f"rating={t['rating']}"
         age = _age_seconds(t["marked_at"])
         when = (dt.datetime.now() - dt.timedelta(seconds=age)).strftime("%H:%M:%S") \
             if age is not None else "?"
-        log(f'marked [{kind}] at {when} {t["artist"] or "?"} - {t["title"]}')
-    return {t["id"] for t in marks}
+        if "tracks" in t:
+            what = f'{t["kind"]} "{t["name"]}" ({len(t["tracks"])} in the dumps)'
+        else:
+            what = f'{t["artist"] or "?"} - {t["title"]}'
+        log(f'marked [{kind}] at {when} {what}')
+    return {t["id"] for t in marks + groups}
 
 
 def cmd_daemon(args):

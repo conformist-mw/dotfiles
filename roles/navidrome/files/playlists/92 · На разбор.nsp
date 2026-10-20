@@ -1,0 +1,6 @@
+{
+  "all": [ { "startsWith": { "filePath": "_на разбор/" } } ],
+  "sort": "filePath",
+  "order": "asc",
+  "limit": 500
+}

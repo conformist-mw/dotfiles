@@ -1,0 +1,12 @@
+{
+  "all": [
+    { "any": [
+        { "is": { "playCount": 0 } },
+        { "before": { "lastPlayed": "2026-09-01" } }
+    ] },
+    { "lt": { "duration": 900 } },
+    { "startsWith": { "filePath": "ext_music/Колбаса/" } }
+  ],
+  "sort": "random",
+  "limit": 500
+}

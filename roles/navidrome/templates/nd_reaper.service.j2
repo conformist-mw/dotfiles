@@ -17,6 +17,8 @@ Environment=REAPER_RATING={{ navidrome_reap_rating }}
 Environment=REAPER_POLL_SECONDS={{ navidrome_reap_poll_seconds }}
 Environment=REAPER_MARK_GRACE_SECONDS={{ navidrome_reap_mark_grace_seconds }}
 Environment=REAPER_MAX_PER_SWEEP={{ navidrome_reap_max_per_sweep }}
+Environment="REAPER_BULK_SCOPE={{ navidrome_reap_bulk_scope | join('|') }}"
+Environment=REAPER_MAX_PER_BULK={{ navidrome_reap_max_per_bulk }}
 ExecStart={{ nd_python }} {{ nd_reaper_path }} daemon
 Restart=always
 RestartSec=10

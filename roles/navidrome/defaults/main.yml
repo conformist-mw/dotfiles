@@ -42,6 +42,18 @@ navidrome_reap_mark_grace_seconds: 60
 # One mis-aimed bulk rating must not be able to empty the library. Above this
 # the sweep refuses and says so instead of deleting.
 navidrome_reap_max_per_sweep: 25
+# The same marker on an album or an artist drops all of its tracks, but only
+# under these prefixes: the dumps being sorted, where whole artists go unheard.
+# An artist is shared with the discographies, which automation never touches.
+navidrome_reap_bulk_scope:
+  - "ext_music/"
+  - "ext_music_sorted/"
+  - "various artists/"
+  - "_на разбор/"
+# Per album or artist. The biggest real artist in the dumps has under 50 tracks,
+# while "[Unknown Artist]" and "Various Artists" each hold over 100: a star on
+# one of those is far more likely a slip than a wish to lose them all.
+navidrome_reap_max_per_bulk: 100
 
 nd_env_filepath: "/etc/nd.env"
 nd_music_dir: "/mnt/hdd/music"
