@@ -26,7 +26,6 @@ Ookla lags new distro releases, so pin the codename in the playbook when needed:
 - **bee** — Ubuntu 24.04 *noble*, but Ookla has no `noble` repo → pinned to
   `jammy` in `beelink.yml` (jammy debs run fine on noble).
 - **hetzner** — Debian 12 *bookworm* (arm64), used as-is.
-- **rpi** — Debian 13 *trixie* (arm64), published by Ookla, used as-is.
 
 ## Apt key
 

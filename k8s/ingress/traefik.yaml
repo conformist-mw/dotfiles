@@ -4,9 +4,9 @@
 # docker stack and this one swap wholesale, so :80 has one owner at any moment.
 #
 # ⚠️ On bee that means: stop the Docker Traefik BEFORE applying this, or the two fight
-# over :80. On rpi (the rehearsal box) nothing else holds the port.
+# over :80.
 #
-# Apply:    KUBECONFIG=~/.kube/rpi.yaml kubectl apply -f k8s/ingress/traefik.yaml
+# Apply:    KUBECONFIG=~/.kube/bee.yaml kubectl apply -f k8s/ingress/traefik.yaml
 # Dashboard: kubectl -n ingress port-forward deploy/traefik 9000:9000  # http://localhost:9000/dashboard/
 # LAN-only: no TLS / no Let's Encrypt here (public traffic goes via hetzner).
 ---

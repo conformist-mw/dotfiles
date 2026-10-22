@@ -29,7 +29,7 @@
 #   glances — `--bind=10.42.0.1` in its systemd unit (currently --bind=127.0.0.1)
 #   cockpit — a socket drop-in with ListenStream=10.42.0.1:9090
 # Until then these two routes answer 502, correctly: nothing is listening there.
-# 10.42.0.1 is k3s's default cluster CIDR gateway; it is the same on bee and rpi.
+# 10.42.0.1 is k3s's default cluster CIDR gateway.
 # The eventual plan for glances is a hostNetwork DaemonSet, which retires its entry here.
 #
 # Apply: KUBECONFIG=~/.kube/bee.yaml kubectl apply -f k8s/external/
