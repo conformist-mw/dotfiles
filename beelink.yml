@@ -31,7 +31,10 @@
     - { role: torrent, tags: [apps, torrent] }
     - { role: sponsorblock, tags: [apps, sponsorblock] }
     - { role: glances, tags: [apps, glances] }
-    - { role: homeassistant, tags: [apps, homeassistant] }
+    # HA moved to its own Raspberry Pi (HAOS on SSD, same IP .223). The role would
+    # restart the old `hass` VM — kept shut off as a cold fallback — and put a second
+    # HA on the SLZB socket. Keep it out until the VM is deleted for good.
+    # - { role: homeassistant, tags: [apps, homeassistant] }
     - { role: grist, tags: [apps, grist] }
     - { role: grist_etl, tags: [apps, grist_etl] }
     - { role: homepage, tags: [apps, homepage] }
