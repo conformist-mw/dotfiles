@@ -1,14 +1,11 @@
-- resources: false
-
-- glances:
-    url: "http://{{ docker_gateway }}:61208"
-    version: 4
-    cpu: true
-    mem: true
-    uptime: true
-    cputemp: true
-    disk: /
+# Built-in, read from inside the container — no host agent. History and
+# alerts live in Beszel.
+- resources:
     label: Hetzner
+    cpu: true
+    memory: true
+    uptime: true
+    disk: /
 
 - search:
     provider: google

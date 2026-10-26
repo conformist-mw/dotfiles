@@ -48,13 +48,13 @@ just list-tags-hetzner
 |----------|------|
 | Base | `base`, `beelink`, `docker`, `vim`, `vim-root`, `speedtest` |
 | Infra | `infra`, `k3s`, `traefik`, `cockpit` |
-| Apps | `apps`, `samba`, `jellyfin`, `navidrome`, `dozzle`, `torrent`, `sponsorblock`, `glances`, `homeassistant`, `homepage`, `immich`, `backup` |
+| Apps | `apps`, `samba`, `jellyfin`, `navidrome`, `dozzle`, `torrent`, `sponsorblock`, `homeassistant`, `homepage`, `immich`, `backup` |
 
 ### Hetzner
 | Category | Tags |
 |----------|------|
 | Base | `base`, `vps`, `docker`, `vim`, `wireguard` |
-| Apps | `apps`, `segments`, `commeilfaut`, `homepage`, `dozzle`, `glances`, `memos`, `flatnotes`, `school-bot` |
+| Apps | `apps`, `segments`, `commeilfaut`, `homepage`, `dozzle`, `memos`, `flatnotes`, `school-bot` |
 
 ### MacOS
 | Tags | Description |

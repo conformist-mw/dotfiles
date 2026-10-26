@@ -13,15 +13,6 @@ http:
       service: noop@internal
       tls:
         certResolver: letsencrypt
-    glances:
-      entryPoints:
-        - websecure
-      middlewares:
-        - auth-chain
-      service: glances
-      rule: Host(`glances.{{ ansible_host }}`)
-      tls:
-        certResolver: letsencrypt
     music:
       entryPoints:
         - websecure
@@ -233,11 +224,6 @@ http:
         permanent: true
 
   services:
-    glances:
-      loadBalancer:
-        servers:
-          - url: http://{{ docker_gateway }}:61208
-
     # commeilfaut
     commeilfaut-django:
       loadBalancer:

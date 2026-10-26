@@ -62,10 +62,6 @@
         icon: "mdi-segment"
         container: "segments"
         server: "local-docker"
-    - Glances:
-        href: https://glances.{{ ansible_host }}
-        description: "System monitoring"
-        icon: "glances"
     - CrowdSec:
         href: https://crowdsec.{{ ansible_host }}
         description: "Security engine dashboard"

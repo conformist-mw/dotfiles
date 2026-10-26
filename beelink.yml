@@ -19,7 +19,10 @@
     # from the host manually. See MIGRATION.md.
 
     # Infrastructure
-    - { role: k3s, tags: [infra, k3s] }
+    # k3s migration paused: the service is stopped + disabled on bee (only the
+    # whoami/ingress pilots ran there), binaries and /var/lib/rancher kept. The role
+    # would start and enable it again — uncomment when the migration resumes.
+    # - { role: k3s, tags: [infra, k3s] }
     - { role: traefik, tags: [infra, traefik] }
     - { role: cockpit, tags: [infra, cockpit] }
 
@@ -30,7 +33,6 @@
     - { role: dozzle, tags: [apps, dozzle] }
     - { role: torrent, tags: [apps, torrent] }
     - { role: sponsorblock, tags: [apps, sponsorblock] }
-    - { role: glances, tags: [apps, glances] }
     # Agent only (host_vars/bee/beszel.yml); the hub on hetzner connects over WireGuard.
     - { role: beszel, tags: [apps, monitoring, beszel] }
     # HA moved to its own Raspberry Pi (HAOS on SSD, same IP .223). The role would

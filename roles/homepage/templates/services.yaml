@@ -81,10 +81,6 @@
         icon: "traefik"
         server: "local-docker"
         container: "traefik"
-    - Glances:
-        href: http://glances.{{ ansible_host }}
-        description: "System monitoring"
-        icon: "glances"
     - Cockpit:
         href: http://cockpit.{{ ansible_host }}
         description: "System management"

@@ -29,7 +29,6 @@
 
     # Applications
     - { role: dozzle, tags: [apps, dozzle] }
-    - { role: glances, tags: [apps, glances] }
     - {
         role: homepage,
         tags: [apps, homepage],

@@ -15,7 +15,6 @@ dns_subdomains:
   - pihole
   - crowdsec
   - dozzle
-  - glances
   - dash # homepage (hostname_prefix: "dash.")
   - commeilfaut
   - segments
