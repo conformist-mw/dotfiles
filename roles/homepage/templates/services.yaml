@@ -50,7 +50,7 @@
 - applications:
     - Home Assistant:
         href: http://192.168.1.223:8123
-        description: "Home automation (QEMU VM)"
+        description: "Home automation (Raspberry Pi)"
         icon: "home-assistant"
         # Same widget as the VPS dashboard's, on the same shared token. Here the
         # LAN address is simply the local one; the tile in the vps group below
@@ -81,10 +81,6 @@
         icon: "traefik"
         server: "local-docker"
         container: "traefik"
-    - Cockpit:
-        href: http://cockpit.{{ ansible_host }}
-        description: "System management"
-        icon: "cockpit"
 
 - vps:
     - Dashboard:

@@ -30,7 +30,7 @@ just deploy-bee-tag "traefik,homepage"
 # By category
 just deploy-bee-tag apps      # all applications
 just deploy-bee-tag base      # system setup only
-just deploy-bee-tag infra     # infrastructure (traefik, cockpit)
+just deploy-bee-tag infra     # infrastructure (traefik)
 
 # Skip certain roles
 uv run ansible-playbook beelink.yml --skip-tags base
@@ -47,8 +47,8 @@ just list-tags-hetzner
 | Category | Tags |
 |----------|------|
 | Base | `base`, `beelink`, `docker`, `vim`, `vim-root`, `speedtest` |
-| Infra | `infra`, `k3s`, `traefik`, `cockpit` |
-| Apps | `apps`, `samba`, `jellyfin`, `navidrome`, `dozzle`, `torrent`, `sponsorblock`, `homeassistant`, `homepage`, `immich`, `backup` |
+| Infra | `infra`, `k3s`, `traefik` |
+| Apps | `apps`, `samba`, `jellyfin`, `navidrome`, `dozzle`, `torrent`, `sponsorblock`, `homepage`, `immich`, `backup` |
 
 ### Hetzner
 | Category | Tags |

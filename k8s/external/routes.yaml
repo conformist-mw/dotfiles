@@ -1,5 +1,5 @@
-# Front-door routes to things that are NOT in the cluster and never will be: daemons
-# running natively on bee, the Home Assistant QEMU guest, and the router's own web UI.
+# Front-door routes to things that are NOT in the cluster and never will be: Home
+# Assistant on its Raspberry Pi and the router's own web UI.
 # This replaces the file-provider block in roles/traefik/templates/dynamic.yml once the
 # k3s Traefik takes over :80 from the docker one.
 #
@@ -17,64 +17,12 @@
 # these stay plain kubernetes objects, so `kubectl get ingress -A` lists EVERY hostname
 # the front door serves. With half the routes hidden in a ConfigMap, it would not.
 #
-# ⚠️ Addresses are deliberately literal. The two LAN guests (HA, router) are simply
-# their own IPs. The host daemon is NOT bee's LAN address: cockpit listens on
-# 127.0.0.1 only, and today the docker Traefik reaches it through a DNAT onto the
-# docker bridge (10.1.1.1 + net.ipv4.conf.*.route_localnet, see the
-# expose_local_port role). That bridge disappears with docker, so it points at cni0
-# instead — the interface pods actually talk to.
-#
-# ⚠️ NOT SELF-CONTAINED: at cutover cockpit has to be rebound to that interface,
-# which is a change at the source rather than another layer of DNAT: a socket
-# drop-in with ListenStream=10.42.0.1:9090. Until then the route answers 502,
-# correctly: nothing is listening there. 10.42.0.1 is k3s's default cluster CIDR gateway.
+# Addresses are deliberately literal: both targets (HA, router) are simply their
+# own LAN IPs.
 #
 # Apply: KUBECONFIG=~/.kube/bee.yaml kubectl apply -f k8s/external/
 ---
-# --- cockpit: native daemon on bee -------------------------------------------
-apiVersion: v1
-kind: Service
-metadata:
-  name: cockpit
-  namespace: external
-spec:
-  ports:
-    - { name: http, port: 9090, targetPort: 9090 }
----
-apiVersion: discovery.k8s.io/v1
-kind: EndpointSlice
-metadata:
-  name: cockpit
-  namespace: external
-  labels:
-    kubernetes.io/service-name: cockpit
-addressType: IPv4
-ports:
-  - { name: http, port: 9090, protocol: TCP }
-endpoints:
-  - addresses: ["10.42.0.1"]                     # the node, on cni0 — see the header
-    conditions: { ready: true }
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: cockpit
-  namespace: external
-spec:
-  ingressClassName: traefik
-  rules:
-    - host: cockpit.bee.home
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: cockpit
-                port:
-                  number: 9090
----
-# --- home assistant: KVM/QEMU guest on bee, stays a VM (see docs/k3s-learning.md) ---
+# --- home assistant: HAOS on its own Raspberry Pi ---------------------------
 apiVersion: v1
 kind: Service
 metadata:
@@ -95,7 +43,7 @@ addressType: IPv4
 ports:
   - { name: http, port: 8123, protocol: TCP }
 endpoints:
-  - addresses: ["192.168.1.223"]   # the HAOS guest
+  - addresses: ["192.168.1.223"]   # the Pi
     conditions: { ready: true }
 ---
 apiVersion: networking.k8s.io/v1

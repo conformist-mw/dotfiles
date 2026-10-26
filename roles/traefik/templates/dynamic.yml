@@ -1,10 +1,5 @@
 http:
   routers:
-    cockpit:
-      entryPoints:
-        - web
-      service: cockpit
-      rule: Host(`cockpit.{{ ansible_host }}`)
     ha:
       entryPoints:
         - web
@@ -17,10 +12,6 @@ http:
       rule: Host(`router.{{ ansible_host }}`)
 
   services:
-    cockpit:
-      loadbalancer:
-        servers:
-          - url: http://{{ docker_gateway }}:9090
     ha:
       loadBalancer:
         servers:
