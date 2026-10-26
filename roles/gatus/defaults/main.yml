@@ -55,3 +55,11 @@ gatus_http_endpoints:
     conditions:
       - "[CONNECTED] == true"
       - "[CERTIFICATE_EXPIRATION] > 168h"
+  # HA on the Pi, straight over WireGuard (bypasses the public proxy). Beszel
+  # already alerts on the Pi host itself; this catches HA core down on a live host.
+  - name: home-assistant
+    url: "http://192.168.1.223:8123/manifest.json"
+    interval: "1m"
+    conditions:
+      - "[STATUS] == 200"
+      - "[RESPONSE_TIME] < 5000"

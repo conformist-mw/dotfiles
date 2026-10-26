@@ -1,74 +1,76 @@
 ---
-# Beszel: lightweight host + container metrics dashboard (hub + agent, both on
-# this host). Hub is gated at the edge by tinyauth (default auth-chain@file from
-# the shared traefik_labels). The agent needs a KEY+TOKEN the hub mints on first
-# run, so it stays skipped until those are set (see defaults/main.yml).
+# Beszel: lightweight host + container metrics dashboard. On hetzner this runs
+# the hub (gated at the edge by tinyauth via the shared traefik_labels) plus a
+# local agent. Home hosts run the agent only (beszel_hub_enabled: false); the
+# hub reaches them over WireGuard. The Pi runs the agent as a HAOS app instead.
 #
 # NOTE: Beszel does NOT alert on a single container going down — that's Gatus's
 # job here (roles/gatus). Beszel is the dashboard / resource view.
-- name: Ensure Beszel data + socket directories exist
+- name: Ensure Beszel directories exist
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
     mode: "0755"
-  loop:
-    - "{{ app_data_dir }}/data"
-    - "{{ app_data_dir }}/socket"
-    # The agent's image declares VOLUME /var/lib/beszel-agent, where it keeps the
-    # fingerprint the hub binds a system record to. Unmapped, that landed on an
-    # anonymous volume, so the agent came back with a new identity after every
-    # recreate and re-registered against the hub.
-    - "{{ app_data_dir }}/agent"
+  loop: "{{ ([app_data_dir ~ '/data', app_data_dir ~ '/socket'] if beszel_hub_enabled else []) + [app_data_dir ~ '/agent'] }}"
+  # The agent's image declares VOLUME /var/lib/beszel-agent, where it keeps the
+  # fingerprint the hub binds a system record to. Unmapped, that landed on an
+  # anonymous volume, so the agent came back with a new identity after every
+  # recreate and re-registered against the hub.
 
-- name: Include labels generator
-  ansible.builtin.include_role:
-    name: labels_generator
-  vars:
-    additional_labels: "{{ beszel_extra_labels }}"
+- name: Beszel hub
+  when: beszel_hub_enabled
+  block:
+    - name: Include labels generator
+      ansible.builtin.include_role:
+        name: labels_generator
+      vars:
+        additional_labels: "{{ beszel_extra_labels }}"
 
-- name: Beszel hub container
-  community.docker.docker_container:
-    name: "{{ app_name }}"
-    image: henrygd/beszel:0.21.0
-    pull: true
-    restart_policy: "unless-stopped"
-    networks:
-      - name: "{{ docker_network }}"
-    # 127.0.0.1 only: lets the host-network agent reach the hub at localhost:8090
-    # without exposing it publicly. Traefik routes the public host via the docker
-    # network (app_port).
-    published_ports:
-      - "127.0.0.1:{{ app_port }}:8090"
-    env:
-      APP_URL: "https://{{ app_subdomain }}.{{ ansible_host }}"
-    volumes:
-      - "{{ app_data_dir }}/data:/beszel_data"
-    labels: "{{ labels }}"
+    - name: Beszel hub container
+      community.docker.docker_container:
+        name: "{{ app_name }}"
+        image: henrygd/beszel:0.21.0
+        pull: true
+        restart_policy: "unless-stopped"
+        networks:
+          - name: "{{ docker_network }}"
+        # 127.0.0.1 only: lets the host-network agent reach the hub at localhost:8090
+        # without exposing it publicly. Traefik routes the public host via the docker
+        # network (app_port).
+        published_ports:
+          - "127.0.0.1:{{ app_port }}:8090"
+        env:
+          APP_URL: "https://{{ app_subdomain }}.{{ ansible_host }}"
+        volumes:
+          - "{{ app_data_dir }}/data:/beszel_data"
+        labels: "{{ labels }}"
 
 - name: Beszel agent container
-  when: beszel_agent_key | length > 0 and beszel_agent_token | length > 0
+  when: not beszel_hub_enabled or beszel_agent_token | length > 0
   community.docker.docker_container:
     name: "{{ app_name }}-agent"
     image: henrygd/beszel-agent:0.21.0
     pull: true
     restart_policy: "unless-stopped"
     network_mode: host
-    env:
+    env: "{{ (beszel_agent_env_hub if beszel_hub_enabled else beszel_agent_env_listen) | combine(beszel_agent_extra_env) }}"
+    volumes: "{{ ['/var/run/docker.sock:/var/run/docker.sock:ro', app_data_dir ~ '/agent:/var/lib/beszel-agent'] + ([app_data_dir ~ '/socket:/beszel_socket'] if beszel_hub_enabled else []) + beszel_agent_extra_volumes }}"
+  vars:
+    beszel_agent_env_hub:
       LISTEN: "/beszel_socket/beszel.sock"
       HUB_URL: "http://localhost:{{ app_port }}"
       TOKEN: "{{ beszel_agent_token }}"
       KEY: "{{ beszel_agent_key }}"
-    volumes:
-      - "{{ app_data_dir }}/agent:/var/lib/beszel-agent"
-      - "{{ app_data_dir }}/socket:/beszel_socket"
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    beszel_agent_env_listen:
+      LISTEN: "{{ beszel_agent_port | string }}"
+      KEY: "{{ beszel_agent_key }}"
 
 - name: Beszel agent not configured yet (first-run instructions)
-  when: not (beszel_agent_key | length > 0 and beszel_agent_token | length > 0)
+  when: beszel_hub_enabled and beszel_agent_token | length == 0
   ansible.builtin.debug:
     msg: >-
       Beszel hub is up. Open https://{{ app_subdomain }}.{{ ansible_host }},
-      create the admin user, then grab a universal token (Settings → Tokens) and
-      the hub public KEY ("Add System" dialog). Put beszel_agent_token and
-      beszel_agent_key in host_vars/hetzner/secrets.sops.yaml and re-run this role
-      to start the agent.
+      create the admin user, then grab a universal token (Settings → Tokens),
+      put beszel_agent_token in host_vars/hetzner/secrets.sops.yaml and re-run
+      this role to start the agent. If the hub was recreated from scratch, also
+      update beszel_agent_key in defaults/main.yml from the "Add System" dialog.

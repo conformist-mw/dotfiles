@@ -10,12 +10,24 @@ beszel_extra_labels:
   - key: "traefik.http.routers.{{ app_name }}.rule"
     value: "Host(`{{ app_subdomain }}.{{ ansible_host }}`)"
 
-# Agent registration is two-phase (the hub mints these on first-run):
-#   1. Deploy this role — the hub comes up, the agent is skipped.
-#   2. Open https://beszel.<host> (behind tinyauth), create the admin user.
-#   3. Settings → Tokens: create a universal token  -> beszel_agent_token
-#      "Add System" dialog shows the hub public KEY  -> beszel_agent_key
-#   4. Add both to host_vars/hetzner/secrets.sops.yaml and re-run — agent starts.
-# Kept empty here so the agent task is skipped until they're provided.
-beszel_agent_key: ""
+# true  = hub + local agent (hetzner): the agent dials the hub on localhost.
+# false = agent only (home hosts): the agent listens on beszel_agent_port and
+#         the hub on hetzner connects to it over WireGuard. Home hosts can't use
+#         the dial-out mode — beszel.<host> sits behind tinyauth (302).
+beszel_hub_enabled: true
+beszel_agent_port: 45876
+
+# Extra env / mounts for the agent container, per host. Data disks are only
+# seen when mounted under /extra-filesystems/<name>; NICS limits the network
+# graph to the listed interfaces (a bridge + its port count traffic twice).
+beszel_agent_extra_env: {}
+beszel_agent_extra_volumes: []
+
+# The hub's PUBLIC ssh key ("Add System" dialog). Not a secret: it only lets
+# agents recognise the hub. Shared by every agent, incl. the HAOS app on the Pi.
+beszel_agent_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIrSAw7pKn+lcCeitTHqFnGevlGR1D6BhgVOxhDoFOfM"
+
+# Universal token (Settings → Tokens), needed only by the dial-out agent next to
+# the hub. Lives in host_vars/hetzner/secrets.sops.yaml; empty skips that agent
+# on a fresh hub (create the admin first, mint the token, re-run).
 beszel_agent_token: ""

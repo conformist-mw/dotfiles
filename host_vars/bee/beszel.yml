@@ -1,0 +1,11 @@
+---
+# Agent only — the hub lives on hetzner and connects over WireGuard.
+beszel_hub_enabled: false
+
+beszel_agent_extra_env:
+  # br0 bridges enp1s0; counting both doubles every byte.
+  NICS: "enp1s0"
+
+beszel_agent_extra_volumes:
+  - "/mnt/ssd:/extra-filesystems/ssd:ro"
+  - "/mnt/hdd:/extra-filesystems/hdd:ro"

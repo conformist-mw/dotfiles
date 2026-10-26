@@ -31,6 +31,8 @@
     - { role: torrent, tags: [apps, torrent] }
     - { role: sponsorblock, tags: [apps, sponsorblock] }
     - { role: glances, tags: [apps, glances] }
+    # Agent only (host_vars/bee/beszel.yml); the hub on hetzner connects over WireGuard.
+    - { role: beszel, tags: [apps, monitoring, beszel] }
     # HA moved to its own Raspberry Pi (HAOS on SSD, same IP .223). The role would
     # restart the old `hass` VM — kept shut off as a cold fallback — and put a second
     # HA on the SLZB socket. Keep it out until the VM is deleted for good.
