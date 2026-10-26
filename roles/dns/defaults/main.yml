@@ -15,7 +15,7 @@ dns_target: "{{ ansible_default_ipv4.address }}"
 
 dns_ttl: 86400
 
-# Names that must resolve, relative to the zone ("subs", not
-# "subs.conformist.name"; "@" for the apex). Empty here on purpose: what a host
+# Names that must resolve, relative to the zone ("gym", not
+# "gym.conformist.name"; "@" for the apex). Empty here on purpose: what a host
 # serves is a property of the host, so the list lives in host_vars.
 dns_subdomains: []

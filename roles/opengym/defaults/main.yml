@@ -23,7 +23,7 @@ opengym_host: "{{ app_subdomain }}.{{ ansible_host }}"
 opengym_invite_only: false
 
 # The hetzner inventory rule label only references app_name; override it so the
-# hostname is gym.<host> instead of opengym.<host>. Same trick as subtrackr.
+# hostname is gym.<host> instead of opengym.<host>. Same trick as beszel.
 #
 # The second router lets the Home Screen icon and the manifest through without
 # a login: iOS fetches them outside the page, without the tinyauth cookie, and

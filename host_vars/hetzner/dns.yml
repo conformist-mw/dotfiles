@@ -20,7 +20,6 @@ dns_subdomains:
   - segments
   - family # family-hub
   - school # school-bot + the Mini App
-  - subs # subtrackr
   - gym # opengym
   - beszel
   - gatus

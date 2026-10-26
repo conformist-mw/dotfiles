@@ -48,7 +48,6 @@
     # family-hub's own database, which the nightly snapshot already covers.
     - { role: family-hub, tags: [apps, family-hub, "family_hub"] }
     - { role: school-bot, tags: [apps, school-bot, "school_bot"] }
-    - { role: subtrackr, tags: [apps, subtrackr] }
     - { role: opengym, tags: [apps, opengym] }
 
     # Snapshots whatever host_vars/hetzner/backup.yml lists, so it runs after

@@ -4,8 +4,6 @@
 vps_backup_sqlite:
   - name: family-hub
     path: "{{ data_dir }}/family-hub/family-hub.db"
-  - name: subtrackr
-    path: "{{ data_dir }}/subtrackr/subtrackr.db"
 
 # openGym keeps everything as plain files (profiles, passkeys, history,
 # uploads, the session secret), so the whole directory is the backup.
