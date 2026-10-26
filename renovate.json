@@ -50,6 +50,15 @@
       "enabled": false
     },
     {
+      "description": "immich's ghcr repos carry thousands of pr-/dev tags and the docker lookup gives up (no-result); its release tags are the same versions",
+      "matchPackageNames": [
+        "ghcr.io/immich-app/immich-server",
+        "ghcr.io/immich-app/immich-machine-learning"
+      ],
+      "overrideDatasource": "github-releases",
+      "overridePackageName": "immich-app/immich"
+    },
+    {
       "description": "openGym api and web ship from one release tag and only work as a pair",
       "matchPackageNames": [
         "ghcr.io/duartesantos8/opengym-*"
