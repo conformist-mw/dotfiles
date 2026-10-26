@@ -4,7 +4,6 @@
   ansible.builtin.apt:
     name:
       - avahi-daemon
-      - iptables-persistent
       - nnn
       - ntfs-3g
       - python3-passlib
@@ -14,15 +13,6 @@
       - smartmontools
     update_cache: yes
     state: present
-  become: true
-
-- name: Ensure iptables persistent dir exists
-  ansible.builtin.file:
-    path: /etc/iptables
-    state: directory
-    owner: root
-    group: root
-    mode: 0755
   become: true
 
 - name: Create logs dir
