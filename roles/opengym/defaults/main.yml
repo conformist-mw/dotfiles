@@ -10,8 +10,8 @@ app_data_dir: "{{ data_dir }}/opengym"
 # Both halves are published from the same release tag and only work as a pair:
 # web proxies /api to the api of its own release. Renovate bumps them together
 # (the opengym group in renovate.json).
-opengym_api_image: "ghcr.io/duartesantos8/opengym-api:1.4.2"
-opengym_web_image: "ghcr.io/duartesantos8/opengym-web:1.4.2"
+opengym_api_image: "ghcr.io/duartesantos8/opengym-api:1.4.3"
+opengym_web_image: "ghcr.io/duartesantos8/opengym-web:1.4.3"
 
 # Passkeys are bound to this exact hostname. Changing it later invalidates
 # every passkey registered against the old one.
