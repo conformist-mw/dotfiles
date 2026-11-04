@@ -65,32 +65,6 @@ family_hub_people: ""
 # Set family_hub_visit_people in host_vars/hetzner/secrets.sops.yaml to fill it.
 family_hub_visit_people: ""
 
-# ── School-today timetable mirror ────────────────────────────────────────────
-# The child's academic school day, pulled from the school-today.com parent
-# portal and served as a SECOND ICS feed (/school.ics) for its own HA Remote
-# Calendar — separate from /calendar.ics, which is the family's own courses and
-# appointments. The sync is off until the login secrets below are set in
-# host_vars/hetzner (email, password, pupil id); these are the non-secret knobs.
-family_hub_school_today_base_url: "https://school-today.com"
-# Weeks of timetable mirrored from the current week forward.
-family_hub_school_today_weeks_ahead: "3"
-# How often the container re-logs in and refreshes the cache (Go duration).
-family_hub_school_sync_interval: "12h"
-# Which portal categories reach /school.ics: lesson,meal,daycare,routine.
-# Lessons only keeps meals, recess and after-school care out of the feed the
-# evening "tomorrow's lessons" digest reads.
-family_hub_school_ics_include: "lesson"
-# When the bot posts tomorrow's school timetable. The old HA automation fired
-# at 19:30; keeping the time means the message just gets more complete.
-family_hub_school_digest_time: "19:30"
-# The Friday review of the school week just gone: per subject, topics, the
-# teacher's notes, homework and marks. Unlike the digest above it reads the
-# portal's lesson pages directly, so it is off without the SCHOOL_TODAY_*
-# credentials no matter what these say. 0=Sun..6=Sat; unset disables.
-# 19:45 rather than 19:30 so the two school messages do not arrive together.
-family_hub_school_week_review_dow: "5"
-family_hub_school_week_review_time: "19:45"
-
 # ── Menu ─────────────────────────────────────────────────────────────────────
 # The morning "what to cook today": for today, not tomorrow — nobody here plans
 # a day ahead, they cook and shop the same day. Empty disables it.
