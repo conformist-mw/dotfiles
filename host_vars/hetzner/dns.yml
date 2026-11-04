@@ -19,7 +19,6 @@ dns_subdomains:
   - commeilfaut
   - segments
   - family # family-hub
-  - school # school-bot + the Mini App
   - gym # opengym
   - beszel
   - gatus

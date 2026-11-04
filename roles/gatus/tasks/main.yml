@@ -1,6 +1,6 @@
 ---
 # Gatus: status page + alerting. HTTP/TCP endpoints are polled directly; portless
-# containers (school-bot et al.) can't be polled, so an on-host systemd timer
+# containers can't be polled, so an on-host systemd timer
 # pushes their `docker inspect` state to Gatus external-endpoints. Alerts go to
 # Telegram via the same bot/chat as tg-sendmail (telegram_alerts_* from sops).
 - name: Ensure Gatus data + config directories exist

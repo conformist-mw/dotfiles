@@ -54,7 +54,7 @@ just list-tags-hetzner
 | Category | Tags |
 |----------|------|
 | Base | `base`, `vps`, `docker`, `vim`, `wireguard` |
-| Apps | `apps`, `segments`, `commeilfaut`, `homepage`, `dozzle`, `memos`, `flatnotes`, `school-bot` |
+| Apps | `apps`, `segments`, `commeilfaut`, `homepage`, `dozzle`, `memos`, `flatnotes` |
 
 ### MacOS
 | Tags | Description |

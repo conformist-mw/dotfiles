@@ -2,7 +2,7 @@
 # {{ ansible_managed }} — roles/gatus.
 # Report container liveness to Gatus external-endpoints so Gatus can alert
 # (Telegram) when a container is down or stuck in a crash-loop. Portless
-# containers (e.g. school-bot) can't be polled over HTTP, hence this push.
+# containers can't be polled over HTTP, hence this push.
 set -uo pipefail
 
 GATUS="http://127.0.0.1:{{ gatus_push_port }}"

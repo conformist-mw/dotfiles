@@ -72,7 +72,7 @@
     path: "{{ server_dir }}"
     state: directory
 
-# Extra human logins (e.g. egor for the school-bot). Defined in
+# Extra human logins (e.g. egor). Defined in
 # host_vars/hetzner/users.yml. Deploy still runs as vps_user; these users get
 # SSH access + docker group so they can manage their own containers.
 - name: Create human user groups
@@ -151,6 +151,18 @@
     validate: "visudo -cf %s"
   become: true
   when: vps_users | default([]) | selectattr('apps', 'defined') | list | length > 0
+
+# Once nobody owns a container the wrapper and its sudoers line are taken off
+# the host, rather than left behind granting a command that refuses everyone.
+- name: Remove appctl when no user owns containers
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/sudoers.d/50-appctl
+    - /usr/local/bin/appctl
+  become: true
+  when: vps_users | default([]) | selectattr('apps', 'defined') | list | length == 0
 
 # --- sshd ---------------------------------------------------------------------
 # Deliberately after the authorized_key tasks above: this run installs the keys

@@ -30,8 +30,8 @@ allowed="${ALLOWED[$caller]:-}"
 verb="$1"
 container="$2"
 
-# Exact match against the list. No globs, no prefixes: 'school' must not reach
-# 'school-bot', and nothing must reach 'traefik'.
+# Exact match against the list. No globs, no prefixes: 'web' must not reach
+# 'web-api', and nothing must reach 'traefik'.
 ok=no
 for c in $allowed; do
   [[ "$c" == "$container" ]] && ok=yes

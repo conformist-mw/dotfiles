@@ -24,11 +24,9 @@ gatus_heartbeat_interval: "5m"
 # Long-running containers that should always be up. Each becomes a Gatus
 # external-endpoint (group "containers") AND a line in the on-host pusher.
 # Single source of truth — edit here to add/remove watched containers.
-# Portless containers (e.g. school-bot) can only be watched this way; HTTP
+# Portless containers can only be watched this way; HTTP
 # services can additionally go in gatus_http_endpoints below.
 gatus_watched_containers:
-  - school-bot
-  - school-web
   - ceilings-app        # role: commeilfaut
   - ceilings-scheduler  # role: commeilfaut
   - segments

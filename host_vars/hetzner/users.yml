@@ -4,7 +4,7 @@
 # them at github.com/<user>.keys), so they live here in plaintext, not SOPS.
 
 # egor's own data area, kept OUT of vps_user's data_dir. Apps deployed for egor
-# lay out their subdirs under here (school-bot today, room for more later).
+# lay out their subdirs under here.
 egor_data_dir: "/home/egor/data"
 
 vps_users:
@@ -15,9 +15,9 @@ vps_users:
     # `docker run -v /:/host … chroot /host` needs nothing else — which made it
     # a strange thing to hand someone whose tinyauth ACL is deliberately capped
     # at read-only observability. He gets `appctl` instead (roles/vps), which
-    # is the same day-to-day operations over exactly the containers below.
+    # is the same day-to-day operations over exactly the containers listed in
+    # `apps` — none at the moment, so appctl is not installed.
     groups: []
-    apps: [school-bot, school-web]
     shell: /bin/bash
     ssh_key: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG1VUoSlBSKHPsxayEQOk1a5sgUal9/ecHylyMib6wQK"
     data_dir: "{{ egor_data_dir }}"   # created + chowned to him by the vps role
