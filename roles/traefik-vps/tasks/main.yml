@@ -68,7 +68,11 @@
           # traefik closes and reopens its log files on USR1 — documented since
           # v1.6. Without this it would keep writing to the rotated inode and the
           # new access.log would stay empty, blinding crowdsec.
-          /usr/bin/docker kill -s USR1 traefik 2>/dev/null || true
+          # Sent from inside, not with `docker kill -s USR1`: docker counts any
+          # kill, whatever the signal, as a manual stop, and an unless-stopped
+          # container so marked is not started again when the daemon comes up.
+          # That left the host without traefik after its first reboot.
+          /usr/bin/docker exec traefik kill -USR1 1 2>/dev/null || true
         endscript
       }
   become: true
