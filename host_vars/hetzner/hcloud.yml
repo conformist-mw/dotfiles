@@ -1,0 +1,19 @@
+---
+# The Hetzner Cloud side of this host (roles/hcloud): its firewall and the
+# protection flags. hcloud_token (Read & Write, this project) lives in
+# secrets.sops.yaml and never leaves the control node.
+hcloud_server: debian-4gb-fsn1-3
+# Both primary IPs. Kept off auto-delete so that deleting or replacing the
+# server does not throw away the address DNS and every WG client point at.
+hcloud_primary_ips:
+  - 79468523 # ipv4 157.90.145.236
+  - 79468524 # ipv6 2a01:4f8:c17:b308::/64
+
+hcloud_firewall: conformist
+# Inbound only; outbound stays open (no out rules = allow all). The WireGuard
+# ports are added from wg_interfaces by the role, so a new tunnel can't be
+# forgotten here.
+hcloud_firewall_tcp:
+  - { port: "22", description: ssh }
+  - { port: "80", description: http }
+  - { port: "443", description: https }

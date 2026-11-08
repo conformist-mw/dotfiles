@@ -11,4 +11,8 @@ collections:
   - community.docker
   - community.postgresql
   - community.sops
+  # The 5.x bundled with the ansible package crashes on the server module: the
+  # Cloud API no longer returns a server's `datacenter`, and 5.x reads it.
+  - name: hetzner.hcloud
+    version: 7.2.0
 

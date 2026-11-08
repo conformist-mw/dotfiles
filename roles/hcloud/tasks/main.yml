@@ -1,0 +1,65 @@
+---
+# Hetzner Cloud firewall + protection flags for this host. Runs from the
+# control node against the Cloud API; nothing here touches the host itself.
+#
+# The firewall is a second layer under iptables, and mostly against docker:
+# a container port published on 0.0.0.0 bypasses INPUT entirely and would
+# be on the internet the moment the role ran. Here it is dropped before it
+# reaches the host. Anything that should be public needs its line in
+# hcloud_firewall_tcp (WireGuard ports come from wg_interfaces).
+- name: Hetzner Cloud
+  delegate_to: localhost
+  become: false
+  run_once: true
+  module_defaults:
+    group/hetzner.hcloud.all:
+      api_token: "{{ hcloud_token }}"
+  vars:
+    hcloud_any: ["0.0.0.0/0", "::/0"]
+    hcloud_rules_icmp:
+      # Ping, and PMTU discovery for everything else.
+      - { direction: in, protocol: icmp, source_ips: "{{ hcloud_any }}", description: icmp }
+    hcloud_rules_tcp: >-
+      {{ hcloud_firewall_tcp | map('combine', {'direction': 'in', 'protocol': 'tcp', 'source_ips': hcloud_any}) | list }}
+    hcloud_rules_wg: >-
+      {{ (wg_interfaces | default({})) | dict2items
+         | map(attribute='value.port') | map('string')
+         | map('community.general.dict_kv', 'port') | list
+         | map('combine', {'direction': 'in', 'protocol': 'udp', 'source_ips': hcloud_any, 'description': 'wireguard'}) | list }}
+  block:
+    - name: Token is set
+      ansible.builtin.assert:
+        that: hcloud_token | default('') not in ['', 'REPLACE_ME']
+        fail_msg: >-
+          hcloud_token in host_vars/hetzner/secrets.sops.yaml is still the
+          placeholder. Put a Read & Write token of this project there.
+        quiet: true
+
+    - name: Firewall
+      hetzner.hcloud.firewall:
+        name: "{{ hcloud_firewall }}"
+        rules: "{{ hcloud_rules_icmp + hcloud_rules_tcp + hcloud_rules_wg }}"
+        state: present
+
+    - name: Firewall applies to the server
+      hetzner.hcloud.firewall_resource:
+        firewall: "{{ hcloud_firewall }}"
+        servers: ["{{ hcloud_server }}"]
+        state: present
+
+    # Both are one click away from losing the host for good: delete takes the
+    # disk with it, rebuild wipes it in place.
+    - name: Server protection
+      hetzner.hcloud.server:
+        name: "{{ hcloud_server }}"
+        delete_protection: true
+        rebuild_protection: true
+        state: present
+
+    - name: Primary IPs survive the server
+      hetzner.hcloud.primary_ip:
+        id: "{{ item }}"
+        auto_delete: false
+        delete_protection: true
+        state: present
+      loop: "{{ hcloud_primary_ips }}"
