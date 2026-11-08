@@ -4,8 +4,6 @@
     - { role: common, tags: [base, common] }
     - { role: vps, tags: [base, vps] }
     - { role: docker, tags: [base, docker] }
-    - { role: vim, tags: [base, vim] }
-    - { role: vim, tags: [base, vim-root], vars: { user: "root" } }
     - { role: speedtest, tags: [base, speedtest] }
     - { role: wireguard, tags: [base, wireguard] }
     # watchtower intentionally disabled: image updates move to renovate (manual PRs)
