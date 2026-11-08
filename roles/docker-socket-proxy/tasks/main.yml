@@ -33,9 +33,12 @@
     # CONTAINERS: list/inspect/logs/stats (all four consumers).
     # INFO: host info (dozzle, beszel).
     # IMAGES: image inspect (beszel). SYSTEM: /system/df (dozzle).
+    # ALLOW_LOGS: /containers/<id>/logs (dozzle). Gated apart from CONTAINERS:
+    # without it dozzle lists every container and shows none of their logs.
     # A consumer asking for more shows up as a 403 in `docker logs socket-proxy`.
     env:
       CONTAINERS: "1"
       INFO: "1"
       IMAGES: "1"
       SYSTEM: "1"
+      ALLOW_LOGS: "1"
