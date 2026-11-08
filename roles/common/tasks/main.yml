@@ -204,6 +204,11 @@
     name: "{{ item }}"
     value: "1"
     sysctl_set: true
+    # Not /etc/sysctl.conf, the module's default: Debian 13 no longer reads it
+    # at boot, and the route_localnet lines in it were lost on the upgrade.
+    # The docker_net key applies too, although the bridge appears only once
+    # docker starts: systemd re-runs sysctl.d for each interface as it comes up.
+    sysctl_file: /etc/sysctl.d/90-homelab.conf
     state: present
     reload: yes
   with_items:

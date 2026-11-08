@@ -6,7 +6,7 @@
 # A container connects to {{ docker_gateway }}:<port>; the packet enters the
 # host on the {{ docker_network }} bridge, PREROUTING DNATs it to 127.0.0.1:<port>
 # where the native service listens. Requires net.ipv4.conf.{{ docker_network }}.
-# route_localnet=1 (set persistently in /etc/sysctl.conf on the VPS).
+# route_localnet=1 (set persistently by roles/common, in /etc/sysctl.d).
 #
 # Persistence is declarative: a per-owner systemd oneshot (expose-<name>.service,
 # After=docker.service) re-asserts exactly these rules at boot with `-C || -A`.

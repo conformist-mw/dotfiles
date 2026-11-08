@@ -3,11 +3,7 @@
     # Base system setup
     - { role: common, tags: [base, common] }
     - { role: vps, tags: [base, vps] }
-    - {
-        role: docker,
-        tags: [base, docker],
-        vars: { ansible_distribution_release: "bookworm" },
-      }
+    - { role: docker, tags: [base, docker] }
     - { role: vim, tags: [base, vim] }
     - { role: vim, tags: [base, vim-root], vars: { user: "root" } }
     - { role: speedtest, tags: [base, speedtest] }

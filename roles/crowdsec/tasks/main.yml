@@ -14,24 +14,26 @@
     mode: "0755"
   become: true
 
+# Armored key as-is: apt reads a .asc keyring directly, and apt-key, which
+# the apt_key module needs, is gone from Debian 13.
 - name: Add CrowdSec apt signing key
-  ansible.builtin.apt_key:
+  ansible.builtin.get_url:
     url: https://packagecloud.io/crowdsec/crowdsec/gpgkey
-    keyring: /etc/apt/keyrings/crowdsec_crowdsec-archive-keyring.gpg
-    state: present
-  become: true
-
-- name: Remove stale .asc keyring from the earlier failed run
-  ansible.builtin.file:
-    path: /etc/apt/keyrings/crowdsec_crowdsec-archive-keyring.asc
-    state: absent
+    dest: /etc/apt/keyrings/crowdsec_crowdsec-archive-keyring.asc
+    mode: "0644"
   become: true
 
 - name: Add CrowdSec apt repository
   ansible.builtin.copy:
     dest: /etc/apt/sources.list.d/crowdsec_crowdsec.list
-    content: "deb [signed-by=/etc/apt/keyrings/crowdsec_crowdsec-archive-keyring.gpg] https://packagecloud.io/crowdsec/crowdsec/any any main\n"
+    content: "deb [signed-by=/etc/apt/keyrings/crowdsec_crowdsec-archive-keyring.asc] https://packagecloud.io/crowdsec/crowdsec/any any main\n"
     mode: "0644"
+  become: true
+
+- name: Remove the dearmored keyring apt_key used to write
+  ansible.builtin.file:
+    path: /etc/apt/keyrings/crowdsec_crowdsec-archive-keyring.gpg
+    state: absent
   become: true
 
 - name: Install CrowdSec + iptables firewall bouncer
