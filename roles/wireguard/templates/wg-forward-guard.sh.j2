@@ -4,9 +4,9 @@
 #
 # The tunnels put the home LAN one route away from every container on this
 # host, and most of those containers face the internet. A container may reach
-# exactly the LAN services listed in wg_docker_lan_allow; anything else behind
-# a tunnel (the LAN, the peers) is rejected. Replies to those connections come
-# in on a wg interface and never enter this chain.
+# exactly the LAN services listed in wg_docker_lan_allow; any new connection to
+# anything else behind a tunnel (the LAN, the peers) is rejected. Replies to
+# those connections come in on a wg interface and never enter this chain.
 #
 # Also sets FORWARD's policy to DROP: every flow this host is meant to forward
 # has an explicit ACCEPT already (docker's chains, the wg-firewall scripts), and
@@ -28,6 +28,10 @@ INGRESS="docker+ br-+"
 case "$ACTION" in
   up)
     iptables -N "$CHAIN" 2>/dev/null || iptables -F "$CHAIN"
+    # Replies. A peer that opens a public site through the tunnel reaches
+    # traefik via wg0, and traefik's answer leaves docker_net for wg0 — that
+    # is not a container reaching into the tunnel and must not be rejected.
+    iptables -A "$CHAIN" -m conntrack --ctstate ESTABLISHED,RELATED -j RETURN
 {% for a in wg_docker_lan_allow %}
     # {{ a.why }}
     iptables -A "$CHAIN" -d {{ a.host }} -p tcp -m multiport --dports {{ a.ports | join(',') }} -j RETURN
