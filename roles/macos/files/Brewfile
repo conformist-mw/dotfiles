@@ -43,6 +43,8 @@ brew "git"
 brew "glab"
 # Open source programming language to build simple/reliable/efficient software
 brew "go"
+# Command-line interface for Hetzner Cloud
+brew "hcloud"
 # Configurable static site generator
 brew "hugo"
 # Tools and libraries to manipulate images in select formats
