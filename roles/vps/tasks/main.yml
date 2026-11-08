@@ -72,9 +72,9 @@
     path: "{{ server_dir }}"
     state: directory
 
-# Extra human logins (e.g. egor). Defined in
-# host_vars/hetzner/users.yml. Deploy still runs as vps_user; these users get
-# SSH access + docker group so they can manage their own containers.
+# Extra human logins, defined in host_vars/hetzner/users.yml. Deploy still runs
+# as vps_user; these users get SSH access and, through appctl, day-to-day
+# control over just the containers listed in their `apps`.
 - name: Create human user groups
   ansible.builtin.group:
     name: "{{ item.name }}"
@@ -183,12 +183,20 @@
       ansible.builtin.copy:
         dest: /etc/ssh/sshd_config.d/99-hardening.conf
         mode: "0644"
+        # Root logs in through nobody: everything here is done as the deploy
+        # user with sudo, and the journal had no root login since 2025. The
+        # forwards are off because nothing uses them and both hand a server-side
+        # process a path back into the client (its X display, its agent keys).
+        # TCP forwarding stays: it is how a 127.0.0.1-only service is reached.
         content: |
           # Managed by Ansible (roles/vps)
           PasswordAuthentication no
           KbdInteractiveAuthentication no
-          PermitRootLogin prohibit-password
+          PermitRootLogin no
           MaxAuthTries 3
+          AllowUsers {{ ([ansible_user] + (vps_users | default([]) | map(attribute='name') | list)) | join(' ') }}
+          X11Forwarding no
+          AllowAgentForwarding no
       register: sshd_dropin
 
     # sshd -t parses the whole tree, Include and all. Validating here rather
@@ -203,6 +211,13 @@
         name: ssh
         state: reloaded
       when: sshd_dropin is changed
+
+    # With root login refused a key here only invites the question of whose it
+    # is; the provider's image puts one there at creation.
+    - name: Remove root's authorized keys
+      ansible.builtin.file:
+        path: /root/.ssh/authorized_keys
+        state: absent
   rescue:
     # A bad config must not survive the run: leave the host reachable and fail
     # loudly instead of reloading sshd into something that will not start.
