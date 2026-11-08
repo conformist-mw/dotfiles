@@ -1,0 +1,54 @@
+#!/bin/bash
+# Managed by Ansible (wireguard role).
+# Run by wg-forward-guard.service as: wg-forward-guard.sh up|down
+#
+# The tunnels put the home LAN one route away from every container on this
+# host, and most of those containers face the internet. A container may reach
+# exactly the LAN services listed in wg_docker_lan_allow; anything else behind
+# a tunnel (the LAN, the peers) is rejected. Replies to those connections come
+# in on a wg interface and never enter this chain.
+#
+# Also sets FORWARD's policy to DROP: every flow this host is meant to forward
+# has an explicit ACCEPT already (docker's chains, the wg-firewall scripts), and
+# with ACCEPT anything arriving on eth0 addressed to the LAN was routed into it.
+{% set ns = namespace(nets=[]) %}
+{% for i in wg_interfaces.values() %}
+{%   set ns.nets = ns.nets + [i.address] %}
+{%   for p in i.peers %}
+{%     set ns.nets = ns.nets + (p.allowed_ips | default([])) %}
+{%   endfor %}
+{% endfor %}
+
+ACTION="${1:?usage: $0 up|down}"
+CHAIN=WG_LAN_GUARD
+# Every bridge docker can create: the deploy network, the default one, and
+# whatever a compose project makes.
+INGRESS="docker+ br-+"
+
+case "$ACTION" in
+  up)
+    iptables -N "$CHAIN" 2>/dev/null || iptables -F "$CHAIN"
+{% for a in wg_docker_lan_allow %}
+    # {{ a.why }}
+    iptables -A "$CHAIN" -d {{ a.host }} -p tcp -m multiport --dports {{ a.ports | join(',') }} -j RETURN
+{% endfor %}
+{% for net in ns.nets | reject('search', '/32$') | unique %}
+    iptables -A "$CHAIN" -d {{ net }} -j REJECT --reject-with icmp-admin-prohibited
+{% endfor %}
+    for i in $INGRESS; do
+      iptables -C DOCKER-USER -i "$i" -j "$CHAIN" 2>/dev/null || iptables -I DOCKER-USER -i "$i" -j "$CHAIN"
+    done
+    iptables -P FORWARD DROP
+    ;;
+  down)
+    # The FORWARD policy is left at DROP: stopping the guard to debug a
+    # container should not also reopen eth0 -> LAN.
+    for i in $INGRESS; do
+      iptables -D DOCKER-USER -i "$i" -j "$CHAIN" 2>/dev/null
+    done
+    iptables -F "$CHAIN" 2>/dev/null
+    iptables -X "$CHAIN" 2>/dev/null
+    ;;
+  *) echo "unknown action: $ACTION (expected up|down)" >&2; exit 1 ;;
+esac
+exit 0

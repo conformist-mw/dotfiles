@@ -1,0 +1,15 @@
+[Unit]
+Description=Limit what containers reach behind the WireGuard tunnels
+# DOCKER-USER exists only once docker has started; docker leaves its contents
+# alone across its own restarts, so this runs once per boot.
+After=docker.service
+Wants=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/wg-forward-guard.sh up
+ExecStop=/usr/local/sbin/wg-forward-guard.sh down
+
+[Install]
+WantedBy=multi-user.target

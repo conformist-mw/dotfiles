@@ -37,8 +37,18 @@ iptables $R FORWARD -i "$WG" -o "$WG" -j ACCEPT
 
 # --- DNS: redirect queries aimed at the gateway to the local resolver (pihole) ---
 [ "$ACTION" = up ] && sysctl -qw "net.ipv4.conf.${WG}.route_localnet=1"
+# route_localnet also lets a peer write 127.x as the destination itself and
+# reach every loopback-only service (crowdsec's LAPI on :8080, its metrics on
+# :6060). raw runs before nat and so sees the address the peer sent, not the
+# one the DNAT below produces: this drops the peer's own 127.x and nothing else.
+iptables -t raw $R PREROUTING -i "$WG" -d 127.0.0.0/8 -j DROP
 iptables -t nat $R PREROUTING -i "$WG" -p udp -d "$GW" --dport 53 -j DNAT --to-destination 127.0.0.1:53
 iptables -t nat $R PREROUTING -i "$WG" -p tcp -d "$GW" --dport 53 -j DNAT --to-destination 127.0.0.1:53
 iptables $R INPUT -i "$WG" -p udp --dport 53 -j ACCEPT
 iptables $R INPUT -i "$WG" -p tcp --dport 53 -j ACCEPT
+{% endif %}
+{% if iface.isolated | default(false) %}
+
+# --- guests: the gateway answers DNS and nothing else (sshd included) ---
+iptables $R INPUT -i "$WG" -j DROP
 {% endif %}

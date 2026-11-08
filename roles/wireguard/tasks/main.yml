@@ -72,3 +72,33 @@
   loop_control:
     label: "{{ item.key }}"
   become: true
+
+# Only where the host also runs docker: the guard lives in DOCKER-USER.
+- name: Guard forwarding into the tunnels
+  when: wg_docker_lan_allow is defined
+  block:
+    - name: Render the forward guard script
+      ansible.builtin.template:
+        src: wg-forward-guard.sh.j2
+        dest: /usr/local/sbin/wg-forward-guard.sh
+        owner: root
+        group: root
+        mode: "0700"
+      register: wg_guard_script
+
+    - name: Install the forward guard unit
+      ansible.builtin.template:
+        src: wg-forward-guard.service.j2
+        dest: /etc/systemd/system/wg-forward-guard.service
+        mode: "0644"
+      register: wg_guard_unit
+
+    # Starting (restarting on change) the oneshot applies the rules now, so the
+    # unit is the one source of truth for boot and for this run alike.
+    - name: Enable and apply the forward guard
+      ansible.builtin.systemd:
+        name: wg-forward-guard.service
+        enabled: true
+        state: "{{ 'restarted' if (wg_guard_script.changed or wg_guard_unit.changed) else 'started' }}"
+        daemon_reload: true
+  become: true

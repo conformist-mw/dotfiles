@@ -51,3 +51,21 @@ wg_interfaces:
       - name: egor
         address: "10.0.40.30/32"
         public_key: "LYUZxviK542UTpzSkf7s2b+cRXnzdbeJze+akuPgsQw="
+
+# The only things a container on this host may reach behind the tunnels
+# (wg-forward-guard). Everything else in the LAN and the WG subnets is
+# rejected, so an exploited public app gets no further than what traefik
+# already publishes. A new LAN-backed route or monitor needs its line here.
+wg_docker_lan_allow:
+  - host: 192.168.1.222
+    ports: [4533, 8096, 2283]
+    why: "traefik -> navidrome, jellyfin, immich on bee"
+  - host: 192.168.1.222
+    ports: [45876]
+    why: "beszel hub -> agent on bee"
+  - host: 192.168.1.223
+    ports: [8123]
+    why: "traefik, gatus, homepage -> home assistant"
+  - host: 192.168.1.223
+    ports: [45876]
+    why: "beszel hub -> agent on the HA Pi"
