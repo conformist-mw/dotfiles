@@ -47,8 +47,21 @@
 #
 # The deeper cause is upstream: backend/docker-compose.yml in the ceilings repo
 # declares no `restart:` policy, so neither service survives a docker daemon
-# restart. Adding `restart: unless-stopped` there is the actual fix; this task
-# just means ansible can recover from it.
+# restart. The override below supplies one until that file does; compose
+# merges docker-compose.override.yml on its own, and the checkout leaves an
+# untracked file alone.
+- name: Give the compose services a restart policy
+  ansible.builtin.copy:
+    dest: "{{ app_data_dir }}/backend/docker-compose.override.yml"
+    mode: "0644"
+    content: |
+      # Managed by Ansible (roles/commeilfaut)
+      services:
+        ceilings:
+          restart: unless-stopped
+        scheduler:
+          restart: unless-stopped
+
 - name: Ensure the compose stack is up
   ansible.builtin.command: docker compose up -d
   args:
