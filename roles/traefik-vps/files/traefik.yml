@@ -18,8 +18,11 @@ entryPoints:
 
 providers:
   docker:
-    endpoint: "unix:///var/run/docker.sock"
+    # roles/docker-socket-proxy: read-only API instead of the raw socket.
+    endpoint: "tcp://socket-proxy:2375"
     exposedByDefault: false
+    # homepage and dozzle sit on socket_proxy too; route over docker_net.
+    network: docker_net
 
   file:
     filename: /dynamic.yml

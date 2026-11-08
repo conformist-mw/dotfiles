@@ -89,12 +89,13 @@
     image: ghcr.io/gethomepage/homepage:v2.8.0
     restart: true
     restart_policy: "unless-stopped"
-    networks:
-      - name: "{{ docker_network }}"
+    # Without it a bind dropped from `volumes` stays on the running container.
+    comparisons:
+      volumes: strict
+    # Through roles/docker-socket-proxy where the host has one (hetzner);
+    # templates/vps/docker.yaml points at it.
+    networks: "{{ [{'name': docker_network}] + ([{'name': docker_socket_proxy.network}] if docker_socket_proxy is defined else []) }}"
     env:
       HOMEPAGE_ALLOWED_HOSTS: "{{ hostname_prefix }}{{ ansible_host }}"
-    volumes:
-      - "{{ app_data_dir }}/config:/app/config"
-      - "{{ app_data_dir }}/images:/app/public/images"
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    volumes: "{{ [app_data_dir ~ '/config:/app/config', app_data_dir ~ '/images:/app/public/images'] + ([] if docker_socket_proxy is defined else ['/var/run/docker.sock:/var/run/docker.sock:ro']) }}"
     labels: "{{ labels }}"

@@ -53,9 +53,11 @@
     pull: true
     restart_policy: "unless-stopped"
     network_mode: host
-    env: "{{ (beszel_agent_env_hub if beszel_hub_enabled else beszel_agent_env_listen) | combine(beszel_agent_extra_env) }}"
-    volumes: "{{ ['/var/run/docker.sock:/var/run/docker.sock:ro', app_data_dir ~ '/agent:/var/lib/beszel-agent'] + ([app_data_dir ~ '/socket:/beszel_socket'] if beszel_hub_enabled else []) + beszel_agent_extra_volumes }}"
+    env: "{{ (beszel_agent_env_hub if beszel_hub_enabled else beszel_agent_env_listen) | combine(beszel_agent_env_docker) | combine(beszel_agent_extra_env) }}"
+    volumes: "{{ ([] if docker_socket_proxy is defined else ['/var/run/docker.sock:/var/run/docker.sock:ro']) + [app_data_dir ~ '/agent:/var/lib/beszel-agent'] + ([app_data_dir ~ '/socket:/beszel_socket'] if beszel_hub_enabled else []) + beszel_agent_extra_volumes }}"
   vars:
+    # Host network, so it reaches roles/docker-socket-proxy on its loopback port.
+    beszel_agent_env_docker: "{{ {'DOCKER_HOST': 'tcp://127.0.0.1:' ~ docker_socket_proxy.port} if docker_socket_proxy is defined else {} }}"
     beszel_agent_env_hub:
       LISTEN: "/beszel_socket/beszel.sock"
       HUB_URL: "http://localhost:{{ app_port }}"

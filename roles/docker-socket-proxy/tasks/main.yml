@@ -1,0 +1,41 @@
+---
+# A `:ro` bind of docker.sock protects nothing: read-only applies to the socket
+# file, not to the API behind it, so any container holding the socket can
+# `docker run -v /:/host` its way to root on the host. The proxy (haproxy)
+# passes only GET requests to the endpoints enabled below and answers 403 to
+# the rest, so a compromised consumer can look but not create, exec or stop.
+#
+# What it still allows is reading: container inspect shows every container's
+# env, secrets included. That is why its network holds only the consumers.
+- name: Socket proxy network
+  community.docker.docker_network:
+    name: "{{ docker_socket_proxy.network }}"
+
+- name: Socket proxy container
+  community.docker.docker_container:
+    name: "{{ docker_socket_proxy.host }}"
+    image: lscr.io/linuxserver/socket-proxy:3.4.7
+    pull: true
+    restart_policy: "unless-stopped"
+    read_only: true
+    tmpfs:
+      - /run
+    networks:
+      - name: "{{ docker_socket_proxy.network }}"
+    # For beszel-agent, which runs with network_mode: host and so cannot join
+    # the network above. Loopback only; docker drops 127.0.0.1-published ports
+    # arriving on any other interface.
+    published_ports:
+      - "127.0.0.1:{{ docker_socket_proxy.port }}:2375"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    # EVENTS, PING and VERSION are on by default, POST and the rest off.
+    # CONTAINERS: list/inspect/logs/stats (all four consumers).
+    # INFO: host info (dozzle, beszel).
+    # IMAGES: image inspect (beszel). SYSTEM: /system/df (dozzle).
+    # A consumer asking for more shows up as a 403 in `docker logs socket-proxy`.
+    env:
+      CONTAINERS: "1"
+      INFO: "1"
+      IMAGES: "1"
+      SYSTEM: "1"

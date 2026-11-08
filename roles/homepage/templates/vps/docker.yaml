@@ -1,2 +1,4 @@
 local-docker:
-  socket: /var/run/docker.sock
+  # roles/docker-socket-proxy
+  host: {{ docker_socket_proxy.host }}
+  port: {{ docker_socket_proxy.port }}

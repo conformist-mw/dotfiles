@@ -1,0 +1,10 @@
+---
+# Read-only Docker API in front of /var/run/docker.sock (roles/docker-socket-proxy).
+# traefik, homepage, dozzle and beszel-agent talk to it instead of mounting the
+# socket. Roles shared with bee fall back to the socket when this is undefined.
+docker_socket_proxy:
+  host: socket-proxy
+  port: 2375
+  # Only the consumers join it, never docker_net: a public app that got
+  # popped must not be able to read every container's env through the proxy.
+  network: socket_proxy

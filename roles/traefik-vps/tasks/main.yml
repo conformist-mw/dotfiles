@@ -16,13 +16,16 @@
     restart: true
     pull: true
     restart_policy: "unless-stopped"
+    # Without it a bind dropped from `volumes` stays on the running container.
+    comparisons:
+      volumes: strict
     ports:
       - "80:80"
       - "443:443"
     networks:
       - name: "{{ docker_network }}"
+      - name: "{{ docker_socket_proxy.network }}"
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "{{ server_dir }}/traefik.yml:/traefik.yml:ro"
       - "{{ server_dir }}/dynamic.yml:/dynamic.yml:ro"
       - "{{ server_dir }}/letsencrypt:/letsencrypt"

@@ -8,8 +8,8 @@
     image: amir20/dozzle:v11.4.3
     pull: true
     restart_policy: "unless-stopped"
-    networks:
-      - name: "{{ docker_network }}"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    # Through roles/docker-socket-proxy where the host has one (hetzner).
+    networks: "{{ [{'name': docker_network}] + ([{'name': docker_socket_proxy.network}] if docker_socket_proxy is defined else []) }}"
+    env: "{{ {'DOCKER_HOST': 'tcp://' ~ docker_socket_proxy.host ~ ':' ~ docker_socket_proxy.port} if docker_socket_proxy is defined else {} }}"
+    volumes: "{{ [] if docker_socket_proxy is defined else ['/var/run/docker.sock:/var/run/docker.sock:ro'] }}"
     labels: "{{ labels }}"

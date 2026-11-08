@@ -21,6 +21,7 @@
     # (dns-01 talks to the zone), so a missing record shows up as an app that is
     # simply unreachable, with nothing in the logs to say so.
     - { role: dns, tags: [infra, dns] }
+    - { role: docker-socket-proxy, tags: [infra, docker-socket-proxy] }
     - { role: traefik-vps, tags: [infra, traefik] }
     - { role: tinyauth, tags: [infra, tinyauth] }
     - { role: pihole, tags: [infra, pihole] }
