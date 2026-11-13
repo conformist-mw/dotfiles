@@ -9,7 +9,7 @@
 - name: Pi-Hole container
   community.docker.docker_container:
     name: pihole
-    image: pihole/pihole:2026.10.1
+    image: pihole/pihole:2026.11.0
     restart: true
     restart_policy: "unless-stopped"
     networks:
