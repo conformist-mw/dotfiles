@@ -6,8 +6,6 @@
     - { role: common, tags: [base, common] }
     - { role: beelink, tags: [base, beelink] }
     - { role: docker, tags: [base, docker] }
-    - { role: vim, tags: [base, vim] }
-    - { role: vim, tags: [base, vim-root], vars: { user: "root" } }
     # Ookla has no ubuntu/noble repo yet; jammy debs run fine on noble.
     - {
         role: speedtest,
