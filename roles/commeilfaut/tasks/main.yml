@@ -17,6 +17,7 @@
 # Outside the git-changed guard below: a rotated secret has to reach the host even
 # when the checkout is unchanged, which it previously did not.
 - name: Copy production.env
+  diff: false
   ansible.builtin.template:
     src: production.env
     dest: "{{ app_data_dir }}/backend/.env"

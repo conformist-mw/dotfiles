@@ -46,6 +46,7 @@
         labels: "{{ labels }}"
 
 - name: Beszel agent container
+  diff: false
   when: not beszel_hub_enabled or beszel_agent_token | length > 0
   community.docker.docker_container:
     name: "{{ app_name }}-agent"

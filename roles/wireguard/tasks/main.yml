@@ -48,6 +48,7 @@
   become: true
 
 - name: Render interface configs
+  diff: false
   ansible.builtin.template:
     src: wg.conf.j2
     dest: "/etc/wireguard/{{ item.key }}.conf"

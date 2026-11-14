@@ -14,6 +14,7 @@
     - "{{ grist_backup_dir }}"
 
 - name: Grist container
+  diff: false
   community.docker.docker_container:
     image: gristlabs/grist:1.7.22
     pull: true

@@ -191,6 +191,7 @@
 # across rebuilds by restoring the CAPI credentials. Skipped unless the secret
 # is set in host_vars/hetzner (crowdsec_capi_login / crowdsec_capi_password).
 - name: Restore online (CAPI / console) credentials
+  diff: false
   ansible.builtin.copy:
     dest: /etc/crowdsec/online_api_credentials.yaml
     content: |

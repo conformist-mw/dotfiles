@@ -15,6 +15,7 @@
     dest: "{{ server_dir }}/traefik.yml"
 
 - name: Copy traefik dynamic config file
+  diff: false
   ansible.builtin.template:
     src: dynamic.yml
     dest: "{{ server_dir }}/dynamic.yml"

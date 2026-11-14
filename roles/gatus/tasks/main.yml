@@ -44,6 +44,7 @@
 # --- Gatus config + container -------------------------------------------------
 # Gatus watches config.yaml and hot-reloads on change, so no restart handler.
 - name: Render Gatus config
+  diff: false
   ansible.builtin.template:
     src: config.yaml.j2
     dest: "{{ app_data_dir }}/config/config.yaml"

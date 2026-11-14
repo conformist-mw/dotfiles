@@ -170,6 +170,7 @@
 - name: Setup the reaper
   block:
     - name: Create the navidrome credentials environment file
+      diff: false
       ansible.builtin.copy:
         dest: "{{ nd_env_filepath }}"
         content: |

@@ -21,6 +21,7 @@
     mode: "0755"
 
 - name: Render tinyauth users file
+  diff: false
   ansible.builtin.template:
     src: users.j2
     dest: "{{ server_dir }}/tinyauth/users"
@@ -28,6 +29,7 @@
   notify: restart tinyauth
 
 - name: tinyauth container
+  diff: false
   community.docker.docker_container:
     name: tinyauth
     image: "{{ tinyauth_image }}"

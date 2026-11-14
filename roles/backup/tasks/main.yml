@@ -6,6 +6,7 @@
     group: "{{ ansible_user }}"
     mode: "0700"
 - name: Copy rclone backblaze config
+  diff: false
   ansible.builtin.copy:
     dest: ~/.config/rclone/rclone.conf
     content: |

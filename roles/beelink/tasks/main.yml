@@ -87,6 +87,7 @@
 - name: setup bitwarden backup job
   block:
     - name: Create Bitwarden environment file
+      diff: false
       copy:
         dest: /etc/bw.env
         content: |

@@ -154,6 +154,7 @@
         name: bsd-mailx
 
     - name: Copy tg sendmail config
+      diff: false
       # 0.4.0 moved the config from /etc/tg-sendmail.ini to /etc/tg-sendmail.yaml and
       # changed its shape; the old path is simply not read any more. Neither host has
       # an .ini left, so there is nothing to clean up — only the new file to own.
