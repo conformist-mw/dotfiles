@@ -1,4 +1,14 @@
 ---
+# A placeholder token doesn't stop traefik from starting; it only shows up
+# weeks later as dns-01 renewals failing, so refuse it here.
+- name: DNS token is set
+  ansible.builtin.assert:
+    that: hetzner_dns_api_token | default('') not in ['', 'REPLACE_ME']
+    fail_msg: >-
+      hetzner_dns_api_token in host_vars/hetzner/secrets.sops.yaml is still the
+      placeholder. Put a Read & Write token of the DNS-only project there.
+    quiet: true
+
 - name: Copy traefik static config file
   ansible.builtin.copy:
     src: traefik.yml
@@ -10,6 +20,9 @@
     dest: "{{ server_dir }}/dynamic.yml"
 
 - name: Traefik container
+  # ansible.cfg turns diffs on, and a container diff prints env verbatim —
+  # the DNS token included.
+  diff: false
   community.docker.docker_container:
     name: traefik
     image: "traefik:v3.7.19"

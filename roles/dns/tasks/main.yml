@@ -15,6 +15,14 @@
 # Runs from the control node: the token stays off the VPS, and the records can
 # be fixed even when the host itself is down.
 
+- name: Token is set
+  ansible.builtin.assert:
+    that: hetzner_dns_api_token | default('') not in ['', 'REPLACE_ME']
+    fail_msg: >-
+      hetzner_dns_api_token in host_vars/hetzner/secrets.sops.yaml is still the
+      placeholder. Put a Read & Write token of the DNS-only project there.
+    quiet: true
+
 - name: Look up the DNS zone
   delegate_to: localhost
   become: false
