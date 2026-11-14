@@ -1,0 +1,29 @@
+#!/bin/bash
+# Appends one line per peer of {{ wg_peer_log | join(', ') }} that completed a
+# handshake within the last {{ wg_peer_log_interval }}s, i.e. was connected and
+# moving traffic. Run by wg-peer-log.timer at that same interval, so an active
+# peer shows up once per run. rx/tx are cumulative since the interface came up.
+#
+# WireGuard itself keeps only the latest handshake, reset on every restart,
+# and pihole can't tell tunnel clients apart (they all arrive via docker-proxy),
+# so this file is the only history of who used the tunnel and when.
+set -euo pipefail
+
+declare -A name=(
+{% for ifname in wg_peer_log %}
+{% for peer in wg_interfaces[ifname].peers %}
+  ["{{ peer.public_key }}"]="{{ peer.name }}"
+{% endfor %}
+{% endfor %}
+)
+
+now=$(date +%s)
+stamp=$(date '+%F %T %Z')
+
+for ifc in {{ wg_peer_log | join(' ') }}; do
+  wg show "$ifc" dump | tail -n +2 |
+    while IFS=$'\t' read -r pubkey _psk endpoint _ips handshake rx tx _ka; do
+      (( handshake > 0 && now - handshake <= {{ wg_peer_log_interval }} )) || continue
+      echo "$stamp $ifc ${name[$pubkey]:-$pubkey} from=${endpoint%:*} rx=$(( rx / 1048576 ))MiB tx=$(( tx / 1048576 ))MiB"
+    done
+done >> {{ wg_peer_log_file }}

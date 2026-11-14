@@ -103,3 +103,54 @@
         state: "{{ 'restarted' if (wg_guard_script.changed or wg_guard_unit.changed) else 'started' }}"
         daemon_reload: true
   become: true
+
+# Who connects through the listed interfaces, and when (see the script).
+- name: Log peer activity
+  when: wg_peer_log is defined
+  vars:
+    wg_peer_log_interval: 300
+    wg_peer_log_file: /var/log/wg-peer-log.log
+  block:
+    - name: Render the peer log script
+      ansible.builtin.template:
+        src: wg-peer-log.sh.j2
+        dest: /usr/local/sbin/wg-peer-log.sh
+        owner: root
+        group: root
+        mode: "0700"
+
+    - name: Install the peer log service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/wg-peer-log.service
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Log active WireGuard peers
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/local/sbin/wg-peer-log.sh
+
+    - name: Install the peer log timer
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/wg-peer-log.timer
+        mode: "0644"
+        content: |
+          [Unit]
+          Description=Log active WireGuard peers every {{ wg_peer_log_interval }}s
+
+          [Timer]
+          OnBootSec={{ wg_peer_log_interval }}
+          OnUnitActiveSec={{ wg_peer_log_interval }}
+          AccuracySec=1s
+
+          [Install]
+          WantedBy=timers.target
+
+    - name: Enable the peer log timer
+      ansible.builtin.systemd:
+        name: wg-peer-log.timer
+        enabled: true
+        state: started
+        daemon_reload: true
+  become: true
