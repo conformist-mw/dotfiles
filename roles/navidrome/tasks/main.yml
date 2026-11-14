@@ -63,6 +63,10 @@
       ND_BACKUP_SCHEDULE: "{{ navidrome_backup_schedule }}"
       ND_BACKUP_COUNT: "{{ navidrome_backup_count }}"
       ND_CONFIGFILE: "/data/navidrome.toml"
+      # Import playlists from the library root only, where the .nsp files from
+      # this role land. The default searches every folder, so a downloaded
+      # discography with a Play.m3u per album turned into 28 playlists.
+      ND_PLAYLISTSPATH: "."
     labels: "{{ labels }}"
 
 # navidrome only creates the library for its music folder; the rest exist only
