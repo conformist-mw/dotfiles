@@ -1,0 +1,26 @@
+{
+  "all": [
+    {
+      "any": [
+        {
+          "is": {
+            "playCount": 0
+          }
+        },
+        {
+          "before": {
+            "lastPlayed": "2026-11-15"
+          }
+        }
+      ]
+    },
+    {
+      "startsWith": {
+        "filePath": "Discographies/Serj Tankian - Discography/"
+      }
+    }
+  ],
+  "sort": "filePath",
+  "order": "asc",
+  "limit": 2000
+}

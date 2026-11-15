@@ -1,0 +1,26 @@
+{
+  "all": [
+    {
+      "any": [
+        {
+          "is": {
+            "playCount": 0
+          }
+        },
+        {
+          "before": {
+            "lastPlayed": "2026-11-15"
+          }
+        }
+      ]
+    },
+    {
+      "startsWith": {
+        "filePath": "Discographies/СЛОТ & Нуки - Discography (2002-2013)/"
+      }
+    }
+  ],
+  "sort": "filePath",
+  "order": "asc",
+  "limit": 2000
+}
