@@ -14,7 +14,7 @@
 - name: Socket proxy container
   community.docker.docker_container:
     name: "{{ docker_socket_proxy.host }}"
-    image: lscr.io/linuxserver/socket-proxy:3.4.7
+    image: lscr.io/linuxserver/socket-proxy:3.4.8
     pull: true
     restart_policy: "unless-stopped"
     read_only: true
