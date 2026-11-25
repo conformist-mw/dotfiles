@@ -2,7 +2,7 @@
 
 Ansible playbooks for deploying:
 - **beelink** — home server (Jellyfin, Navidrome, Traefik, etc.)
-- **hetzner** — VPS (oauth2-proxy, segments, commeilfaut, etc.)
+- **hetzner** — VPS (oauth2-proxy, segments, etc.)
 - **macos** — MacBook setup (Homebrew, dev tools, configs)
 
 ## Quick Start
@@ -54,7 +54,7 @@ just list-tags-hetzner
 | Category | Tags |
 |----------|------|
 | Base | `base`, `vps`, `docker`, `vim`, `wireguard` |
-| Apps | `apps`, `segments`, `commeilfaut`, `homepage`, `dozzle`, `memos`, `flatnotes` |
+| Apps | `apps`, `segments`, `homepage`, `dozzle`, `memos`, `flatnotes` |
 
 ### MacOS
 | Tags | Description |

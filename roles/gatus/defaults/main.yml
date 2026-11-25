@@ -27,8 +27,6 @@ gatus_heartbeat_interval: "5m"
 # Portless containers can only be watched this way; HTTP
 # services can additionally go in gatus_http_endpoints below.
 gatus_watched_containers:
-  - ceilings-app        # role: commeilfaut
-  - ceilings-scheduler  # role: commeilfaut
   - segments
   - family-hub
   - opengym-api

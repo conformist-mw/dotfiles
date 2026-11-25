@@ -16,7 +16,6 @@ dns_subdomains:
   - crowdsec
   - dozzle
   - dash # homepage (hostname_prefix: "dash.")
-  - commeilfaut
   - segments
   - family # family-hub
   - gym # opengym

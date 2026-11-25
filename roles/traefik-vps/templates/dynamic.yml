@@ -40,13 +40,6 @@ http:
       rule: Host(`ha.{{ ansible_host }}`)
       tls:
         certResolver: letsencrypt
-    commeilfaut-django:
-      rule: "Host(`commeilfaut.{{ ansible_host }}`)"
-      middlewares:
-        - secure-no-auth
-      service: commeilfaut-django
-      tls:
-        certResolver: letsencrypt
 
     # --- login endpoints -----------------------------------------------------
     # Every form that faces the internet gets its own router so the strict
@@ -68,17 +61,6 @@ http:
       middlewares:
         - login-chain
       service: tinyauth@docker
-      tls:
-        certResolver: letsencrypt
-
-    commeilfaut-login:
-      rule: "Host(`commeilfaut.{{ ansible_host }}`) && PathPrefix(`/admin/login`)"
-      priority: 1000
-      entryPoints:
-        - websecure
-      middlewares:
-        - login-chain
-      service: commeilfaut-django
       tls:
         certResolver: letsencrypt
 
@@ -224,12 +206,6 @@ http:
         permanent: true
 
   services:
-    # commeilfaut
-    commeilfaut-django:
-      loadBalancer:
-        servers:
-          - url: http://ceilings-app:8000
-
     # home network
     music:
       loadBalancer:

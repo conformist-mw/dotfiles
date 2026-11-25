@@ -38,7 +38,6 @@
             homepage_crowdsec_machine: "homepage",
           },
       }
-    - { role: commeilfaut, tags: [apps, commeilfaut] }
     - { role: segments, tags: [apps, segments] }
     # home-meters is gone: its addresses/tariffs/readings now live in
     # family-hub's own database, which the nightly snapshot already covers.

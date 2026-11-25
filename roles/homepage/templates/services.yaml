@@ -103,11 +103,6 @@
         description: "Lessons tracker + family appointments"
         icon: "mdi-school"
         siteMonitor: https://family.conformist.name
-    - Commeilfaut:
-        href: https://commeilfaut.conformist.name/admin/
-        description: "Ceilings shop admin"
-        icon: "mdi-ceiling-light"
-        siteMonitor: https://commeilfaut.conformist.name
     - Segments:
         href: https://segments.conformist.name
         description: "Segments app"

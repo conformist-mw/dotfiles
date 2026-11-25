@@ -1,2 +1,0 @@
-app_name: "commeilfaut"
-app_data_dir: "{{ data_dir }}/commeilfaut"

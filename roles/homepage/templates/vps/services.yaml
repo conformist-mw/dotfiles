@@ -13,13 +13,6 @@
         container: "dozzle"
         server: "local-docker"
 
-    - Commeilfaut:
-        href: https://commeilfaut.{{ ansible_host }}/admin
-        description: "Ceilings shop admin"
-        icon: "mdi-ceiling-light"
-        container: "ceilings-app"
-        server: "local-docker"
-
     - Family Hub:
         href: https://family.{{ ansible_host }}
         description: "Lessons tracker + family appointments"

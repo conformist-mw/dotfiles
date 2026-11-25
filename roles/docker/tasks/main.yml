@@ -15,8 +15,8 @@
 
 # Nothing here ever removed an image, so the VPS was carrying 189 images for 19
 # containers — 16G of the 22G under /var/lib/docker was reclaimable. Three sources
-# feed it: every pull of a moving tag orphans the previous digest, roles/commeilfaut
-# rebuilds ceilings-app on each git change, and images belonging to roles that were
+# feed it: every pull of a moving tag orphans the previous digest, source-built
+# roles rebuild their image on each git change, and images belonging to roles that were
 # deleted long ago (n8n, jupyter, flatnotes, pgadmin, memos, authelia) were still
 # on disk.
 #
@@ -47,7 +47,7 @@
     images_filters:
       dangling: false
     builder_cache: true
-    # commeilfaut builds from source; keeping a slice means its next rebuild is
+    # grist_etl builds from source; keeping a slice means its next rebuild is
     # incremental rather than starting from the base image again.
     builder_cache_keep_storage: "1GB"
     # Networks are not a disk problem, and pruning them here would be actively
