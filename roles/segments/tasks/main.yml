@@ -1,7 +1,7 @@
 ---
 - name: Run segments-go container
   community.docker.docker_container:
-    image: olegsmedyuk/segments:latest
+    image: olegsmedyuk/segments:v1.7.0
     name: segments
     restart: true
     restart_policy: "unless-stopped"
