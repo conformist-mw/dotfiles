@@ -76,3 +76,17 @@ family_hub_menu_evening_time: "20:15"
 # Needs AI_API_KEY as well.
 family_hub_dish_suggest_dow: "6"
 family_hub_dish_suggest_time: "10:00"
+
+# ── School (Moodle) ──────────────────────────────────────────────────────────
+# URL, login and password live in host_vars/hetzner/secrets.sops.yaml
+# (family_hub_school_moodle_*); empty means the integration is off.
+family_hub_school_moodle_url: ""
+family_hub_school_moodle_username: ""
+family_hub_school_moodle_password: ""
+# Monday of the week the school calls «Тиждень 0». Week numbers in the Friday
+# review are counted from it; if the review starts saying a week's section is
+# missing (a holiday the school skipped), move this.
+family_hub_school_moodle_week0: "2026-08-31"
+# The Friday review of the school week. 0=Sun..6=Sat; empty disables.
+family_hub_school_moodle_review_dow: "5"
+family_hub_school_moodle_review_time: "19:45"

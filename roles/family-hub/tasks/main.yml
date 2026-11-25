@@ -149,6 +149,14 @@
       MENU_EVENING_TIME: "{{ family_hub_menu_evening_time }}"
       DISH_SUGGEST_DOW: "{{ family_hub_dish_suggest_dow }}"
       DISH_SUGGEST_TIME: "{{ family_hub_dish_suggest_time }}"
+      # School grades from Moodle: new grades to the group, /grades, and the
+      # Friday week review. Off unless all three of URL/login/password are set.
+      SCHOOL_MOODLE_URL: "{{ family_hub_school_moodle_url }}"
+      SCHOOL_MOODLE_USERNAME: "{{ family_hub_school_moodle_username }}"
+      SCHOOL_MOODLE_PASSWORD: "{{ family_hub_school_moodle_password }}"
+      SCHOOL_MOODLE_WEEK0: "{{ family_hub_school_moodle_week0 }}"
+      SCHOOL_MOODLE_REVIEW_DOW: "{{ family_hub_school_moodle_review_dow }}"
+      SCHOOL_MOODLE_REVIEW_TIME: "{{ family_hub_school_moodle_review_time }}"
     volumes:
       - "{{ family_hub_dir }}:/data"
     labels:
