@@ -9,12 +9,18 @@ entryPoints:
   web:
     address: ":80"
     http:
+      aliasHeadersStrategy: delete
       redirections:
         entryPoint:
           to: websecure
           scheme: https
   websecure:
     address: ":443"
+    http:
+      # Drops request headers whose names alias a managed one (X_Auth_User,
+      # X.Auth.User for X-Auth-User), so a client can't spoof what tinyauth
+      # sets for the backends. delete over reject: odd clients keep working.
+      aliasHeadersStrategy: delete
 
 providers:
   docker:

@@ -8,6 +8,16 @@ api:
 entryPoints:
   web:
     address: ":80"
+    http:
+      # Drops request headers whose names alias a managed one (X_Auth_User,
+      # X.Auth.User for X-Auth-User), so a client can't spoof headers set
+      # by the proxy in front. delete over reject: odd clients keep working.
+      aliasHeadersStrategy: delete
+  # The one api.insecure would create on its own, declared to set the same.
+  traefik:
+    address: ":8080"
+    http:
+      aliasHeadersStrategy: delete
 
 providers:
   file:
