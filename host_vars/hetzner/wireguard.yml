@@ -45,16 +45,6 @@ wg_interfaces:
       - name: masha
         address: "10.0.40.20/32"
         public_key: "aFQOHrsnTBMX6UROwUNTem4Drl1KS5SkIDEYsRMcCDQ="
-      - name: macos
-        address: "10.0.40.40/32"
-        public_key: "Da779VGoPIRW8qClsSTmIDVLbjDtSZGy8Ar7ycXPUjA="
-      - name: egor
-        address: "10.0.40.30/32"
-        public_key: "LYUZxviK542UTpzSkf7s2b+cRXnzdbeJze+akuPgsQw="
-
-# Interfaces whose peer activity goes to /var/log/wg-peer-log.log. wg1 is on
-# trial: if only masha shows up by ~2026-11-28, the whole interface goes.
-wg_peer_log: [wg1]
 
 # The only things a container on this host may reach behind the tunnels
 # (wg-forward-guard). Everything else in the LAN and the WG subnets is

@@ -154,3 +154,24 @@
         state: started
         daemon_reload: true
   become: true
+
+- name: Remove the peer log when no interface is listed
+  when: wg_peer_log is not defined
+  block:
+    - name: Stop the peer log timer
+      ansible.builtin.systemd:
+        name: wg-peer-log.timer
+        enabled: false
+        state: stopped
+      failed_when: false
+
+    - name: Delete the peer log files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/systemd/system/wg-peer-log.timer
+        - /etc/systemd/system/wg-peer-log.service
+        - /usr/local/sbin/wg-peer-log.sh
+        - /var/log/wg-peer-log.log
+  become: true
